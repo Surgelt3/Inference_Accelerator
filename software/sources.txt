@@ -1,0 +1,2 @@
+https://github.com/onnx/onnx/blob/main/docs/IR.md
+https://onnx.ai/onnx/api/classes.html#

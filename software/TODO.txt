@@ -1,0 +1,6 @@
+- commands
+- finish importing all data types
+- command run
+- load data to MDA
+- command -> instructions
+- attributes default
