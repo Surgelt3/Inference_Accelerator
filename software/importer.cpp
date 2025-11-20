@@ -7,7 +7,8 @@
 
 #define chprint chprintln
 
-class MDAManager{
+class MDAManager
+{
   // hash to map local app memory to shared mem
   // might need to check if we can free mem at some point
   void*deviceMem;
@@ -36,15 +37,28 @@ class MDAManager{
   }
 } MDAMem;
 
-
 static Tensor parseTensor(onnx::TensorProto t)
 {
   size_t size = 1;
-  ch_array dim = ch_arrcreate(int, t.dims_size());
-  for (int i = 0; i < t.dims_size(); i++)
+  ch_array dim;
+  if (t.dims_size() == 0)
   {
-    size *= t.dims(i);
-    ch_arrget(int, dim, i) = t.dims(i);
+    size = t.float_data_size() == 0 ? t.raw_data().size() / 4 : t.float_data_size();
+    dim = ch_arrcreate(int, 4);
+    for(int i=0;i<4;i++)
+      ch_arrget(int, dim, i) = 0;
+    ch_arrget(int, dim, 0) = size;
+  }
+  else
+  {
+    dim=ch_arrcreate(int, t.dims_size());
+    for (int i = 0; i < t.dims_size(); i++)
+    {
+      if (t.dims(i) < 0)
+        chprinterr("size < 0\n");
+      size *= t.dims(i);
+      ch_arrget(int, dim, i) = t.dims(i);
+    }
   }
 
   ch_array a = ch_arrcreate(float, size);
@@ -56,8 +70,23 @@ static Tensor parseTensor(onnx::TensorProto t)
     {
     case onnx::TensorProto::FLOAT:
     case onnx::TensorProto::COMPLEX64:
-      if (t.float_data_size() == 0)
+      if (t.float_data_size() != size || size == 0)
       {
+        if (t.raw_data().size() / 4 != size)
+          chstop("TODO");
+
+        for (int i = 0; i < size; i++)
+        {
+          union {
+            float f;
+            int32_t i;
+          }d;
+          memcpy(&d.i, t.raw_data().data() + 4 * i,sizeof(int32_t));
+          #if BYTE_ORDER == BIG_ENDIAN
+            d.i=__bswap_32(d.i);
+          #endif
+          ch_arrget(float, a, i) = d.f;
+        }
       }
       else
         memcpy(a._start, t.raw_data().c_str(), size * sizeof(float));
@@ -276,15 +305,16 @@ Net importModel(std::string path)
       const Tensor &kernel = *layer.layer_input[1];
       const Tensor &bias = *layer.layer_input[2];
       ch_array outDim = ch_arrcreate(int, 4);
-      ch_arrget(int, outDim, 0) = ch_arrget(int, base.dim, 0);
-      ch_arrget(int, outDim, 1) = ch_arrget(int, kernel.dim, 0);
+      ch_arrget(int, outDim, 0) = 1;
+      ch_arrget(int, outDim, 1) = kernel.batch();
       ch_arrget(int, outDim, 2) = (base.width() - attributes.kernel_shape[0] + attributes.pads[0] + attributes.pads[1]) / attributes.strides[0] + 1;
       ch_arrget(int, outDim, 3) = (base.height() - attributes.kernel_shape[1] + attributes.pads[2] + attributes.pads[3]) / attributes.strides[1] + 1;
       ch_array outData = ch_arrcreate(float, ch_arrget(int, outDim, 0) * ch_arrget(int, outDim, 1) * ch_arrget(int, outDim, 2) * ch_arrget(int, outDim, 3));
       layer.layer_output.dim = outDim;
       layer.layer_output.data = outData;
 
-      for (uint z = 0; z < kernel.batch(); z++)
+      aModel.commands.reserve(aModel.commands.size() + kernel.batch() * kernel.channel() * layer.layer_output.width() * layer.layer_output.height());
+      for (uint z = 0; z < layer.layer_output.channel(); z++)
       {
         int outX = 0;
         for (int x = -attributes.pads[0]; x < base.width() - attributes.kernel_shape[0] + attributes.pads[1]; x += attributes.strides[0], outX++)
@@ -294,42 +324,55 @@ Net importModel(std::string path)
           {
             NetCommand comm;
             comm.type = MAC;
-            comm.mac.N = kernel.channel() * kernel.width() * kernel.height();
+            comm.mac.N = kernel.width() * kernel.height();
+            comm.mac.shifts = 0;
             comm.mac.addrA = (float *)base.data._start;
             comm.mac.addrB = (float *)kernel.data._start;
             comm.mac.addrC = ((float *)bias.data._start) + z;
-            comm.mac.out = ((float *)layer.layer_output.data._start) + (outX + layer.layer_output.width() * (outY + layer.layer_output.height() * z));
-            comm.mac.indexes = (int *)malloc(sizeof(int) * 2 * kernel.channel() * kernel.width() * kernel.height());
+            comm.mac.out = layer.layer_output.get(0, z, outX, outY);
+            comm.mac.indexes = (int *)malloc(sizeof(int) * 2 * kernel.width() * kernel.height() * kernel.batch());
 
-            int j = 0;
-            for (int c = 0; c < kernel.channel(); c++)
+            bool hasOOB = false;
+            for (int c = 0; c < base.channel(); c++)
             {
               for (int dx = 0; dx < attributes.kernel_shape[0]; dx++)
               {
                 for (int dy = 0; dy < attributes.kernel_shape[1]; dy++)
                 {
-                  int aIndex = c + base.channel() * (x + dx + base.width() * (y + dy));
+                  int aIndex = base.getIndex(0, c, x + dx, y + dy);
                   if (x + dx < 0 || y + dy < 0 || x + dx > base.width() || y + dy > base.height())
                   {
                     aIndex = -1;
+                    hasOOB = true;
                   }
-                  const int bIndex = c + kernel.channel() * (dx + kernel.width() * (dy + kernel.height() * z));
-                  comm.mac.indexes[j++] = aIndex;
-                  comm.mac.indexes[j++] = bIndex;
+                  const int bIndex = kernel.getIndex(z, c, dx, dy);
+                  assert(aIndex < ch_arrlength(float, base.data));
+                  assert(1 + 2 * (dy + attributes.kernel_shape[1] * dx) < 2 * kernel.width() * kernel.height());
+                  comm.mac.indexes[0 + 2 * (dy + attributes.kernel_shape[1] * dx)] = aIndex;
+                  comm.mac.indexes[1 + 2 * (dy + attributes.kernel_shape[1] * dx)] = bIndex;
                 }
               }
             }
-            // free(comm.mac.indexes);
-            aModel.commands.push_back(comm);
+            if (!hasOOB)
+            {
+              free(comm.mac.indexes);
+              aModel.commands.back().mac.shifts++;
+            }
+            else
+            {
+              aModel.commands.push_back(comm);
+            }
           }
         }
+        aModel.commands.shrink_to_fit();
       }
     }
     else if (node.op_type() == "Constant")
     {
-      NetCommand comm;
-      comm.type = LOAD;
-      // todo check if size is correct
+      if (attributes.value.batch() < 0 || attributes.value.channel() < 0 || attributes.value.width() < 0 || attributes.value.height() < 0)
+      {
+        chprinterr("size < 0\n");
+      }
       if(attributes.value.data._start)
       {
         layer.layer_output = attributes.value;
@@ -338,7 +381,6 @@ Net importModel(std::string path)
       {
         chprinterr("constant type unimplemented");
       }
-      aModel.commands.push_back(comm);
     }
     else if (node.op_type() == "Clip")
     {
@@ -378,22 +420,26 @@ Net importModel(std::string path)
       ch_arrget(int, layer.layer_output.dim, 3) = 1;
       layer.layer_output.data = ch_arrcreate(int, layer.layer_output.channel() * layer.layer_output.channel());
 
-      for (int i = 0; i < base.batch(); i++)
+      for (int j = 0; j < base.batch(); j++)
       {
-        for (int j = 0; j < base.channel(); j++)
+        for (int k = 0; k < base.channel(); k++)
         {
           NetCommand comm;
           comm.type = GAP;
-          comm.addn.N = base.width() * base.height();
-          comm.addn.addr = (float *)base.data._start;
-          comm.addn.out = ((float *)layer.layer_output.data._start) + j + layer.layer_output.channel() * i;
-          comm.addn.indexes = (int *)malloc(sizeof(int) * base.width() * base.height());
+          comm.mac.N = base.width() * base.height();
+          comm.mac.shifts = 0;
+          comm.mac.addrA = (float *)base.data._start;
+          comm.mac.addrB = (float *)base.data._start;
+          comm.mac.addrC = NULL;
+          comm.mac.out = ((float *)layer.layer_output.data._start) + k + layer.layer_output.channel() * j;
+          comm.mac.indexes = (int *)malloc(sizeof(int) * 2 * base.width() * base.height());
 
           for (int x = 0; x < base.width(); x++)
           {
             for (int y = 0; y < base.height(); y++)
             {
-              comm.addn.indexes[x + y * base.width()] = j + base.channel() * (x + base.width() * (y + base.height() * i));
+              comm.mac.indexes[2 * (x + y * base.width())] = k + base.channel() * (x + base.width() * (y + base.height() * j));
+              comm.mac.indexes[2 * (x + y * base.width()) + 1] = -2;
             }
           }
           aModel.commands.push_back(comm);
@@ -404,21 +450,89 @@ Net importModel(std::string path)
     {
       const Tensor &base = *layer.layer_input[0];
       layer.layer_output.dim = ch_arrcopy(base.dim);
+      layer.layer_output.batch() = 1;
+      layer.layer_output.channel() = base.batch() * base.channel() * base.width() * base.height();
+      layer.layer_output.width() = 1;
+      layer.layer_output.height() = 1;
       layer.layer_output.data = ch_arrcopy(base.data);
-      // todo
     }
     else if (node.op_type() == "Gemm")
     {
-      const Tensor &base = *layer.layer_input[0];
-      layer.layer_output.dim = ch_arrcopy(base.dim);
-      layer.layer_output.data = ch_arrcopy(base.data);
-      // todo
+      const Tensor &tensorA = *layer.layer_input[0];
+      const Tensor &tensorB = *layer.layer_input[1];
+      const Tensor &tensorC = *layer.layer_input[2];
+      layer.layer_output.dim = ch_arrcopy(tensorC.dim);
+      if (layer.layer_output.channel() == 0)
+        layer.layer_output.channel() = 1;
+      layer.layer_output.data = ch_arrcopy(tensorC.data);
+
+      if (attributes.transA != 0 || attributes.transB != 0)
+        chprinterr("oops, not implemented teehee");
+
+      const bool tensorAAxis = tensorA.batch() != layer.layer_output.batch(); // 1
+      const bool tensorBAxis = tensorB.batch() != layer.layer_output.batch(); // 0
+      const size_t loopValue = (tensorAAxis == 0) ? tensorA.batch() : tensorA.channel(); // 1280
+
+      for (int x = 0; x < layer.layer_output.batch(); x++) // 1000
+      {
+        for (int y = 0; y < layer.layer_output.channel(); y++) // 1
+        {
+          NetCommand comm;
+          comm.type = MAC;
+          comm.mac.N = loopValue;
+          comm.mac.shifts = 0;
+          comm.mac.addrA = (float *)tensorA.data._start;
+          comm.mac.addrB = (float *)tensorB.data._start;
+          comm.mac.addrC = 0;
+          // this will error as out is not big enough to store entire result
+          comm.mac.out = ((float *)layer.layer_output.data._start) + x + y * layer.layer_output.batch();
+          comm.mac.indexes = (int *)malloc(sizeof(int) * 2 * loopValue); // 1280*2
+
+          for (int j = 0; j < loopValue; j++)
+          {
+            comm.mac.indexes[j * 2 + 0] = tensorAAxis ? x + j * tensorA.batch() : j + y * tensorA.batch();
+            comm.mac.indexes[j * 2 + 1] = tensorBAxis ? x + j * tensorB.batch() : j + y * tensorB.batch();
+          }
+          aModel.commands.push_back(comm);
+        }
+      }
+
+      NetCommand movComm;
+      movComm.type = MOV;
+      movComm.mov.N = layer.layer_output.batch() * layer.layer_output.channel();
+      movComm.mov.addrA = (float*)layer.layer_output.data._start;
+      movComm.mov.addrB = 0;
+      aModel.commands.push_back(movComm);
+
+      NetCommand mulI;
+      mulI.type = MULI;
+      mulI.opImm.N = layer.layer_output.batch() * layer.layer_output.channel();
+      mulI.opImm.addrA = 0;
+      mulI.opImm.c = attributes.alpha;
+      mulI.opImm.out = (float *)layer.layer_output.data._start;
+      aModel.commands.push_back(mulI);
+      aModel.commands.push_back(movComm);
+
+      mulI.opImm.addrA=(float*)tensorC.data._start;
+      mulI.opImm.c = attributes.beta;
+      aModel.commands.push_back(mulI);
+      movComm.mov.addrB = (float*)1;
+      aModel.commands.push_back(movComm);
+
+      NetCommand addComm;
+      addComm.type=ADD;
+      addComm.add.N = layer.layer_output.batch() * layer.layer_output.channel();
+      addComm.add.addrA=0;
+      addComm.add.addrB=(float*)1;
+      addComm.add.out = (float *)layer.layer_output.data._start;
+      aModel.commands.push_back(addComm);
     }
     else
     {
       chprinterr("unimplemented layer type %s\n", node.op_type().c_str());
     }
     chprint("\tout size: ", layer.layer_output.batch(), ",", layer.layer_output.channel(), ",", layer.layer_output.width(), ",", layer.layer_output.height());
+    chprint("\tcommands: ",aModel.commands.size());
   }
   aModel.output = ch_hashget(Tensor *, arrayNameMap, model.graph().output(0).name().c_str());
   chassert(aModel.output != ch_hash_NOTFOUND, "Output array not found");
@@ -428,8 +542,11 @@ Net importModel(std::string path)
 int main()
 {
 
+  
   Net model = importModel("../mobilenet-v2-pytorch/mobilenet_v2.onnx");
   chprint("done");
+  model.calculate();
+  chprint("calculated");
   model.free();
 
   return 0;

@@ -41,7 +41,11 @@ static inline void *ch_arrget(size_t _size, ch_array arr, int i)
   else
     return (uchar *)arr._end + i * _size;
 }
-#define ch_arrgetp(type, arr, i) (((type *)ch_arrget(sizeof(type), arr, i)))
+static inline void *ch_arrgetp(size_t _size, ch_array arr, int i)
+{
+  return ch_arrget(_size, arr, i);
+}
+#define ch_arrgetp(type, arr, i) ((type *)ch_arrgetp(sizeof(type), arr, i))
 #define ch_arrget(type, arr, i) (*((type *)ch_arrget(sizeof(type), arr, i)))
 
 #define ch_arrpush(type, arr, e)                 \

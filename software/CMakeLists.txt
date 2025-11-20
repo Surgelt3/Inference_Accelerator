@@ -43,7 +43,7 @@ include_directories(${ProtobufIncludePath})
 add_executable(importer)
 set_property(TARGET importer PROPERTY CXX_STANDARD 11)
 
-set(importer_sources importer.cpp)
+set(importer_sources importer.cpp neural_net.cpp)
 
 
 INCLUDE_DIRECTORIES(${PROTOBUF_INCLUDE_DIR})
