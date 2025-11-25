@@ -50,6 +50,7 @@ void Net::calculate()
         if (comm.type == GAP)
           sum /= comm.mac.N / 2;
         *(comm.mac.out + shift) = sum;
+        sum = 0;
       }
       break;
     case CLIP:
