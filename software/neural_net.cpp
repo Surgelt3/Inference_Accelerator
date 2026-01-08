@@ -23,34 +23,40 @@ void Net::calculate()
       if ((long)comm.mac.addrB < 10)
         addrB = tmpData[(long)comm.mac.addrB];
 
-      for (int shift = 0; shift < comm.mac.shifts + 1; shift++)
+      for (int vShift = 0; vShift < comm.mac.vertShift; vShift++)
       {
-        for (int i = 0; i < comm.mac.N; i++)
+        for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
         {
-          float valA = 0;
-          float valB = 0;
-          if (comm.mac.indexes[2 * i] == -1)
-            valA = 0;
-          else if (comm.mac.indexes[2 * i] == -2)
-            valA = 1;
-          else
-            valA = addrA[comm.mac.indexes[2 * i] + shift];
-          if (comm.mac.indexes[2 * i + 1] == -1)
-            valB = 0;
-          else if (comm.mac.indexes[2 * i + 1] == -2)
-            valB = 1;
-          else
-            valB = addrB[comm.mac.indexes[2 * i + 1] + shift];
+          for (int c=0;c<comm.mac.repeat;c++)
+          {
+            for (int i = 0; i < comm.mac.N; i++)
+            {
+              float valA = 0;
+              float valB = 0;
+              if (comm.mac.indexes[2 * i] == -1)
+                valA = 0;
+              else if (comm.mac.indexes[2 * i] == -2)
+                valA = 1;
+              else
+                valA = addrA[comm.mac.indexes[2 * i] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize + vShift * comm.mac.vertShiftSize];
+              if (comm.mac.indexes[2 * i + 1] == -1)
+                valB = 0;
+              else if (comm.mac.indexes[2 * i + 1] == -2)
+                valB = 1;
+              else
+                valB = addrB[comm.mac.indexes[2 * i + 1] + c * comm.mac.repeatShiftB];
 
-          sum += valA * valB;
+              sum += valA * valB;
+            }
+          }
+          if (comm.mac.addrC)
+            sum += *comm.mac.addrC;
+  
+          if (comm.type == GAP)
+            sum /= comm.mac.N / 2;
+          *(comm.mac.out + shift) = sum;
+          sum = 0;
         }
-        if (comm.mac.addrC)
-          sum += *comm.mac.addrC;
-
-        if (comm.type == GAP)
-          sum /= comm.mac.N / 2;
-        *(comm.mac.out + shift) = sum;
-        sum = 0;
       }
       break;
     case CLIP:

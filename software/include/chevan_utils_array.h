@@ -241,4 +241,9 @@ static size_t ch_hashlength(size_t _size, ch_hash h)
 }
 #define ch_hashlength(type, hash) ch_hashlength(sizeof(type), hash)
 
+static void ch_hashfree(ch_hash h)
+{
+  free(h.arr);
+}
+
 #endif

@@ -94,7 +94,10 @@ struct NetCommand
         if addrA or addrB is 0-10, refer to temp array created using mov
         MAC N,addrA,addrB,addrC,x,a,y,b,z,c,x1,a1,y1,b1,z1,c1 -> addrC[0]+addrA[x]*addrB[a]+addrA[y]*addrB[b]+addrA[z]*addrB[c]+...,addrA[x1]*addrB[a1]+addrA[y1]*addrB[b1]+addrA[z1]*addrB[c1]
       */
-      int N,shifts;
+      int N;
+      int repeat,repeatShiftA,repeatShiftB;
+      int horShifts,horShiftSize;
+      int vertShift,vertShiftSize;
       float *addrA, *addrB, *addrC, *out;
       int *indexes;
     } mac;
@@ -157,13 +160,12 @@ struct NetCommand
 // object storing the entire model and command to run it
 struct Net
 {
+  Tensor *input;
+  Tensor *output;
   // each layer in the model
   std::vector<Layer> layers;
   // input vectors 
   std::vector<Tensor> input_values;
-  // std::vector<Tensor> 
-  Tensor *input;
-  Tensor *output;
   /*
   structure of commands
   index -1 is constant 0
@@ -187,7 +189,18 @@ struct Net
       input_values[i].free();
     for (int i = 0; i < layers.size(); i++)
       layers[i].free();
-    // todo free command
+    for (NetCommand &comm : commands)
+    {
+      switch (comm.type)
+      {
+      case MAC:
+      case GAP:
+        std::free(comm.mac.indexes);
+        break;
+      default:
+        break;
+      }
+    }
   }
   void calculate();
 };

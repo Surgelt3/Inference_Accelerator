@@ -170,6 +170,7 @@ Net importModel(std::string path)
     ch_hashinsert(Tensor *, arrayNameMap, model.graph().initializer(i).name().c_str(), &aModel.input_values[1+i]);
   }
 
+  aModel.layers.reserve(model.graph().node_size());
   for (int i = 0; i < model.graph().node_size(); i++)
   {
     aModel.layers.push_back(Layer());
@@ -304,68 +305,97 @@ Net importModel(std::string path)
       const Tensor &base = *layer.layer_input[0];
       const Tensor &kernel = *layer.layer_input[1];
       const Tensor &bias = *layer.layer_input[2];
-      ch_array outDim = ch_arrcreate(int, 4);
-      ch_arrget(int, outDim, 0) = 1;
-      ch_arrget(int, outDim, 1) = kernel.batch();
-      ch_arrget(int, outDim, 2) = (base.width() - attributes.kernel_shape[0] + attributes.pads[0] + attributes.pads[1]) / attributes.strides[0] + 1;
-      ch_arrget(int, outDim, 3) = (base.height() - attributes.kernel_shape[1] + attributes.pads[2] + attributes.pads[3]) / attributes.strides[1] + 1;
-      ch_array outData = ch_arrcreate(float, ch_arrget(int, outDim, 0) * ch_arrget(int, outDim, 1) * ch_arrget(int, outDim, 2) * ch_arrget(int, outDim, 3));
-      layer.layer_output.dim = outDim;
-      layer.layer_output.data = outData;
+      int *temporaryIndexStore = (int *)malloc(sizeof(int) * 2 * kernel.width() * kernel.height());
+      layer.layer_output.dim = ch_arrcreate(int, 4);
+      layer.layer_output.batch()=1;
+      layer.layer_output.channel()=kernel.batch();
+      layer.layer_output.width() = (base.width() - attributes.kernel_shape[0] + attributes.pads[0] + attributes.pads[1]) / attributes.strides[0] + 1;
+      layer.layer_output.height()= (base.height() - attributes.kernel_shape[1] + attributes.pads[2] + attributes.pads[3]) / attributes.strides[1] + 1;
+      layer.layer_output.data = ch_arrcreate(float, layer.layer_output.channel() * layer.layer_output.width() * layer.layer_output.height());
 
-      aModel.commands.reserve(aModel.commands.size() + kernel.batch() * kernel.channel() * layer.layer_output.width() * layer.layer_output.height());
+      aModel.commands.reserve(aModel.commands.size() + layer.layer_output.batch() * layer.layer_output.channel() * layer.layer_output.width() * layer.layer_output.height());
       for (uint z = 0; z < layer.layer_output.channel(); z++)
       {
-        int outX = 0;
-        for (int x = -attributes.pads[0]; x < base.width() - attributes.kernel_shape[0] + attributes.pads[1]; x += attributes.strides[0], outX++)
+        int outY = 0;
+        int shiftY = 0;
+        for (int y = -attributes.pads[2]; y < base.height() - attributes.kernel_shape[1] + attributes.pads[3]; y += attributes.strides[1] + shiftY, outY++)
         {
-          int outY = 0;
-          for (int y = -attributes.pads[2]; y < base.height() - attributes.kernel_shape[1] + attributes.pads[3]; y += attributes.strides[1], outY++)
+          int outX=0;
+          bool previousCommandRepeat = false;
+          for (int x = -attributes.pads[0]; x < base.width() - attributes.kernel_shape[0] + attributes.pads[1]; x += attributes.strides[0], outX++)
           {
             NetCommand comm;
             comm.type = MAC;
             comm.mac.N = kernel.width() * kernel.height();
-            comm.mac.shifts = 0;
+            comm.mac.repeat=base.channel();
+            comm.mac.repeatShiftA = base.getIndex(0, 1, 0, 0) - base.getIndex(0, 0, 0, 0);
+            comm.mac.repeatShiftB = kernel.getIndex(0, 1, 0, 0) - base.getIndex(0, 0, 0, 0);
+            comm.mac.horShifts = 0;
+            comm.mac.horShiftSize = base.getIndex(0, 0, attributes.strides[0], 0) - base.getIndex(0, 0, 0, 0);
             comm.mac.addrA = (float *)base.data._start;
             comm.mac.addrB = (float *)kernel.data._start;
             comm.mac.addrC = ((float *)bias.data._start) + z;
             comm.mac.out = layer.layer_output.get(0, z, outX, outY);
-            comm.mac.indexes = (int *)malloc(sizeof(int) * 2 * kernel.width() * kernel.height() * kernel.batch());
+            comm.mac.indexes = NULL;
+            comm.mac.vertShift = 1;
+            comm.mac.vertShiftSize = 0;
 
-            bool hasOOB = false;
-            for (int c = 0; c < base.channel(); c++)
+            bool canRepeatHor = true;
+            bool canRepeatVert = true;
+            // the entire column is OOB
+            bool vertIsOOB[3] = {true, true, true}; // TODO this is bad, please make variable size
+            for (int dy = 0; dy < attributes.kernel_shape[1]; dy++)
             {
+              // the entire row is OOB
+              bool horIsOOB = true;
               for (int dx = 0; dx < attributes.kernel_shape[0]; dx++)
               {
-                for (int dy = 0; dy < attributes.kernel_shape[1]; dy++)
+                int aIndex = 0;
+                if (x + dx < 0 || y + dy < 0 || x + dx > base.width() || y + dy > base.height())
                 {
-                  int aIndex = base.getIndex(0, c, x + dx, y + dy);
-                  if (x + dx < 0 || y + dy < 0 || x + dx > base.width() || y + dy > base.height())
-                  {
-                    aIndex = -1;
-                    hasOOB = true;
-                  }
-                  const int bIndex = kernel.getIndex(z, c, dx, dy);
-                  assert(aIndex < ch_arrlength(float, base.data));
-                  assert(1 + 2 * (dy + attributes.kernel_shape[1] * dx) < 2 * kernel.width() * kernel.height());
-                  comm.mac.indexes[0 + 2 * (dy + attributes.kernel_shape[1] * dx)] = aIndex;
-                  comm.mac.indexes[1 + 2 * (dy + attributes.kernel_shape[1] * dx)] = bIndex;
+                  aIndex = -1;
                 }
+                else
+                {
+                  aIndex = base.getIndex(0, 0, x + dx, y + dy);
+                  vertIsOOB[dx] = false;
+                  horIsOOB = false;
+                }
+                const int bIndex = kernel.getIndex(z, 0, dx, dy);
+                temporaryIndexStore[0 + 2 * (attributes.kernel_shape[1] * dy + dx)] = aIndex;
+                temporaryIndexStore[1 + 2 * (attributes.kernel_shape[1] * dy + dx)] = bIndex;
               }
+              canRepeatVert = canRepeatVert && !horIsOOB;
             }
-            if (!hasOOB)
+            for (int dx = 0; dx < attributes.kernel_shape[0]; dx++)
             {
-              free(comm.mac.indexes);
-              aModel.commands.back().mac.shifts++;
+              canRepeatHor = canRepeatHor && !vertIsOOB[dx];
+            }
+            if (canRepeatVert)
+            {
+              comm.mac.vertShift = layer.layer_output.height();
+              comm.mac.vertShiftSize = base.getIndex(0, 0, 0, attributes.strides[1]) - base.getIndex(0, 0, 0, 0) - 2;
+              shiftY = comm.mac.vertShiftSize;
             }
             else
             {
+              shiftY = 0;
+            }
+            if (canRepeatHor && previousCommandRepeat)
+            {
+              aModel.commands.back().mac.horShifts++;
+            }
+            else
+            {
+              comm.mac.indexes = (int *)malloc(sizeof(int) * 2 * kernel.width() * kernel.height());
+              memcpy(comm.mac.indexes, temporaryIndexStore, sizeof(int) * 2 * kernel.width() * kernel.height());
               aModel.commands.push_back(comm);
             }
+            previousCommandRepeat = canRepeatHor;
           }
         }
-        aModel.commands.shrink_to_fit();
       }
+      aModel.commands.shrink_to_fit();
     }
     else if (node.op_type() == "Constant")
     {
@@ -426,8 +456,12 @@ Net importModel(std::string path)
         {
           NetCommand comm;
           comm.type = GAP;
+          comm.mac.repeat=1;
+          comm.mac.repeatShiftA = 0;
+          comm.mac.repeatShiftB = 0;
           comm.mac.N = base.width() * base.height();
-          comm.mac.shifts = 0;
+          comm.mac.horShifts = 0;
+          comm.mac.vertShift = 1;
           comm.mac.addrA = (float *)base.data._start;
           comm.mac.addrB = (float *)base.data._start;
           comm.mac.addrC = NULL;
@@ -479,8 +513,12 @@ Net importModel(std::string path)
         {
           NetCommand comm;
           comm.type = MAC;
+          comm.mac.repeat = 1;
+          comm.mac.repeatShiftA = 0;
+          comm.mac.repeatShiftB = 0;
           comm.mac.N = loopValue;
-          comm.mac.shifts = 0;
+          comm.mac.horShifts = 0;
+          comm.mac.vertShift = 1;
           comm.mac.addrA = (float *)tensorA.data._start;
           comm.mac.addrB = (float *)tensorB.data._start;
           comm.mac.addrC = 0;
@@ -536,6 +574,10 @@ Net importModel(std::string path)
   }
   aModel.output = ch_hashget(Tensor *, arrayNameMap, model.graph().output(0).name().c_str());
   chassert(aModel.output != ch_hash_NOTFOUND, "Output array not found");
+
+  aModel.commands.shrink_to_fit();
+  ch_hashfree(arrayNameMap);
+
   return aModel;
 }
 
@@ -545,8 +587,18 @@ int main()
   
   Net model = importModel("../mobilenet-v2-pytorch/mobilenet_v2.onnx");
   chprint("done");
+
+  for (int i = 0; i < ch_arrlength(float, model.input->data); i++)
+  {
+    ch_arrget(float, model.input->data, i) = (float)i / ch_arrlength(float, model.input->data);
+  }
   model.calculate();
   chprint("calculated");
+
+  for(int i=0;i<ch_arrlength(float,model.output->data);i++)
+  {
+    chprint(ch_arrget(float,model.output->data,i));
+  }
   model.free();
 
   return 0;
