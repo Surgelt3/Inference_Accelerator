@@ -11,6 +11,13 @@
 class MemManager
 {
   public:
+  const uchar* base;
+  float* constant0;
+  float* constant1;
+  void replace(void*data,size_t N)
+  {
+
+  }
   void schedule(void*data,size_t N)
   {
 
@@ -55,15 +62,12 @@ class Compiler
   {
 
   }
-  void MAC(int *regA,int*regB,int regC)
+  void MAC(void *start,size_t length,float bias)
   {
-    chprint("MAC ");
-    for(int i=0;i<4;i++)
-      chprint("r",regA[i],", ");
-    for (int i = 0; i < 4; i++)
-      chprint("r",regB[i],", ");
-    chprint("r",regC);
-    chprintln();
+    manager.replace(start, length);
+    manager.request(start);
+
+    chprintln("MAC ",start," ",length," ",bias);
   }
   void APPLY()
   {
@@ -82,72 +86,101 @@ class Compiler
 
   void runCommandMAC(const NetCommand&comm)
   {
-    // float *addrA = comm.mac.addrA;
-    // float* addrB = comm.mac.addrB;
+    for (Tensor *t : comm.referenceLayer->layer_input)
+    {
+      manager.schedule(t->data._start, ch_arrlength(float, t->data));
+    }
 
-    // for(const Tensor*t:comm.referenceLayer->layer_input)
+    float *addrA = comm.mac.addrA;
+    float* addrB = comm.mac.addrB;
+
+    const int npuLimit=4;
+    ch_array toWrite = ch_arrstack(long, npuLimit * 2);
+    // ch_array toWrite = ch_arrstack(long, comm.mac.repeat * comm.mac.N * 2);
+    for (int vShift = 0; vShift < comm.mac.vertShift; vShift++)
+    {
+      for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
+      {
+
+        for (int c = 0; c < comm.mac.repeat; c++)
+        {
+          for (int i = 0; i < comm.mac.N; i++)
+          {
+            const float *valA = 0;
+            const float *valB = 0;
+            if (comm.mac.indexes[2 * i] == -1)
+              valA = manager.constant0;
+            else if (comm.mac.indexes[2 * i] == -2)
+              valA = manager.constant0;
+            else
+              valA = (float*)manager.request(addrA) + comm.mac.indexes[2 * i] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize + vShift * comm.mac.vertShiftSize;
+            ch_arrpush(long, toWrite, (uchar*)valA-manager.base);
+
+            if (comm.mac.indexes[2 * i + 1] == -1)
+                valB = manager.constant0;
+            else if (comm.mac.indexes[2 * i + 1] == -2)
+              valB = manager.constant1;
+            else
+              valB = (float*)manager.request(addrB) + comm.mac.indexes[2 * i + 1] + c * comm.mac.repeatShiftB;
+            ch_arrpush(long, toWrite, (uchar *)valB - manager.base);
+
+            if(ch_arrlength(long,toWrite)==npuLimit*2)
+            {
+              MAC(toWrite._start, ch_arrlength(long, toWrite), *comm.mac.addrC);
+              toWrite._end=toWrite._start;
+              // get pointer to result
+              ch_arrpush(long, toWrite, 0);
+              ch_arrpush(long, toWrite, (uchar *)manager.constant1 - manager.base);
+            }
+          }
+        }
+        for (int i = ch_arrlength(long, toWrite) / 2; i < npuLimit; i++)
+        {
+          ch_arrpush(long, toWrite, (uchar *)manager.constant0 - manager.base);
+          ch_arrpush(long, toWrite, (uchar *)manager.constant0 - manager.base);
+        }
+        MAC(toWrite._start, ch_arrlength(long, toWrite), *comm.mac.addrC);
+        // wait for completion
+        // store result
+        // *(comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut) = sum;
+      }
+    }
+
+    // if (comm.type == GAP)
     // {
-    //   transferMem(t->data._start, ch_arrlength(float, t->data));
+    //   MULI(9, 2 / comm.mac.N, regAInUse[0]);
+    //   mov(9, regAInUse[0]);
     // }
-
-    // if ((long)comm.mac.addrA < 10)
-    //   addrA = tmpBuffer[(long)comm.mac.addrA];
-    // if ((long)comm.mac.addrB < 10)
-    //   addrB = tmpBuffer[(long)comm.mac.addrB];
-
-    // for (int shift = 0; shift < comm.mac.shifts + 1; shift++)
-    // {
-    //   int regAInUse[] = {1, 2, 3, 4};
-    //   int regBInUse[] = {5, 6, 7, 8};
-    //   int count = 0;
-    //   int regOut = 9;
-    //   for (int i = 0; i < comm.mac.N; i++)
-    //   {
-    //     if (comm.mac.indexes[2 * i] == -1)
-    //       load(CONSTANT_0, regAInUse[count % (sizeof(regAInUse)/sizeof(int))]);
-    //     else if (comm.mac.indexes[2 * i] == -2)
-    //       load(CONSTANT_1, regAInUse[count % (sizeof(regAInUse)/sizeof(int))]);
-    //     else
-    //       load(addrA + comm.mac.indexes[2 * i] + shift, regAInUse[count % (sizeof(regAInUse)/sizeof(int))]);
-    //     if (comm.mac.indexes[2 * i + 1] == -1)
-    //       load(CONSTANT_0, regBInUse[count % (sizeof(regBInUse)/sizeof(int))]);
-    //     else if (comm.mac.indexes[2 * i + 1] == -2)
-    //       load(CONSTANT_1, regBInUse[count % (sizeof(regBInUse)/sizeof(int))]);
-    //     else
-    //       load(addrB + comm.mac.indexes[2 * i + 1] + shift, regBInUse[count % (sizeof(regBInUse)/sizeof(int))]);
-    //     count++;
-
-    //     if (count % (sizeof(regAInUse) / sizeof(int)) == 0)
-    //     {
-    //       MAC(regAInUse,regBInUse,regOut);
-    //       mov(regOut,regAInUse[0]);
-    //       load(CONSTANT_1,regBInUse[0]);
-    //       count++;
-    //     }
-    //   }
-
-
-    //   if (comm.mac.addrC)
-    //   {
-    //     load(comm.mac.addrC, regAInUse[count % (sizeof(regAInUse) / sizeof(int))]);
-    //     load(CONSTANT_1, regBInUse[count % (sizeof(regBInUse) / sizeof(int))]);
-    //     count++;
-    //   }
-    //   while (count % (sizeof(regAInUse) / sizeof(int)))
-    //   {
-    //     load(CONSTANT_0, regAInUse[count % (sizeof(regAInUse) / sizeof(int))]);
-    //     load(CONSTANT_0, regBInUse[count % (sizeof(regBInUse) / sizeof(int))]);
-    //     count++;
-    //   }
-    //   MAC(regAInUse, regBInUse, regOut);
-
-    //   if (comm.type == GAP)
-    //   {
-    //     MULI(9, 2 / comm.mac.N, regAInUse[0]);
-    //     mov(9, regAInUse[0]);
-    //   }
     //   store(comm.mac.out + shift,9);
-    // }
+  }
+
+  void runCommandCLIP(const NetCommand &comm)
+  {
+    //   addrA = comm.clip.addrA;
+    //   if ((long)comm.clip.addrA < 10)
+    //     addrA = tmpData[(long)comm.clip.addrA];
+
+    //   for (int i = 0; i < comm.clip.N; i++)
+    //   {
+    //     float val = addrA[i];
+    //     if (comm.clip.addrMin)
+    //       val = MIN(val, *comm.clip.addrMin);
+    //     if (comm.clip.addrMax)
+    //       val = MAX(val, *comm.clip.addrMax);
+    //     comm.clip.out[i] = val;
+    //   }
+    //   break;
+    // case NetCommandType::ADD:
+    //   addrA = comm.add.addrA;
+    //   addrB = comm.add.addrB;
+    //   if ((long)comm.add.addrA < 10)
+    //     addrA = tmpData[(long)comm.add.addrA];
+    //   if ((long)comm.add.addrB < 10)
+    //     addrB = tmpData[(long)comm.add.addrB];
+    //   for (int i = 0; i < comm.add.N; i++)
+    //   {
+    //     comm.add.out[i] = addrA[i] + addrB[i];
+    //   }
   }
 
   public:
@@ -158,10 +191,12 @@ class Compiler
       switch (comm.type)
       {
       case NetCommandType::MAC:
-      case NetCommandType::GAP:
         runCommandMAC(comm);
+      break;
+      case NetCommandType::GAP:
         break;
       case NetCommandType::CLIP:
+        runCommandCLIP(comm);
       //   addrA = comm.clip.addrA;
       //   if ((long)comm.clip.addrA < 10)
       //     addrA = tmpData[(long)comm.clip.addrA];

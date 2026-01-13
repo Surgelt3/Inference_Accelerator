@@ -83,6 +83,7 @@ enum NetCommandType
 struct NetCommand
 {
   NetCommandType type;
+  Layer*referenceLayer;
   union
   {
     struct

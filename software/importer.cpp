@@ -326,6 +326,7 @@ Net importModel(std::string path)
           {
             NetCommand comm;
             comm.type = MAC;
+            comm.referenceLayer=&layer;
             comm.mac.N = kernel.width() * kernel.height();
             comm.mac.repeat=base.channel();
             comm.mac.repeatShiftA = base.getIndex(0, 1, 0, 0) - base.getIndex(0, 0, 0, 0);
@@ -422,6 +423,7 @@ Net importModel(std::string path)
       layer.layer_output.data = ch_arrcopy(base.data);
       NetCommand comm;
       comm.type = CLIP;
+      comm.referenceLayer=&layer;
       comm.clip.N = ch_arrlength(float, base.data);
       comm.clip.addrA = (float *)base.data._start;
       comm.clip.addrMin = (float *)min.data._start;
@@ -437,6 +439,7 @@ Net importModel(std::string path)
       layer.layer_output.data = ch_arrcopy(tensorA.data);
       NetCommand comm;
       comm.type = ADD;
+      comm.referenceLayer = &layer;
       comm.add.N = ch_arrlength(float, tensorA.data);
       comm.add.addrA = (float *)tensorA.data._start;
       comm.add.addrB = (float *)tensorB.data._start;
@@ -457,6 +460,7 @@ Net importModel(std::string path)
         {
           NetCommand comm;
           comm.type = GAP;
+          comm.referenceLayer=&layer;
           comm.mac.repeat=1;
           comm.mac.repeatShiftA = 0;
           comm.mac.repeatShiftB = 0;
