@@ -27,7 +27,7 @@ void Net::calculate()
       {
         for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
         {
-          for (int c=0;c<comm.mac.repeat;c++)
+          for (int c = 0; c < comm.mac.repeat; c++)
           {
             for (int i = 0; i < comm.mac.N; i++)
             {
@@ -54,7 +54,7 @@ void Net::calculate()
   
           if (comm.type == GAP)
             sum /= comm.mac.N / 2;
-          *(comm.mac.out + shift) = sum;
+          *(comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut) = sum;
           sum = 0;
         }
       }

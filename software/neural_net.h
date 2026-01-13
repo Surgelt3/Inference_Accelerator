@@ -97,7 +97,7 @@ struct NetCommand
       int N;
       int repeat,repeatShiftA,repeatShiftB;
       int horShifts,horShiftSize;
-      int vertShift,vertShiftSize;
+      int vertShift,vertShiftSize,vertShiftSizeOut;
       float *addrA, *addrB, *addrC, *out;
       int *indexes;
     } mac;

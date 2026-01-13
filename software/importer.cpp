@@ -339,6 +339,7 @@ Net importModel(std::string path)
             comm.mac.indexes = NULL;
             comm.mac.vertShift = 1;
             comm.mac.vertShiftSize = 0;
+            comm.mac.vertShiftSizeOut = layer.layer_output.getIndex(0, 0, 0, 1) - layer.layer_output.getIndex(0, 0, 0, 0);
 
             bool canRepeatHor = true;
             bool canRepeatVert = true;
@@ -581,25 +582,25 @@ Net importModel(std::string path)
   return aModel;
 }
 
-int main()
-{
+// int main()
+// {
 
   
-  Net model = importModel("../mobilenet-v2-pytorch/mobilenet_v2.onnx");
-  chprint("done");
+//   Net model = importModel("../mobilenet-v2-pytorch/mobilenet_v2.onnx");
+//   chprint("done");
 
-  for (int i = 0; i < ch_arrlength(float, model.input->data); i++)
-  {
-    ch_arrget(float, model.input->data, i) = (float)i / ch_arrlength(float, model.input->data);
-  }
-  model.calculate();
-  chprint("calculated");
+//   for (int i = 0; i < ch_arrlength(float, model.input->data); i++)
+//   {
+//     ch_arrget(float, model.input->data, i) = (float)i / ch_arrlength(float, model.input->data);
+//   }
+//   model.calculate();
+//   chprint("calculated");
 
-  for(int i=0;i<ch_arrlength(float,model.output->data);i++)
-  {
-    chprint(ch_arrget(float,model.output->data,i));
-  }
-  model.free();
+//   for(int i=0;i<ch_arrlength(float,model.output->data);i++)
+//   {
+//     chprint(ch_arrget(float,model.output->data,i));
+//   }
+//   model.free();
 
-  return 0;
-}
+//   return 0;
+// }

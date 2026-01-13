@@ -1,0 +1,88 @@
+#include "compiler.hpp"
+#include "importer.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+int main()
+{
+
+#if 0
+  Net aModel;
+  float a[]={1,2,3,4};
+  float b[]={2,3};
+  int index[]={0,0,1,1};
+    // ,2,0,3,0};
+  float out[4];
+  NetCommand comm;
+  comm.type=NetCommandType::MAC;
+  comm.mac.N=1;
+  comm.mac.addrA=a;
+  comm.mac.addrB=b;
+  comm.mac.addrC=0;
+  comm.mac.indexes=index;
+
+  comm.mac.repeat = 1;
+  comm.mac.repeatShiftA = 0;
+  comm.mac.repeatShiftB = 0;
+
+  comm.mac.horShifts = 1;
+  comm.mac.horShiftSize = 1;
+
+  comm.mac.vertShift = 2;
+  comm.mac.vertShiftSize = 2;
+  comm.mac.vertShiftSizeOut = 2;
+  comm.mac.out=out;
+  aModel.commands.push_back(comm);
+
+  aModel.calculate();
+
+  for(int i=0;i<4;i++)
+    chprintln(out[i]);
+
+
+  return 0;
+#endif
+  Net model = importModel("../mobilenet-v2-pytorch/mobilenet_v2.onnx");
+  chprintln("done");
+  int w,h,comp;
+  unsigned char *image = stbi_load("/home/chevan/Documents/school/2025-2026/fall term/elec 490/Inference_Accelerator/software/images/DogResize.jpg",
+     &w, &h, &comp, STBI_rgb);
+
+  
+  assert(w==h&&w==224);
+
+  Tensor*input=model.input;
+  for (int x=0;x<224;x++)
+  {
+    for(int y=0;y<224;y++)
+    {
+      for(int c=0;c<3;c++)
+      {
+        int arrIndex = input->getIndex(0, c, x, y);
+        int imIndex = 3 * (y * w + x) + c;
+        ch_arrget(float,input->data,arrIndex)=image[imIndex];
+      }
+    }
+  }
+  
+  // compiler.compileModel(model);
+
+  // for (int i = 0; i < ch_arrlength(float, model.input->data); i++)
+  // {
+  //   ch_arrget(float, model.input->data, i) = (float)i / ch_arrlength(float, model.input->data);
+  // }
+
+  model.calculate();
+  chprintln("calculated");
+
+  for (int i = 0; i < ch_arrlength(float, model.output->data); i++)
+  {
+    float prob = ch_arrget(float, model.output->data, i);
+    if(prob>0.1){
+      chprintln(prob);
+    }
+  }
+  model.free();
+
+  return 0;
+}
