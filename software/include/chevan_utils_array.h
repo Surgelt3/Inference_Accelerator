@@ -246,4 +246,11 @@ static void ch_hashfree(ch_hash h)
   free(h.arr);
 }
 
+static inline ch_hash ch_hashclear(size_t _tsize, ch_hash h)
+{
+  memset(h.arr, 0, h.size * sizeof(ch_hashPair) + _tsize - sizeof(void *));
+  return h;
+}
+#define ch_hashclear(type, hash) ch_hashclear(sizeof(type), hash)
+
 #endif

@@ -10,22 +10,22 @@
 #define MAX_REG 16
 class MemManager
 {
-  public:
-  const uchar* base;
-  float* constant0;
-  float* constant1;
-  void replace(void*data,size_t N)
-  {
-
-  }
-  void schedule(void*data,size_t N)
-  {
-
-  }
-  void*request(void*ref)
-  {
-    return 0;
-  }
+private:
+  int fd=-1;
+  ch_hash mappedAddresses;
+  const int DATA_OFFSET=512;
+  const int TEXT_OFFSET=0;
+public:
+  void *virt_addr;
+  const uchar *base;
+  const float *constant0;
+  const float *constant1;
+  MemManager();
+  ~MemManager();
+  void replace(void *data, size_t N);
+  void schedule(void *data, size_t N);
+  void *request(void *ref);
+  void freeLocal();
 };
 class Compiler
 {
@@ -263,6 +263,7 @@ class Compiler
       default:
         break;
       }
+      manager.freeLocal();
     }
   }
 };
