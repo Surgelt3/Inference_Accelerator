@@ -13,8 +13,7 @@ class MemManager
 private:
   int fd=-1;
   ch_hash mappedAddresses;
-  const int DATA_OFFSET=512;
-  const int TEXT_OFFSET=0;
+  float *outPtr;
 public:
   void *virt_addr;
   const uchar *base;
@@ -24,6 +23,8 @@ public:
   MemManager(uchar* base);
   ~MemManager();
   void schedule(void *data, size_t N);
+  void *readOut();
+  void readComplete();
   void *request(void *ref,size_t N);
   void freeLastAdded();
   void freeBuffer(void*data);
@@ -275,7 +276,6 @@ class Compiler
       default:
         break;
       }
-      manager.freeAll();
     }
   }
 };
