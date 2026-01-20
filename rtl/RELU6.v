@@ -1,7 +1,9 @@
 module RELU6(
 	input clk,
-	input [31:0] in_val,
-	output [31:0] out_val,
+	input in_valid,
+	input [31:0] in_data,
+	output out_valid,
+	output [31:0] out_data
 );
 
 	localparam [31:0] FP_ZERO = 32'h00000000;
@@ -9,12 +11,15 @@ module RELU6(
 
 	
 	always @(posedge clk) begin
-		if (in_val > FP_SIX)
-			out_val <= FP_SIX;
-		end else if (in_val[31])
-			out_val <= FP_ZERO;
-		end else 
-			out_val <= in_val;
+		if (in_valid) begin
+			if (in_data > FP_SIX)
+				out_data <= FP_SIX;
+			end else if (in_data[31])
+				out_data <= FP_ZERO;
+			end else 
+				out_data <= in_data;
+			end
+			out_valid <= 1'b1;
 		end
 		
 	end
