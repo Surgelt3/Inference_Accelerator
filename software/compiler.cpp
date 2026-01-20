@@ -100,6 +100,7 @@ int main(){
   chprintln(readPtr);
   chprintln(*manager.constant0, " ", *manager.constant1);
   chprintln(readPtr[0], " ", readPtr[1], " ", readPtr[2]);
+  ((uint32_t *)readPtr)[-1] &= ~0x1;
   for (int i = 0; i < 12; i++)
   {
     manager.schedule(data1[i], sizeof(float) * 1);

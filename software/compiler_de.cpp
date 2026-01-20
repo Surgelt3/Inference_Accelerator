@@ -78,23 +78,23 @@ int unmap_physical(void *virtual_base, unsigned int span)
 #define DATA_OFFSET 512
 #define TEXT_OFFSET 0
 #define DATA_OUT_SIZE (sizeof(float) * DATA_OUT_LENGTH)
-#define NUM_BLOCKS 12
+#define NUM_BLOCKS 32
 #define DATA_INFO_MAGIC 0x86AC
 static uint usedBlocks[NUM_BLOCKS];
 static uint blocksQueueIndex = 0;
 static uchar* blocksQueue[NUM_BLOCKS];
 struct DataInfo
 {
-  uint16_t magic : 16;
-  uint32_t ready : 1;
   uint32_t lock : 1;
+  uint32_t ready : 1;
   uint32_t length : 14;
+  uint16_t magic : 16;
 };
 struct DataInfoOut
 {
-  uint16_t magic : 16;
   uint32_t ready : 1;
   uint32_t _empty : 15;
+  uint16_t magic : 16;
 };
 
 MemManager::MemManager()
@@ -153,7 +153,7 @@ void MemManager::freeLastAdded()
     if(blocksQueue[index])
     {
       volatile DataInfo *info = ch_hashget(DataInfo *, mappedAddresses, (size_t)blocksQueue[index]);
-      if(info->ready && !info->lock)
+      if(info->ready)
       {
         freeBuffer(blocksQueue[index]);
         break;
@@ -255,6 +255,15 @@ void MemManager::lock(void*data)
   if ((info->magic != DATA_INFO_MAGIC) || (!info->length))
     return;
   info->lock=1;
+}
+void *MemManager::get(void *data){
+  uchar *requestedData = ch_hashget(uchar *, mappedAddresses, (size_t)data);
+  if (!requestedData || requestedData == ch_hash_NOTFOUND)
+    return NULL;
+  volatile DataInfo *info = (DataInfo *)requestedData;
+  if ((info->magic != DATA_INFO_MAGIC) || (!info->length))
+    return NULL;
+  return requestedData + sizeof(DataInfo);
 }
 void *MemManager::request(void *ref, size_t N)
 {
