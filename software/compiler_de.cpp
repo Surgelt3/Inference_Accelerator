@@ -13,9 +13,6 @@ void *map_physical(int, unsigned int, unsigned int);
 void close_physical(int);
 int unmap_physical(void *, unsigned int);
 
-// const unsigned int LW_BRIDGE_BASE = 0xFF200000;
-
-
 #if 0
 int main(void)
 {
@@ -80,7 +77,7 @@ int unmap_physical(void *virtual_base, unsigned int span)
 
 #define DATA_OFFSET 512
 #define TEXT_OFFSET 0
-#define DATA_OUT_SIZE (sizeof(float)*9)
+#define DATA_OUT_SIZE (sizeof(float)*12)
 #define NUM_BLOCKS 12
 #define DATA_INFO_MAGIC 0x86AC
 static const uint BLOCK_SIZE = LW_BRIDGE_SPAN / NUM_BLOCKS;
@@ -91,7 +88,8 @@ struct DataInfo
 {
   uint16_t magic : 16;
   uint32_t ready : 1;
-  uint32_t length : 15;
+  uint32_t lock : 1;
+  uint32_t length : 14;
 };
 struct DataInfoOut
 {
@@ -100,19 +98,10 @@ struct DataInfoOut
   uint32_t _empty : 15;
 };
 
-MemManager::MemManager()
+MemManager::MemManager() : MemManager((uchar *)LW_BRIDGE_BASE)
 {
   open_physical(fd);
-  this->base = (uchar *)LW_BRIDGE_BASE;
   this->virt_addr = map_physical(fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN);
-  this->constant0 = ((float *)(base + DATA_OFFSET)) + 0;
-  this->constant1 = ((float *)(base + DATA_OFFSET)) + 1;
-  this->outPtr = (float*)((uchar*)virt_addr + DATA_OFFSET);
-  *((float *)((uchar *)virt_addr + DATA_OFFSET + DATA_OUT_SIZE) + 0) = 0.0;
-  *((float *)((uchar *)virt_addr + DATA_OFFSET + DATA_OUT_SIZE) + 1) = 1.0;
-  memset(usedBlocks, 0, sizeof(uint) * NUM_BLOCKS);
-  memset(blocksQueue, 0, sizeof(uchar *) * NUM_BLOCKS);
-  mappedAddresses = ch_hashcreate(uchar *);
 }
 MemManager::MemManager(uchar* base)
 {
@@ -121,6 +110,7 @@ MemManager::MemManager(uchar* base)
   this->outPtr = (float *)((uchar *)virt_addr + DATA_OFFSET);
   this->constant0 = ((float *)(base + DATA_OFFSET + DATA_OUT_SIZE)) + 0;
   this->constant1 = ((float *)(base + DATA_OFFSET + DATA_OUT_SIZE)) + 1;
+  this->permaBlock = (float *)malloc(BLOCK_SIZE - sizeof(DataInfo));
   *((float *)((uchar *)virt_addr + DATA_OFFSET) + 0) = 0.0;
   *((float *)((uchar *)virt_addr + DATA_OFFSET) + 1) = 1.0;
   memset(usedBlocks, 0, sizeof(uint) * NUM_BLOCKS);
@@ -143,11 +133,37 @@ void MemManager::freeLastAdded()
   {
     if(blocksQueue[index])
     {
-      freeBuffer(blocksQueue[index]);
-      break;
+      volatile DataInfo *info = ch_hashget(DataInfo *, mappedAddresses, (size_t)blocksQueue[index]);
+      if(info->ready)
+      {
+        freeBuffer(blocksQueue[index]);
+        break;
+      }
     }
   }
 }
+
+float* MemManager::readOut()
+{
+  if (!outPtr)
+    return NULL;
+  volatile DataInfoOut *info = (DataInfoOut *)outPtr;
+  if (info->magic != DATA_INFO_MAGIC)
+    return NULL;
+  while(!info->ready);
+  return outPtr + sizeof(DataInfo);
+}
+void MemManager::readComplete()
+{
+  if (!outPtr)
+    return;
+  volatile DataInfoOut *info = (DataInfoOut *)outPtr;
+  if (info->magic != DATA_INFO_MAGIC)
+    return;
+  info->ready = 0;
+  return;
+}
+
 void MemManager::schedule(void *data, size_t N)
 {
   uchar *previousData = ch_hashget(uchar *, mappedAddresses, (size_t)data);
@@ -194,6 +210,7 @@ void MemManager::schedule(void *data, size_t N)
 
   DataInfo info;
   info.ready = 0;
+  info.lock = 0;
   info.magic = DATA_INFO_MAGIC;
   info.length = requiredBlocks;
   memcpy((uchar *)virt_addr + offset, &info, sizeof(DataInfo));
@@ -202,32 +219,13 @@ void MemManager::schedule(void *data, size_t N)
       {
         DataInfo info;
         info.ready = 1;
+        info.lock = 0;
         info.magic = DATA_INFO_MAGIC;
         info.length = requiredBlocks;
         memcpy((uchar *)virt_addr + offset + sizeof(DataInfo), data, N);
         memcpy((uchar *)virt_addr + offset, &info, sizeof(DataInfo));
       });
   t.detach();
-}
-void* MemManager::readOut()
-{
-  if (!outPtr)
-    return NULL;
-  volatile DataInfoOut *info = (DataInfoOut *)outPtr;
-  if (info->magic != DATA_INFO_MAGIC)
-    return NULL;
-  while(!info->ready);
-  return outPtr + sizeof(DataInfo);
-}
-void MemManager::readComplete()
-{
-  if (!outPtr)
-    return;
-  volatile DataInfoOut *info = (DataInfoOut *)outPtr;
-  if (info->magic != DATA_INFO_MAGIC)
-    return;
-  info->ready = 0;
-  return;
 }
 
 void *MemManager::request(void *ref, size_t N)
@@ -260,6 +258,7 @@ void MemManager::freeBuffer(void*data)
   volatile DataInfo *info = (DataInfo *)requestedData;
   if ((info->magic != DATA_INFO_MAGIC) || (!info->length))
     return;
+  while(info->lock);
   uint index = (requestedData - base - DATA_OFFSET - sizeof(float) * 2) / BLOCK_SIZE;
   for (int i = 0; i < info->length; i++)
     usedBlocks[index + i] = 0;

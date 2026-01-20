@@ -19,11 +19,12 @@ public:
   const uchar *base;
   const float *constant0;
   const float *constant1;
+  float *permaBlock;
   MemManager();
   MemManager(uchar* base);
   ~MemManager();
   void schedule(void *data, size_t N);
-  void *readOut();
+  float *readOut();
   void readComplete();
   void *request(void *ref,size_t N);
   void freeLastAdded();
@@ -43,14 +44,7 @@ class Compiler
   Compiler(void*basePtr)
   {
     this->writeBasePtr = basePtr;
-
-    // load permanent 0 and 1
-  }
-
-  void transferMem(const void *ptr, size_t N)
-  {
-    // start data transfer
-    // add to mem addr translation book
+    this->manager = MemManager();
   }
 
   void load(const void*ptr,int reg)
@@ -67,7 +61,6 @@ class Compiler
   }
   void MAC(void *start,size_t length,float bias)
   {
-    manager.schedule(start, length);
     manager.request(start, length);
 
     chprintln("MAC ",start," ",length," ",bias);
@@ -91,11 +84,11 @@ class Compiler
   {
     for (Tensor *t : comm.referenceLayer->layer_input)
     {
-      manager.schedule(t->data._start, ch_arrlength(float, t->data));
+      manager.schedule(t->data._start, sizeof(float) * ch_arrlength(float, t->data));
     }
 
-    size_t aSize = ch_arrlength(float, comm.referenceLayer->layer_input[0]->data);
-    size_t bSize = ch_arrlength(float, comm.referenceLayer->layer_input[1]->data);
+    size_t aSize = sizeof(float) * ch_arrlength(float, comm.referenceLayer->layer_input[0]->data);
+    size_t bSize = sizeof(float) * ch_arrlength(float, comm.referenceLayer->layer_input[1]->data);
     float *addrA = comm.mac.addrA;
     float* addrB = comm.mac.addrB;
 
@@ -106,7 +99,7 @@ class Compiler
     {
       for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
       {
-
+        float tempValue = 0;
         for (int c = 0; c < comm.mac.repeat; c++)
         {
           for (int i = 0; i < comm.mac.N; i++)
@@ -137,12 +130,13 @@ class Compiler
             }
             ch_arrpush(long, toWrite, (uchar *)valB - manager.base);
 
-            if(ch_arrlength(long,toWrite)==npuLimit*2)
+            if (ch_arrlength(long, toWrite) == npuLimit * 2)
             {
-              MAC(toWrite._start, ch_arrlength(long, toWrite), *comm.mac.addrC);
-              toWrite._end=toWrite._start;
-              // get pointer to result
-              ch_arrpush(long, toWrite, 0);
+              MAC(toWrite._start, sizeof(float) * ch_arrlength(long, toWrite), *comm.mac.addrC);
+              toWrite._end = toWrite._start;
+              tempValue = *manager.readOut();
+              manager.readComplete();
+              ch_arrpush(long, toWrite, (uchar *)manager.request(&tempValue, sizeof(float)) - manager.base);
               ch_arrpush(long, toWrite, (uchar *)manager.constant1 - manager.base);
             }
           }
@@ -153,9 +147,9 @@ class Compiler
           ch_arrpush(long, toWrite, (uchar *)manager.constant0 - manager.base);
         }
         MAC(toWrite._start, ch_arrlength(long, toWrite), *comm.mac.addrC);
-        // wait for completion
-        // store result
-        // *(comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut) = sum;
+        *(comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut) = *manager.readOut();
+        manager.readComplete();
+        manager.freeBuffer(&tempValue);
       }
     }
 
