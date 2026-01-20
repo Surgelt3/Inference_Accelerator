@@ -78,7 +78,7 @@ int unmap_physical(void *virtual_base, unsigned int span)
 
 static const uint NUM_BLOCKS = 12;
 static const uint BLOCK_SIZE = LW_BRIDGE_SPAN / NUM_BLOCKS;
-static const uint MAGIC = 0x86AC;
+static const uint DATA_INFO_MAGIC = 0x86AC;
 static uint usedBlocks[NUM_BLOCKS];
 static uint blocksQueueIndex = 0;
 static uchar* blocksQueue[NUM_BLOCKS];
@@ -117,13 +117,16 @@ MemManager::MemManager(uchar* base)
 
 MemManager::~MemManager()
 {
-  // unmap_physical(virt_addr, LW_BRIDGE_SPAN);
-  // close_physical(fd);
+  if (this->base!=this->virt_addr)
+  {
+    unmap_physical(virt_addr, LW_BRIDGE_SPAN);
+    close_physical(fd);
+  }
   ch_hashfree(mappedAddresses);
 }
 void MemManager::freeLastAdded()
 {
-  for (int index = blocksQueueIndex + 1; index != blocksQueueIndex; index = (index + 1) % NUM_BLOCKS)
+  for (int i = 0, index = blocksQueueIndex; i < NUM_BLOCKS; index = (++i) % NUM_BLOCKS)
   {
     if(blocksQueue[index])
     {
@@ -139,7 +142,7 @@ void MemManager::schedule(void *data, size_t N)
   if (!previousData && previousData != ch_hash_NOTFOUND)
   {
     volatile DataInfo *previousInfo = (DataInfo *)previousData;
-    if (previousInfo->magic == MAGIC && previousInfo->length == requiredBlocks)
+    if (previousInfo->magic == DATA_INFO_MAGIC && previousInfo->length == requiredBlocks)
       return;
   }
   int startIndex = -1;
@@ -177,7 +180,7 @@ void MemManager::schedule(void *data, size_t N)
   blocksQueueIndex = (blocksQueueIndex + 1) % NUM_BLOCKS;
 
   // start seperate thread?
-  DataInfo info = {1, MAGIC, requiredBlocks};
+  DataInfo info = {1, DATA_INFO_MAGIC, requiredBlocks};
   memcpy((uchar *)virt_addr + offset + sizeof(DataInfo), data, N);
   memcpy((uchar *)virt_addr + offset, &info, sizeof(DataInfo));
 }
@@ -191,7 +194,7 @@ void *MemManager::request(void *ref, size_t N)
     return requestedData + sizeof(DataInfo);
   }
   volatile DataInfo *info = (DataInfo *)requestedData;
-  if ((info->magic != MAGIC) || (!info->length))
+  if ((info->magic != DATA_INFO_MAGIC) || (!info->length))
   {
     if (N)
       schedule(ref, N);
@@ -209,7 +212,7 @@ void MemManager::freeBuffer(void*data)
   if (!requestedData || requestedData == ch_hash_NOTFOUND)
     return;
   volatile DataInfo *info = (DataInfo *)requestedData;
-  if ((info->magic != MAGIC) || (!info->length))
+  if ((info->magic != DATA_INFO_MAGIC) || (!info->length))
     return;
   uint index = (requestedData - base - DATA_OFFSET - sizeof(float) * 2) / BLOCK_SIZE;
   for (int i = 0; i < info->length; i++)

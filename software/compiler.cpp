@@ -94,7 +94,7 @@ int main(){
   MemManager manager = MemManager(VIRT_MEM);
 
   float data[]={1,2,3};
-  float data1[12][1]={{3},{4},{5}};
+  float data1[12][1]={{420.69},{4},{5}};
   manager.schedule(data,sizeof(float)*3);
   readPtr = (float *)manager.request(data, sizeof(int) * 3);
   chprintln(readPtr);
@@ -105,16 +105,13 @@ int main(){
     manager.schedule(data1[i], sizeof(float) * 1);
   }
 
-  readPtr=(float*)manager.request(data, sizeof(int) * 3);
+  readPtr=(float*)manager.request(data, sizeof(float) * 3);
   chprintln(readPtr);
   chprintln(*manager.constant0," ",*manager.constant1);
   chprintln(readPtr[0]," ",readPtr[1]," ",readPtr[2]);
 
-  manager.freeBuffer(data);
-  readPtr = (float *)manager.request(data, sizeof(int) * 3);
-  chprintln(readPtr);
-  chprintln(*manager.constant0, " ", *manager.constant1);
-  chprintln(readPtr[0], " ", readPtr[1], " ", readPtr[2]);
+  readPtr=(float*)manager.request(data1[0],sizeof(float));
+  chprintln(readPtr[0]);
 
   return 0;
 }
