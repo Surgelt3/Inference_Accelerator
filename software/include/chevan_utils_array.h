@@ -177,7 +177,7 @@ static void *ch_hashinsInt(ch_hash h, size_t k, size_t _size)
   for (int i = 0; i < h.size; i++)
   {
     ch_hashPair *p = (ch_hashPair *)(((uchar *)h.arr) + ((i + _k) % h.size) * (sizeof(ch_hashPair) + _size - sizeof(void *)));
-    if (p->flag & 0x1)
+    if (memcmp(&k, p->key, sizeof(k)) && p->flag & 0x1)
       continue;
     p->flag = 0x1;
 
@@ -193,7 +193,7 @@ static void *ch_hashinsStr(ch_hash h, const char *k, size_t _size)
   for (int i = 0; i < h.size; i++)
   {
     ch_hashPair *p = (ch_hashPair *)(((uchar *)h.arr) + ((i + _k) % h.size) * (sizeof(ch_hashPair) - sizeof(void *) + _size));
-    if (p->flag & 0x1)
+    if (memcmp(k, p->key, MIN(strlen(k), ch_hash_STRING_SIZE)) && p->flag & 0x1)
       continue;
     p->flag = 0x1;
     memset(p->key, 0, sizeof(p->key));

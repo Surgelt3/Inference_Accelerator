@@ -21,11 +21,13 @@ public:
   const float *constant0;
   const float *constant1;
   MemManager();
+  MemManager(uchar* base);
   ~MemManager();
-  void replace(void *data, size_t N);
   void schedule(void *data, size_t N);
-  void *request(void *ref);
-  void freeLocal();
+  void *request(void *ref,size_t N);
+  void freeLastAdded();
+  void freeBuffer(void*data);
+  void freeAll();
 };
 class Compiler
 {
@@ -64,8 +66,8 @@ class Compiler
   }
   void MAC(void *start,size_t length,float bias)
   {
-    manager.replace(start, length);
-    manager.request(start);
+    manager.schedule(start, length);
+    manager.request(start, length);
 
     chprintln("MAC ",start," ",length," ",bias);
   }
@@ -91,6 +93,8 @@ class Compiler
       manager.schedule(t->data._start, ch_arrlength(float, t->data));
     }
 
+    size_t aSize = ch_arrlength(float, comm.referenceLayer->layer_input[0]->data);
+    size_t bSize = ch_arrlength(float, comm.referenceLayer->layer_input[1]->data);
     float *addrA = comm.mac.addrA;
     float* addrB = comm.mac.addrB;
 
@@ -113,7 +117,11 @@ class Compiler
             else if (comm.mac.indexes[2 * i] == -2)
               valA = manager.constant0;
             else
-              valA = (float*)manager.request(addrA) + comm.mac.indexes[2 * i] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize + vShift * comm.mac.vertShiftSize;
+            {
+              valA = (float *)manager.request(addrA, aSize);
+              chassert(valA != NULL, "memory manager already freed array");
+              valA += comm.mac.indexes[2 * i] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize + vShift * comm.mac.vertShiftSize;
+            }
             ch_arrpush(long, toWrite, (uchar*)valA-manager.base);
 
             if (comm.mac.indexes[2 * i + 1] == -1)
@@ -121,7 +129,11 @@ class Compiler
             else if (comm.mac.indexes[2 * i + 1] == -2)
               valB = manager.constant1;
             else
-              valB = (float*)manager.request(addrB) + comm.mac.indexes[2 * i + 1] + c * comm.mac.repeatShiftB;
+            {
+              valB = (float *)manager.request(addrB, bSize);
+              chassert(valB != NULL, "memory manager already freed array");
+              valB += comm.mac.indexes[2 * i + 1] + c * comm.mac.repeatShiftB;
+            }
             ch_arrpush(long, toWrite, (uchar *)valB - manager.base);
 
             if(ch_arrlength(long,toWrite)==npuLimit*2)
@@ -263,7 +275,7 @@ class Compiler
       default:
         break;
       }
-      manager.freeLocal();
+      manager.freeAll();
     }
   }
 };

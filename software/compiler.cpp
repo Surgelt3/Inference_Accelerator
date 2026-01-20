@@ -1,8 +1,9 @@
 #include "compiler.hpp"
 #include "importer.hpp"
+
+#if 0
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
 int main()
 {
 
@@ -86,3 +87,36 @@ int main()
 
   return 0;
 }
+#else
+int main(){
+  uchar *VIRT_MEM = (uchar *)malloc(0x5000);
+  float *readPtr = (float*)(VIRT_MEM + 512 + sizeof(float) * 2);
+  MemManager manager = MemManager(VIRT_MEM);
+
+  float data[]={1,2,3};
+  float data1[12][1]={{3},{4},{5}};
+  manager.schedule(data,sizeof(float)*3);
+  readPtr = (float *)manager.request(data, sizeof(int) * 3);
+  chprintln(readPtr);
+  chprintln(*manager.constant0, " ", *manager.constant1);
+  chprintln(readPtr[0], " ", readPtr[1], " ", readPtr[2]);
+  for (int i = 0; i < 12; i++)
+  {
+    manager.schedule(data1[i], sizeof(float) * 1);
+  }
+
+  readPtr=(float*)manager.request(data, sizeof(int) * 3);
+  chprintln(readPtr);
+  chprintln(*manager.constant0," ",*manager.constant1);
+  chprintln(readPtr[0]," ",readPtr[1]," ",readPtr[2]);
+
+  manager.freeBuffer(data);
+  readPtr = (float *)manager.request(data, sizeof(int) * 3);
+  chprintln(readPtr);
+  chprintln(*manager.constant0, " ", *manager.constant1);
+  chprintln(readPtr[0], " ", readPtr[1], " ", readPtr[2]);
+
+  return 0;
+}
+#endif
+

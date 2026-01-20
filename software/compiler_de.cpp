@@ -76,13 +76,17 @@ int unmap_physical(void *virtual_base, unsigned int span)
   return 0;
 }
 
-static uint64_t *usedBlocks;
-static uint NUM_BLOCKS;
-const static uint BLOCK_SIZE = sizeof(float) * 16;
+static const uint NUM_BLOCKS = 12;
+static const uint BLOCK_SIZE = LW_BRIDGE_SPAN / NUM_BLOCKS;
+static const uint MAGIC = 0x86AC;
+static uint usedBlocks[NUM_BLOCKS];
+static uint blocksQueueIndex = 0;
+static uchar* blocksQueue[NUM_BLOCKS];
 struct DataInfo
 {
   uint32_t ready : 1;
-  uint32_t length : 31;
+  uint32_t magic : 16;
+  uint32_t length : 15;
 };
 
 MemManager::MemManager()
@@ -94,62 +98,135 @@ MemManager::MemManager()
   this->constant1 = ((float *)(base + DATA_OFFSET)) + 1;
   *((float *)((uchar*)virt_addr + DATA_OFFSET) + 0) = 0.0;
   *((float *)((uchar*)virt_addr + DATA_OFFSET) + 1) = 1.0;
-  NUM_BLOCKS = LW_BRIDGE_SPAN / BLOCK_SIZE;
-  usedBlocks = (uint64_t *)calloc(sizeof(uint64_t), (NUM_BLOCKS / 64));
+  memset(usedBlocks, 0, sizeof(uint) * NUM_BLOCKS);
+  memset(blocksQueue, 0, sizeof(uchar *) * NUM_BLOCKS);
   mappedAddresses = ch_hashcreate(uchar *);
 }
+MemManager::MemManager(uchar* base)
+{
+  this->base = base;
+  this->virt_addr = base;
+  this->constant0 = ((float *)(base + DATA_OFFSET)) + 0;
+  this->constant1 = ((float *)(base + DATA_OFFSET)) + 1;
+  *((float *)((uchar *)virt_addr + DATA_OFFSET) + 0) = 0.0;
+  *((float *)((uchar *)virt_addr + DATA_OFFSET) + 1) = 1.0;
+  memset(usedBlocks, 0, sizeof(uint) * NUM_BLOCKS);
+  memset(blocksQueue, 0, sizeof(uchar *) * NUM_BLOCKS);
+  mappedAddresses = ch_hashcreate(uchar *);
+}
+
 MemManager::~MemManager()
 {
-  unmap_physical(virt_addr, LW_BRIDGE_SPAN);
-  close_physical(fd);
-  free(usedBlocks);
+  // unmap_physical(virt_addr, LW_BRIDGE_SPAN);
+  // close_physical(fd);
   ch_hashfree(mappedAddresses);
 }
-void MemManager::replace(void *data, size_t N)
+void MemManager::freeLastAdded()
 {
-  uint requiredBlocks = (N + sizeof(DataInfo)) / BLOCK_SIZE + 1;
-  int continuousBlocks=0;
-  int startIndex=0;
-  for(int i=0;i<NUM_BLOCKS*64;i++)
+  for (int index = blocksQueueIndex + 1; index != blocksQueueIndex; index = (index + 1) % NUM_BLOCKS)
   {
-    if (usedBlocks[i / 64] & (1 << (i % 64)))
+    if(blocksQueue[index])
     {
-      if (continuousBlocks == 0)
-        startIndex = i;
-      ++continuousBlocks;
-      if (continuousBlocks >= requiredBlocks)
-        break;
+      freeBuffer(blocksQueue[index]);
+      break;
     }
-    else
+  }
+}
+void MemManager::schedule(void *data, size_t N)
+{
+  uchar *previousData = ch_hashget(uchar *, mappedAddresses, (size_t)data);
+  uint requiredBlocks = (N + sizeof(DataInfo)) / BLOCK_SIZE + 1;
+  if (!previousData && previousData != ch_hash_NOTFOUND)
+  {
+    volatile DataInfo *previousInfo = (DataInfo *)previousData;
+    if (previousInfo->magic == MAGIC && previousInfo->length == requiredBlocks)
+      return;
+  }
+  int startIndex = -1;
+  do
+  {
+    int continuousBlocks = 0;
+    for (int i = 0; i < NUM_BLOCKS; i++)
     {
-      continuousBlocks = 0;
+      if (!usedBlocks[i])
+      {
+        if (continuousBlocks == 0)
+          startIndex = i;
+        ++continuousBlocks;
+        if (continuousBlocks >= requiredBlocks)
+          break;
+      }
+      else
+      {
+        continuousBlocks = 0;
+      }
     }
+    if (startIndex == -1)
+      freeLastAdded();
+  } while (startIndex == -1);
+
+  for (int i = 0; i < requiredBlocks; i++)
+  {
+    usedBlocks[startIndex + i] = 1;
   }
   int offset = DATA_OFFSET + sizeof(float) * 2 + startIndex * BLOCK_SIZE;
   const uchar *destAddress = base + offset;
   ch_hashinsert(const uchar *, mappedAddresses, (size_t)data, destAddress);
 
+  blocksQueue[blocksQueueIndex] = (uchar *)data;
+  blocksQueueIndex = (blocksQueueIndex + 1) % NUM_BLOCKS;
+
   // start seperate thread?
-  DataInfo info = {1, requiredBlocks};
+  DataInfo info = {1, MAGIC, requiredBlocks};
   memcpy((uchar *)virt_addr + offset + sizeof(DataInfo), data, N);
   memcpy((uchar *)virt_addr + offset, &info, sizeof(DataInfo));
 }
-void MemManager::schedule(void *data, size_t N)
-{
-  replace(data, N);
-}
-void *MemManager::request(void *ref)
+void *MemManager::request(void *ref, size_t N)
 {
   uchar *requestedData = ch_hashget(uchar *, mappedAddresses, (size_t)ref);
-  if (!requestedData)
-    return NULL;
-  volatile DataInfo info = *(DataInfo *)requestedData;
-  while(!info.ready);
+  if (!requestedData || requestedData == ch_hash_NOTFOUND)
+  {
+    schedule(ref, N);
+    requestedData = ch_hashget(uchar *, mappedAddresses, (size_t)ref);
+    return requestedData + sizeof(DataInfo);
+  }
+  volatile DataInfo *info = (DataInfo *)requestedData;
+  if ((info->magic != MAGIC) || (!info->length))
+  {
+    if (N)
+      schedule(ref, N);
+    else
+      return NULL;
+  }
 
-  return requestedData + sizeof(requestedData);
+  while(!info->ready);
+
+  return requestedData + sizeof(DataInfo);
 }
-void MemManager::freeLocal()
+void MemManager::freeBuffer(void*data)
+{
+  uchar *requestedData = ch_hashget(uchar *, mappedAddresses, (size_t)data);
+  if (!requestedData || requestedData == ch_hash_NOTFOUND)
+    return;
+  volatile DataInfo *info = (DataInfo *)requestedData;
+  if ((info->magic != MAGIC) || (!info->length))
+    return;
+  uint index = (requestedData - base - DATA_OFFSET - sizeof(float) * 2) / BLOCK_SIZE;
+  for (int i = 0; i < info->length; i++)
+    usedBlocks[index + i] = 0;
+  info->length = 0;
+  info->magic = 0;
+  for (int i = 0; i < NUM_BLOCKS; i++)
+  {
+    if (blocksQueue[i] == data)
+      blocksQueue[i] = 0;
+  }
+  ch_hashget(uchar *, mappedAddresses, (size_t)data) = 0;
+}
+void MemManager::freeAll()
 {
   ch_hashclear(uchar *, mappedAddresses);
-  memset(usedBlocks, 0, sizeof(uint64_t) * (NUM_BLOCKS / 64));
+  memset(usedBlocks, 0, sizeof(uint) * NUM_BLOCKS);
+  memset(blocksQueue, 0, sizeof(uchar*) * NUM_BLOCKS);
+  blocksQueueIndex = 0;
 }
