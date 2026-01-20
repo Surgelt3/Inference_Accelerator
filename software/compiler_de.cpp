@@ -77,10 +77,9 @@ int unmap_physical(void *virtual_base, unsigned int span)
 
 #define DATA_OFFSET 512
 #define TEXT_OFFSET 0
-#define DATA_OUT_SIZE (sizeof(float)*12)
+#define DATA_OUT_SIZE (sizeof(float) * DATA_OUT_LENGTH)
 #define NUM_BLOCKS 12
 #define DATA_INFO_MAGIC 0x86AC
-static uint BLOCK_SIZE;
 static uint usedBlocks[NUM_BLOCKS];
 static uint blocksQueueIndex = 0;
 static uchar* blocksQueue[NUM_BLOCKS];
@@ -113,7 +112,7 @@ MemManager::MemManager()
   memset(usedBlocks, 0, sizeof(uint) * NUM_BLOCKS);
   memset(blocksQueue, 0, sizeof(uchar *) * NUM_BLOCKS);
   mappedAddresses = ch_hashcreate(uchar *);
-  BLOCK_SIZE = (LW_BRIDGE_SPAN - DATA_OFFSET - sizeof(float) * 2) / NUM_BLOCKS;
+  BLOCK_SIZE = (LW_BRIDGE_SPAN - DATA_OFFSET - sizeof(float) * 2 - DATA_OUT_SIZE) / NUM_BLOCKS;
 }
 MemManager::MemManager(uchar* base)
 {
@@ -127,7 +126,7 @@ MemManager::MemManager(uchar* base)
   memset(usedBlocks, 0, sizeof(uint) * NUM_BLOCKS);
   memset(blocksQueue, 0, sizeof(uchar *) * NUM_BLOCKS);
   mappedAddresses = ch_hashcreate(uchar *);
-  BLOCK_SIZE = (LW_BRIDGE_SPAN - DATA_OFFSET - sizeof(float) * 2) / NUM_BLOCKS;
+  BLOCK_SIZE = (LW_BRIDGE_SPAN - DATA_OFFSET - sizeof(float) * 2 - DATA_OUT_SIZE) / NUM_BLOCKS;
 }
 
 MemManager::~MemManager()
@@ -154,7 +153,7 @@ void MemManager::freeLastAdded()
     if(blocksQueue[index])
     {
       volatile DataInfo *info = ch_hashget(DataInfo *, mappedAddresses, (size_t)blocksQueue[index]);
-      if(info->ready)
+      if(info->ready && !info->lock)
       {
         freeBuffer(blocksQueue[index]);
         break;
@@ -247,7 +246,16 @@ void MemManager::schedule(void *data, size_t N)
       });
   t.detach();
 }
-
+void MemManager::lock(void*data)
+{
+  uchar *requestedData = ch_hashget(uchar *, mappedAddresses, (size_t)data);
+  if (!requestedData || requestedData == ch_hash_NOTFOUND)
+    return;
+  volatile DataInfo *info = (DataInfo *)requestedData;
+  if ((info->magic != DATA_INFO_MAGIC) || (!info->length))
+    return;
+  info->lock=1;
+}
 void *MemManager::request(void *ref, size_t N)
 {
   uchar *requestedData = ch_hashget(uchar *, mappedAddresses, (size_t)ref);
@@ -269,6 +277,23 @@ void *MemManager::request(void *ref, size_t N)
   while(!info->ready);
 
   return requestedData + sizeof(DataInfo);
+}
+void *MemManager::use(void*ref,size_t N)
+{
+  void*ptr=request(ref,N);
+  volatile DataInfo *info = ch_hashget(DataInfo *, mappedAddresses, (size_t)ref);
+  info->lock = 1;
+  return ptr;
+}
+void MemManager::release(void*data)
+{
+  uchar *requestedData = ch_hashget(uchar *, mappedAddresses, (size_t)data);
+  if (!requestedData || requestedData == ch_hash_NOTFOUND)
+    return;
+  volatile DataInfo *info = (DataInfo *)requestedData;
+  if ((info->magic != DATA_INFO_MAGIC) || (!info->length))
+    return;
+  info->lock = 0;
 }
 void MemManager::freeBuffer(void*data)
 {

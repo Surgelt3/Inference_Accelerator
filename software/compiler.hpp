@@ -7,88 +7,72 @@
 #define OP_LOAD  0x1
 #define OP_END 0x2
 
-#define MAX_REG 16
+#define DATA_OUT_LENGTH 48
 class MemManager
 {
 private:
   int fd=-1;
   ch_hash mappedAddresses;
-  float *outPtr;
 public:
+  float *outPtr;
   void *virt_addr;
   const uchar *base;
   const float *constant0;
   const float *constant1;
+  uint BLOCK_SIZE;
   MemManager();
   MemManager(uchar* base);
   ~MemManager();
   void writeInstr(uint32_t i);
   void schedule(void *data, size_t N);
+  void lock(void*data);
+  void *request(void *ref,size_t N);
+  void*use(void*ref,size_t N);
   float *readOut();
   void readComplete();
-  void *request(void *ref,size_t N);
   void freeLastAdded();
+  void release(void *data);
   void freeBuffer(void*data);
   void freeAll();
 };
 class Compiler
 {
   MemManager manager;
-  const void*writeBasePtr;
-  const float *CONSTANT_0;
-  const float *CONSTANT_1;
 
-  float*tmpBuffer[10];
 
   public:
-  Compiler(void*basePtr)
+  Compiler()
   {
-    this->writeBasePtr = basePtr;
     this->manager = MemManager();
-  }
-
-  void load(const void*ptr,int reg)
-  {
-    chprintln("LOAD ",ptr," r",reg);
-  }
-  void store(void*ptr,int reg)
-  {
-
-  }
-  void mov(int regOut,int regIn)
-  {
-
   }
   void MAC(void *start,size_t length,float bias)
   {
-    int instrLoc = (uchar *)manager.request(start, length) - manager.base;
+    int instrLoc = (uchar *)manager.use(start, length) - manager.base;
     chassert(instrLoc < (1 << 7), "instr loc int overflow");
     chassert(length < (1 << 7), "length int overflow");
     int bias_i = *((int*)&bias);
-    uint32_t instr=0;
+    uint32_t instr = 0;
     instr |= OP_MAC << 29;
     instr |= (instrLoc & 0x3F) << 22;
     instr |= (length & 0x3F) << 16;
     instr |= (bias_i & 0x3F) << 4;
     manager.writeInstr(instr);
   }
-  void APPLY()
+
+  void LOAD(void *dst, void *src)
   {
-
-  }
-
-
-
-  void MULI(int reg,float val,int regOut)
-  {
-    manager.schedule(&val,1);
-    load(&val,(reg+1)%MAX_REG);
-    // todo
-    
+    int mem_dst = (uchar *)dst - manager.base;
+    int mem_src = (uchar *)src - manager.base;
+    uint32_t instr = 0;
+    instr |= OP_LOAD << 29;
+    instr |= (mem_dst & 0x3F) << 22;
+    instr |= mem_src & (~(1 << 22));
+    manager.writeInstr(instr);
   }
 
   void runCommandMAC(const NetCommand&comm)
   {
+    size_t reservedSize=manager.BLOCK_SIZE-sizeof(uint32_t);
     for (Tensor *t : comm.referenceLayer->layer_input)
     {
       manager.schedule(t->data._start, sizeof(float) * ch_arrlength(float, t->data));
@@ -101,6 +85,7 @@ class Compiler
 
     // hope to god we don't overflow
     ch_array toWrite = ch_arrstack(uint32_t, comm.mac.repeat * comm.mac.N * 2);
+    uint outIndex = 0;
     for (int vShift = 0; vShift < comm.mac.vertShift; vShift++)
     {
       for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
@@ -117,7 +102,7 @@ class Compiler
               valA = manager.constant0;
             else
             {
-              valA = (float *)manager.request(addrA, aSize);
+              valA = (float *)manager.use(addrA, aSize);
               chassert(valA != NULL, "memory manager already freed array");
               valA += comm.mac.indexes[2 * i] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize + vShift * comm.mac.vertShiftSize;
             }
@@ -129,7 +114,7 @@ class Compiler
               valB = manager.constant1;
             else
             {
-              valB = (float *)manager.request(addrB, bSize);
+              valB = (float *)manager.use(addrB, bSize);
               chassert(valB != NULL, "memory manager already freed array");
               valB += comm.mac.indexes[2 * i + 1] + c * comm.mac.repeatShiftB;
             }
@@ -139,8 +124,16 @@ class Compiler
         while (ch_arrlength(uint32_t, toWrite) % 8)
           ch_arrpush(uint32_t, toWrite, (uchar *)manager.constant0 - manager.base);
         MAC(toWrite._start, sizeof(uint32_t) * ch_arrlength(uint32_t, toWrite), *comm.mac.addrC);
-        *(comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut) = *manager.readOut();
-        manager.readComplete();
+        // WHAT IS THE LOCATION OF THE OUT
+        LOAD(manager.outPtr + (++outIndex),NULL);
+        if(outIndex>=DATA_OUT_LENGTH)
+        {
+          memcpy((comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut),manager.readOut(),sizeof(float)*DATA_OUT_LENGTH);
+          manager.readComplete();
+          outIndex = 0;
+        }
+
+        manager.release(toWrite._start);
         manager.freeBuffer(toWrite._start);
       }
     }

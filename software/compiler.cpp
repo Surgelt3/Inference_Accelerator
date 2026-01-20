@@ -96,7 +96,7 @@ int main(){
   float data[]={1,2,3};
   float data1[12][1]={{420.69},{4},{5}};
   manager.schedule(data,sizeof(float)*3);
-  readPtr = (float *)manager.request(data, sizeof(int) * 3);
+  readPtr = (float *)manager.use(data, sizeof(int) * 3);
   chprintln(readPtr);
   chprintln(*manager.constant0, " ", *manager.constant1);
   chprintln(readPtr[0], " ", readPtr[1], " ", readPtr[2]);
