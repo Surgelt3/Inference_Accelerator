@@ -78,7 +78,7 @@ int unmap_physical(void *virtual_base, unsigned int span)
 #define DATA_OFFSET 512
 #define TEXT_OFFSET 0
 #define DATA_OUT_SIZE (sizeof(float) * DATA_OUT_LENGTH)
-#define NUM_BLOCKS 32
+#define NUM_BLOCKS 512
 #define DATA_INFO_MAGIC 0x86AC
 static uint usedBlocks[NUM_BLOCKS];
 static uint blocksQueueIndex = 0;
@@ -100,40 +100,42 @@ struct DataInfoOut
 MemManager::MemManager()
 {
   open_physical(fd);
-  this->virt_addr = map_physical(fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN);
-  this->outPtr = (float *)((uchar *)virt_addr + DATA_OFFSET);
-  *((float *)((uchar *)virt_addr + DATA_OFFSET) + 0) = 0.0;
-  *((float *)((uchar *)virt_addr + DATA_OFFSET) + 1) = 1.0;
+  this->shared_addr = map_physical(fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN);
+  this->outPtr = (float *)((uchar *)shared_addr + DATA_OFFSET);
+  *((float *)((uchar *)shared_addr + DATA_OFFSET) + 0) = 0.0;
+  *((float *)((uchar *)shared_addr + DATA_OFFSET) + 1) = 1.0;
 
   this->base = (uchar *)LW_BRIDGE_BASE;
-  this->outPtr = (float *)((uchar *)virt_addr + DATA_OFFSET);
-  this->constant0 = ((float *)(base + DATA_OFFSET + DATA_OUT_SIZE)) + 0;
-  this->constant1 = ((float *)(base + DATA_OFFSET + DATA_OUT_SIZE)) + 1;
+  this->outPtr = (float *)((uchar *)shared_addr + DATA_OFFSET);
+  this->constant0 = ((float *)((uchar*)shared_addr + DATA_OFFSET + DATA_OUT_SIZE)) + 0;
+  this->constant1 = ((float *)((uchar*)shared_addr + DATA_OFFSET + DATA_OUT_SIZE)) + 1;
   memset(usedBlocks, 0, sizeof(uint) * NUM_BLOCKS);
   memset(blocksQueue, 0, sizeof(uchar *) * NUM_BLOCKS);
   mappedAddresses = ch_hashcreate(uchar *);
   BLOCK_SIZE = (LW_BRIDGE_SPAN - DATA_OFFSET - sizeof(float) * 2 - DATA_OUT_SIZE) / NUM_BLOCKS;
+  BLOCK_SIZE = BLOCK_SIZE / sizeof(float) * sizeof(float);
 }
-MemManager::MemManager(uchar* base)
+MemManager::MemManager(uchar* virt)
 {
-  this->base = base;
-  this->virt_addr = base;
-  this->outPtr = (float *)((uchar *)virt_addr + DATA_OFFSET);
-  this->constant0 = ((float *)(base + DATA_OFFSET + DATA_OUT_SIZE)) + 0;
-  this->constant1 = ((float *)(base + DATA_OFFSET + DATA_OUT_SIZE)) + 1;
-  *((float *)((uchar *)virt_addr + DATA_OFFSET) + 0) = 0.0;
-  *((float *)((uchar *)virt_addr + DATA_OFFSET) + 1) = 1.0;
+  this->base = NULL;
+  this->shared_addr = virt;
+  this->outPtr = (float *)((uchar *)shared_addr + DATA_OFFSET);
+  this->constant0 = ((float *)((uchar*)shared_addr + DATA_OFFSET + DATA_OUT_SIZE)) + 0;
+  this->constant1 = ((float *)((uchar*)shared_addr + DATA_OFFSET + DATA_OUT_SIZE)) + 1;
+  *((float *)((uchar *)shared_addr + DATA_OFFSET) + 0) = 0.0;
+  *((float *)((uchar *)shared_addr + DATA_OFFSET) + 1) = 1.0;
   memset(usedBlocks, 0, sizeof(uint) * NUM_BLOCKS);
   memset(blocksQueue, 0, sizeof(uchar *) * NUM_BLOCKS);
   mappedAddresses = ch_hashcreate(uchar *);
   BLOCK_SIZE = (LW_BRIDGE_SPAN - DATA_OFFSET - sizeof(float) * 2 - DATA_OUT_SIZE) / NUM_BLOCKS;
+  BLOCK_SIZE = BLOCK_SIZE / sizeof(float) * sizeof(float);
 }
 
 MemManager::~MemManager()
 {
-  if (this->base!=this->virt_addr)
+  if (this->base)
   {
-    unmap_physical(virt_addr, LW_BRIDGE_SPAN);
+    unmap_physical(shared_addr, LW_BRIDGE_SPAN);
     close_physical(fd);
   }
   ch_hashfree(mappedAddresses);
@@ -142,7 +144,7 @@ MemManager::~MemManager()
 static uint PC=0;
 void MemManager::writeInstr(uint32_t instruction)
 {
-  ((uint32_t*)virt_addr)[PC]=instruction;
+  ((uint32_t *)shared_addr)[PC] = instruction;
   PC = (PC + 1) % (DATA_OFFSET / sizeof(uint32_t));
 }
 
@@ -221,7 +223,7 @@ void MemManager::schedule(void *data, size_t N)
     usedBlocks[startIndex + i] = 1;
   }
   int offset = DATA_OFFSET + sizeof(float) * 2 + startIndex * BLOCK_SIZE;
-  const uchar *destAddress = base + offset;
+  const uchar *destAddress = (uchar*)shared_addr + offset;
   ch_hashinsert(const uchar *, mappedAddresses, (size_t)data, destAddress);
 
   blocksQueue[blocksQueueIndex] = (uchar *)data;
@@ -232,7 +234,7 @@ void MemManager::schedule(void *data, size_t N)
   info.lock = 0;
   info.magic = DATA_INFO_MAGIC;
   info.length = requiredBlocks;
-  memcpy((uchar *)virt_addr + offset, &info, sizeof(DataInfo));
+  memcpy((uchar *)shared_addr + offset, &info, sizeof(DataInfo));
   std::thread t = std::thread(
       [this, offset, data, N, requiredBlocks]()
       {
@@ -241,8 +243,8 @@ void MemManager::schedule(void *data, size_t N)
         info.lock = 0;
         info.magic = DATA_INFO_MAGIC;
         info.length = requiredBlocks;
-        memcpy((uchar *)virt_addr + offset + sizeof(DataInfo), data, N);
-        memcpy((uchar *)virt_addr + offset, &info, sizeof(DataInfo));
+        memcpy((uchar *)shared_addr + offset + sizeof(DataInfo), data, N);
+        memcpy((uchar *)shared_addr + offset, &info, sizeof(DataInfo));
       });
   t.detach();
 }
@@ -313,7 +315,7 @@ void MemManager::freeBuffer(void*data)
   if ((info->magic != DATA_INFO_MAGIC) || (!info->length))
     return;
   while(info->lock);
-  uint index = (requestedData - base - DATA_OFFSET - sizeof(float) * 2) / BLOCK_SIZE;
+  uint index = (requestedData - (uchar*)shared_addr - DATA_OFFSET - sizeof(float) * 2) / BLOCK_SIZE;
   for (int i = 0; i < info->length; i++)
     usedBlocks[index + i] = 0;
   info->length = 0;

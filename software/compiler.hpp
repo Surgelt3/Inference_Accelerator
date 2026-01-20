@@ -17,13 +17,13 @@ private:
   ch_hash mappedAddresses;
 public:
   float *outPtr;
-  void *virt_addr;
+  void *shared_addr;
   const uchar *base;
   const float *constant0;
   const float *constant1;
   uint BLOCK_SIZE;
   MemManager();
-  MemManager(uchar* base);
+  MemManager(uchar* shared);
   ~MemManager();
   void writeInstr(uint32_t i);
   void schedule(void *data, size_t N);
@@ -48,24 +48,22 @@ class Compiler
   {
     this->manager = MemManager();
   }
-  void MAC(void *start,size_t length,float bias)
+  void MAC(void *start,size_t length)
   {
-    int instrLoc = (uchar *)manager.use(start, length) - manager.base;
+    int instrLoc = (size_t)start;
     chassert(instrLoc < (1 << 7), "instr loc int overflow");
     chassert(length < (1 << 7), "length int overflow");
-    int bias_i = *((int*)&bias);
     uint32_t instr = 0;
     instr |= OP_MAC << 29;
     instr |= (instrLoc & 0x3F) << 22;
     instr |= (length & 0x3F) << 16;
-    instr |= (bias_i & 0x3F) << 4;
     manager.writeInstr(instr);
   }
 
   void LOAD(void *dst, void *src)
   {
-    int mem_dst = (uchar *)dst - manager.base;
-    int mem_src = (uchar *)src - manager.base;
+    int mem_dst = (uchar *)dst - (uchar*)manager.shared_addr;
+    int mem_src = (uchar *)src - (uchar*)manager.shared_addr;
     uint32_t instr = 0;
     instr |= OP_LOAD << 29;
     instr |= (mem_dst & 0x3F) << 22;
@@ -75,28 +73,10 @@ class Compiler
 
   void runCommandMAC(const NetCommand&comm)
   {
-    size_t reservedSize = manager.BLOCK_SIZE - sizeof(uint32_t);
-    for (Tensor *t : comm.referenceLayer->layer_input)
-    {
-      for (void *p = t->data._start; p < t->data._end; p = (uchar *)p + reservedSize)
-      {
-        manager.schedule(p, sizeof(float) * MIN(reservedSize, (uchar *)t->data._end - (uchar *)p));
-      }
-    }
-
-    void *aEnd = comm.referenceLayer->layer_input[0]->data._end;
-    void *bEnd = comm.referenceLayer->layer_input[1]->data._end;
     float *addrA = comm.mac.addrA;
     float* addrB = comm.mac.addrB;
 
-    std::mutex semiphoreMutex;
-    int semiphoreA[512] = {};
-    int semiphoreB[4] = {};
-    memset(semiphoreA, 0, 512 * sizeof(int));
-    memset(semiphoreB, 0, 4 * sizeof(int));
-
-    // hope to god we don't overflow
-    ch_array toWrite = ch_arrstack(uint32_t, comm.mac.repeat * comm.mac.N * 2);
+    ch_array toWrite = ch_arrstack(float, comm.mac.repeat *comm.mac.N * 2 + 1);
     uint outIndex = 0;
     for (int vShift = 0; vShift < comm.mac.vertShift; vShift++)
     {
@@ -106,90 +86,57 @@ class Compiler
         {
           for (int i = 0; i < comm.mac.N; i++)
           {
-            const float *valA = 0;
-            const float *valB = 0;
+            float valA = 0;
+            float valB = 0;
             if (comm.mac.indexes[2 * i] == -1)
-              valA = manager.constant0;
+              valA = 0;
             else if (comm.mac.indexes[2 * i] == -2)
-              valA = manager.constant1;
+              valA = 1;
             else
-            {
-              int index = comm.mac.indexes[2 * i] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize + vShift * comm.mac.vertShiftSize;
-              size_t loc = (size_t)((float*)addrA + index) / reservedSize * reservedSize;
-              valA = (float *)manager.use((void *)loc, MIN(reservedSize, (size_t)aEnd - loc));
-              semiphoreMutex.lock();
-              semiphoreA[index/reservedSize]++;
-              semiphoreMutex.unlock();
-              chassert(valA != NULL, "memory manager already freed array");
-              valA += index % (reservedSize / sizeof(float));
-            }
-            ch_arrpush(uint32_t, toWrite, (uchar *)valA - manager.base);
+              valA = addrA[comm.mac.indexes[2 * i] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize + vShift * comm.mac.vertShiftSize];
+            ch_arrpush(float, toWrite, valA);
 
             if (comm.mac.indexes[2 * i + 1] == -1)
-                valB = manager.constant0;
+                valB = 0;
             else if (comm.mac.indexes[2 * i + 1] == -2)
-              valB = manager.constant1;
+              valB = 1;
             else
-            {
-              int index=comm.mac.indexes[2 * i + 1] + c * comm.mac.repeatShiftB;
-              size_t loc = (size_t)((float*)addrB + index) / reservedSize * reservedSize;
-              valB = (float *)manager.use((void *)loc, MIN(reservedSize, (size_t)bEnd - loc));
-              semiphoreMutex.lock();
-              semiphoreB[index / reservedSize]++;
-              semiphoreMutex.unlock();
-              chassert(valB != NULL, "memory manager already freed array");
-              valB += index % (reservedSize / sizeof(float));
-            }
-            ch_arrpush(uint32_t, toWrite, (uchar *)valB - manager.base);
+              valB = addrB[comm.mac.indexes[2 * i + 1] + c * comm.mac.repeatShiftB];
+            ch_arrpush(float, toWrite, valB);
           }
         }
-        while (ch_arrlength(uint32_t, toWrite) % 8)
-          ch_arrpush(uint32_t, toWrite, (uchar *)manager.constant0 - manager.base);
-        MAC(toWrite._start, sizeof(uint32_t) * ch_arrlength(uint32_t, toWrite), *comm.mac.addrC);
-        // WHAT IS THE LOCATION OF THE OUT
-        LOAD(manager.outPtr + (++outIndex),NULL);
-        if(outIndex>=DATA_OUT_LENGTH)
-        {
-          memcpy((comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut),manager.readOut(),sizeof(float)*DATA_OUT_LENGTH);
-          manager.readComplete();
-          outIndex = 0;
-        }
+        while (ch_arrlength(float, toWrite) % 8)
+          ch_arrpush(float, toWrite, 0.0);
+        
+        ch_arrpush(float,toWrite,*comm.mac.addrC);
+
+        float *outLoc = comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut;
+        MAC((void*)((uchar*)manager.use(toWrite._start, sizeof(float) * ch_arrlength(float, toWrite))-(uchar*)manager.shared_addr), ch_arrlength(float, toWrite) - 1);
+        // // WHAT IS THE LOCATION OF THE OUT
+        // LOAD(manager.outPtr + (outIndex++), NULL);
+        // if (outIndex >= DATA_OUT_LENGTH)
+        // {
+        //   // this will be wrong, pls fix
+        //   // also if loop ends before this, we miss values
+        //   memcpy((comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut - DATA_OUT_LENGTH), manager.readOut(), sizeof(float) * DATA_OUT_LENGTH);
+        //   manager.readComplete();
+        //   outIndex = 0;
+        // }
         void*capturedWrite=toWrite._start;
-        void*capturedEnd=toWrite._end;
+        toWrite = ch_arrcreate(float, ch_arrlength(float, toWrite));
         std::thread t = std::thread(
-            [this, capturedWrite, capturedEnd, reservedSize, &semiphoreMutex, &semiphoreA, &semiphoreB, addrA, addrB]()
+            [this, capturedWrite, outLoc, outIndex]()
             {
               // will stall until MAC is complete
               manager.freeBuffer(capturedWrite);
-              for (uint i=0;i<((size_t)capturedEnd-(size_t)capturedWrite)/sizeof(uint32_t);i++)
-              {
-                size_t index;
-                if (i % 2)
-                  index = (size_t)((uchar*)manager.get(addrA) - (((uint32_t *)capturedWrite)[i] + (size_t)manager.base));
-                else
-                  index = (size_t)((uchar*)manager.get(addrB) - (((uint32_t *)capturedWrite)[i] + (size_t)manager.base));
-                // multithreading is pain peko
-                semiphoreMutex.lock();
-                if (i % 2)
-                {
-                  if (--semiphoreA[index / reservedSize] <= 0)
-                  {
-                    manager.release(addrA + (index % reservedSize));
-                  }
-                }
-                else
-                {
-                  if (--semiphoreB[index / reservedSize] <= 0)
-                  {
-                    manager.release(addrB + (index % reservedSize));
-                  }
-                }
-                semiphoreMutex.unlock();
-              }
+              free(capturedWrite);
+              
+              // ig
+              memcpy(outLoc, manager.readOut(), sizeof(float) * DATA_OUT_LENGTH);
+              manager.readComplete();
 
-          free(capturedWrite); });
+            });
         t.detach();
-        toWrite = ch_arrcreate(uint32_t, ch_arrlength(uint32_t, toWrite));
       }
     }
     ch_arrfree(toWrite);
