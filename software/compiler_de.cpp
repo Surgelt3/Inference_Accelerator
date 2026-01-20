@@ -6,6 +6,8 @@
 #include <sys/mman.h>
 #include "../address_map_arm.h"
 
+#include <thread>
+
 int open_physical(int);
 void *map_physical(int, unsigned int, unsigned int);
 void close_physical(int);
@@ -190,12 +192,22 @@ void MemManager::schedule(void *data, size_t N)
   blocksQueue[blocksQueueIndex] = (uchar *)data;
   blocksQueueIndex = (blocksQueueIndex + 1) % NUM_BLOCKS;
 
-  DataInfo info = {0, DATA_INFO_MAGIC, requiredBlocks};
+  DataInfo info;
+  info.ready = 0;
+  info.magic = DATA_INFO_MAGIC;
+  info.length = requiredBlocks;
   memcpy((uchar *)virt_addr + offset, &info, sizeof(DataInfo));
-  // start seperate thread
-  info.ready = 1;
-  memcpy((uchar *)virt_addr + offset + sizeof(DataInfo), data, N);
-  memcpy((uchar *)virt_addr + offset, &info, sizeof(DataInfo));
+  std::thread t = std::thread(
+      [this, offset, data, N, requiredBlocks]()
+      {
+        DataInfo info;
+        info.ready = 1;
+        info.magic = DATA_INFO_MAGIC;
+        info.length = requiredBlocks;
+        memcpy((uchar *)virt_addr + offset + sizeof(DataInfo), data, N);
+        memcpy((uchar *)virt_addr + offset, &info, sizeof(DataInfo));
+      });
+  t.detach();
 }
 void* MemManager::readOut()
 {
