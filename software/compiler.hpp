@@ -3,9 +3,9 @@
 #include "neural_net.h"
 #include <chevan_utils_print.hpp>
 
-#define OP_NOP  0x0
-#define OP_MAC  0x1
-#define OP_RELU 0x2
+#define OP_MAC  0x0
+#define OP_LOAD  0x1
+#define OP_END 0x2
 
 #define MAX_REG 16
 class MemManager
@@ -19,10 +19,10 @@ public:
   const uchar *base;
   const float *constant0;
   const float *constant1;
-  float *permaBlock;
   MemManager();
   MemManager(uchar* base);
   ~MemManager();
+  void writeInstr(uint32_t i);
   void schedule(void *data, size_t N);
   float *readOut();
   void readComplete();
@@ -61,9 +61,16 @@ class Compiler
   }
   void MAC(void *start,size_t length,float bias)
   {
-    manager.request(start, length);
-
-    chprintln("MAC ",start," ",length," ",bias);
+    int instrLoc = (uchar *)manager.request(start, length) - manager.base;
+    chassert(instrLoc < (1 << 7), "instr loc int overflow");
+    chassert(length < (1 << 7), "length int overflow");
+    int bias_i = *((int*)&bias);
+    uint32_t instr=0;
+    instr |= OP_MAC << 29;
+    instr |= (instrLoc & 0x3F) << 22;
+    instr |= (length & 0x3F) << 16;
+    instr |= (bias_i & 0x3F) << 4;
+    manager.writeInstr(instr);
   }
   void APPLY()
   {
@@ -92,14 +99,12 @@ class Compiler
     float *addrA = comm.mac.addrA;
     float* addrB = comm.mac.addrB;
 
-    const int npuLimit=4;
-    ch_array toWrite = ch_arrstack(long, npuLimit * 2);
-    // ch_array toWrite = ch_arrstack(long, comm.mac.repeat * comm.mac.N * 2);
+    // hope to god we don't overflow
+    ch_array toWrite = ch_arrstack(uint32_t, comm.mac.repeat * comm.mac.N * 2);
     for (int vShift = 0; vShift < comm.mac.vertShift; vShift++)
     {
       for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
       {
-        float tempValue = 0;
         for (int c = 0; c < comm.mac.repeat; c++)
         {
           for (int i = 0; i < comm.mac.N; i++)
@@ -116,7 +121,7 @@ class Compiler
               chassert(valA != NULL, "memory manager already freed array");
               valA += comm.mac.indexes[2 * i] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize + vShift * comm.mac.vertShiftSize;
             }
-            ch_arrpush(long, toWrite, (uchar*)valA-manager.base);
+            ch_arrpush(uint32_t, toWrite, (uchar *)valA - manager.base);
 
             if (comm.mac.indexes[2 * i + 1] == -1)
                 valB = manager.constant0;
@@ -128,66 +133,17 @@ class Compiler
               chassert(valB != NULL, "memory manager already freed array");
               valB += comm.mac.indexes[2 * i + 1] + c * comm.mac.repeatShiftB;
             }
-            ch_arrpush(long, toWrite, (uchar *)valB - manager.base);
-
-            if (ch_arrlength(long, toWrite) == npuLimit * 2)
-            {
-              MAC(toWrite._start, sizeof(float) * ch_arrlength(long, toWrite), *comm.mac.addrC);
-              toWrite._end = toWrite._start;
-              tempValue = *manager.readOut();
-              manager.readComplete();
-              ch_arrpush(long, toWrite, (uchar *)manager.request(&tempValue, sizeof(float)) - manager.base);
-              ch_arrpush(long, toWrite, (uchar *)manager.constant1 - manager.base);
-            }
+            ch_arrpush(uint32_t, toWrite, (uchar *)valB - manager.base);
           }
         }
-        for (int i = ch_arrlength(long, toWrite) / 2; i < npuLimit; i++)
-        {
-          ch_arrpush(long, toWrite, (uchar *)manager.constant0 - manager.base);
-          ch_arrpush(long, toWrite, (uchar *)manager.constant0 - manager.base);
-        }
-        MAC(toWrite._start, ch_arrlength(long, toWrite), *comm.mac.addrC);
+        while (ch_arrlength(uint32_t, toWrite) % 8)
+          ch_arrpush(uint32_t, toWrite, (uchar *)manager.constant0 - manager.base);
+        MAC(toWrite._start, sizeof(uint32_t) * ch_arrlength(uint32_t, toWrite), *comm.mac.addrC);
         *(comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut) = *manager.readOut();
         manager.readComplete();
-        manager.freeBuffer(&tempValue);
+        manager.freeBuffer(toWrite._start);
       }
     }
-
-    // if (comm.type == GAP)
-    // {
-    //   MULI(9, 2 / comm.mac.N, regAInUse[0]);
-    //   mov(9, regAInUse[0]);
-    // }
-    //   store(comm.mac.out + shift,9);
-  }
-
-  void runCommandCLIP(const NetCommand &comm)
-  {
-    //   addrA = comm.clip.addrA;
-    //   if ((long)comm.clip.addrA < 10)
-    //     addrA = tmpData[(long)comm.clip.addrA];
-
-    //   for (int i = 0; i < comm.clip.N; i++)
-    //   {
-    //     float val = addrA[i];
-    //     if (comm.clip.addrMin)
-    //       val = MIN(val, *comm.clip.addrMin);
-    //     if (comm.clip.addrMax)
-    //       val = MAX(val, *comm.clip.addrMax);
-    //     comm.clip.out[i] = val;
-    //   }
-    //   break;
-    // case NetCommandType::ADD:
-    //   addrA = comm.add.addrA;
-    //   addrB = comm.add.addrB;
-    //   if ((long)comm.add.addrA < 10)
-    //     addrA = tmpData[(long)comm.add.addrA];
-    //   if ((long)comm.add.addrB < 10)
-    //     addrB = tmpData[(long)comm.add.addrB];
-    //   for (int i = 0; i < comm.add.N; i++)
-    //   {
-    //     comm.add.out[i] = addrA[i] + addrB[i];
-    //   }
   }
 
   public:
@@ -199,37 +155,13 @@ class Compiler
       {
       case NetCommandType::MAC:
         runCommandMAC(comm);
-      break;
-      case NetCommandType::GAP:
         break;
       case NetCommandType::CLIP:
-        runCommandCLIP(comm);
-      //   addrA = comm.clip.addrA;
-      //   if ((long)comm.clip.addrA < 10)
-      //     addrA = tmpData[(long)comm.clip.addrA];
-
-      //   for (int i = 0; i < comm.clip.N; i++)
-      //   {
-      //     float val = addrA[i];
-      //     if (comm.clip.addrMin)
-      //       val = MIN(val, *comm.clip.addrMin);
-      //     if (comm.clip.addrMax)
-      //       val = MAX(val, *comm.clip.addrMax);
-      //     comm.clip.out[i] = val;
-      //   }
-      //   break;
-      // case NetCommandType::ADD:
-      //   addrA = comm.add.addrA;
-      //   addrB = comm.add.addrB;
-      //   if ((long)comm.add.addrA < 10)
-      //     addrA = tmpData[(long)comm.add.addrA];
-      //   if ((long)comm.add.addrB < 10)
-      //     addrB = tmpData[(long)comm.add.addrB];
-      //   for (int i = 0; i < comm.add.N; i++)
-      //   {
-      //     comm.add.out[i] = addrA[i] + addrB[i];
-      //   }
+        // do nothing
         break;
+      case NetCommandType::GAP:
+        break;
+      
       case NetCommandType::MOV:
       //   addrA = comm.mov.addrA;
       //   addrB = comm.mov.addrB;

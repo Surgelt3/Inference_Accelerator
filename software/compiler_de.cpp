@@ -80,7 +80,7 @@ int unmap_physical(void *virtual_base, unsigned int span)
 #define DATA_OUT_SIZE (sizeof(float)*12)
 #define NUM_BLOCKS 12
 #define DATA_INFO_MAGIC 0x86AC
-static const uint BLOCK_SIZE = LW_BRIDGE_SPAN / NUM_BLOCKS;
+static uint BLOCK_SIZE;
 static uint usedBlocks[NUM_BLOCKS];
 static uint blocksQueueIndex = 0;
 static uchar* blocksQueue[NUM_BLOCKS];
@@ -98,10 +98,22 @@ struct DataInfoOut
   uint32_t _empty : 15;
 };
 
-MemManager::MemManager() : MemManager((uchar *)LW_BRIDGE_BASE)
+MemManager::MemManager()
 {
   open_physical(fd);
   this->virt_addr = map_physical(fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN);
+  this->outPtr = (float *)((uchar *)virt_addr + DATA_OFFSET);
+  *((float *)((uchar *)virt_addr + DATA_OFFSET) + 0) = 0.0;
+  *((float *)((uchar *)virt_addr + DATA_OFFSET) + 1) = 1.0;
+
+  this->base = (uchar *)LW_BRIDGE_BASE;
+  this->outPtr = (float *)((uchar *)virt_addr + DATA_OFFSET);
+  this->constant0 = ((float *)(base + DATA_OFFSET + DATA_OUT_SIZE)) + 0;
+  this->constant1 = ((float *)(base + DATA_OFFSET + DATA_OUT_SIZE)) + 1;
+  memset(usedBlocks, 0, sizeof(uint) * NUM_BLOCKS);
+  memset(blocksQueue, 0, sizeof(uchar *) * NUM_BLOCKS);
+  mappedAddresses = ch_hashcreate(uchar *);
+  BLOCK_SIZE = (LW_BRIDGE_SPAN - DATA_OFFSET - sizeof(float) * 2) / NUM_BLOCKS;
 }
 MemManager::MemManager(uchar* base)
 {
@@ -110,12 +122,12 @@ MemManager::MemManager(uchar* base)
   this->outPtr = (float *)((uchar *)virt_addr + DATA_OFFSET);
   this->constant0 = ((float *)(base + DATA_OFFSET + DATA_OUT_SIZE)) + 0;
   this->constant1 = ((float *)(base + DATA_OFFSET + DATA_OUT_SIZE)) + 1;
-  this->permaBlock = (float *)malloc(BLOCK_SIZE - sizeof(DataInfo));
   *((float *)((uchar *)virt_addr + DATA_OFFSET) + 0) = 0.0;
   *((float *)((uchar *)virt_addr + DATA_OFFSET) + 1) = 1.0;
   memset(usedBlocks, 0, sizeof(uint) * NUM_BLOCKS);
   memset(blocksQueue, 0, sizeof(uchar *) * NUM_BLOCKS);
   mappedAddresses = ch_hashcreate(uchar *);
+  BLOCK_SIZE = (LW_BRIDGE_SPAN - DATA_OFFSET - sizeof(float) * 2) / NUM_BLOCKS;
 }
 
 MemManager::~MemManager()
@@ -127,6 +139,14 @@ MemManager::~MemManager()
   }
   ch_hashfree(mappedAddresses);
 }
+
+static uint PC=0;
+void MemManager::writeInstr(uint32_t instruction)
+{
+  ((uint32_t*)virt_addr)[PC]=instruction;
+  PC = (PC + 1) % (DATA_OFFSET / sizeof(uint32_t));
+}
+
 void MemManager::freeLastAdded()
 {
   for (int i = 0, index = blocksQueueIndex; i < NUM_BLOCKS; index = (++i) % NUM_BLOCKS)
