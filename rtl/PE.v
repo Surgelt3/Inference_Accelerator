@@ -1,9 +1,12 @@
 module PE(
-    input clk, rst, i_vld, bias_add,  
-    input [31:0] in0, in1, in2, in3, in4, in5, in6, in7, bias_val, 
+    input clk, rst, i_vld, bias_add,
+	 input [1:0] bias_loc, 
+    input [31:0] in0, in1, in2, in3, in4, in5, in6, in7, 
 	 output out_valid,
     output [31:0] out_node
 );
+
+	 wire [31:0] mul0_ia, mul0_ib, mul1_ia, mul1_ib, mul2_ia, mul2_ib, mul3_ia, mul3_ib;
 
     wire mul0_overflow, mul1_overflow, mul2_overflow, mul3_overflow;
     wire mul0_o_res_vld, mul1_o_res_vld, mul2_o_res_vld, mul3_o_res_vld;
@@ -22,20 +25,33 @@ module PE(
 	 
 	 wire acc_vld;
 	 wire [31:0] accumulate_in;
+	 reg [2:0] bias_add_clk;
 
     always @(posedge clk) begin
         if (rst) begin
-            out_reg = 32'd0;
+            out_reg <= 32'd0;
+				bias_add_clk <= 3'b000;
         end else begin
-            out_reg = out_reg_out;
+            out_reg <= out_reg_out;
 		  end
+		  bias_add_clk = {bias_add, bias_add_clk[2], bias_add_clk[1]};
     end
+	 
+	 assign mul0_ia = (bias_add && (bias_loc == 2'b00)) ? in0: 1'b1;
+	 assign mul0_ib = in1;
+	 assign mul1_ia = (bias_add && (bias_loc == 2'b01)) ? in2: 1'b1;
+	 assign mul1_ib = in3;
+	 assign mul2_ia = (bias_add && (bias_loc == 2'b10)) ? in4: 1'b1;
+	 assign mul2_ib = in5;
+	 assign mul3_ia = (bias_add && (bias_loc == 2'b11)) ? in6: 1'b1;
+	 assign mul3_ib = in7;
+
 
     multiplier_32bit multiplier0(
         .clk(clk),
         .rst(rst),
-        .i_a(in0),
-        .i_b(in1),
+        .i_a(mul0_ia),
+        .i_b(mul0_ib),
         .i_vld(i_vld),
         .o_res(mul0_o_res),
         .o_res_vld(mul0_o_res_vld),
@@ -45,8 +61,8 @@ module PE(
     multiplier_32bit multiplier1(
         .clk(clk),
         .rst(rst),
-        .i_a(in2),
-        .i_b(in3),
+        .i_a(mul1_ia),
+        .i_b(mul1_ib),
         .i_vld(i_vld),
         .o_res(mul1_o_res),
         .o_res_vld(mul1_o_res_vld),
@@ -56,8 +72,8 @@ module PE(
     multiplier_32bit multiplier2(
         .clk(clk),
         .rst(rst),
-        .i_a(in4),
-        .i_b(in5),
+        .i_a(mul2_ia),
+        .i_b(mul2_ib),
         .i_vld(i_vld),
         .o_res(mul2_o_res),
         .o_res_vld(mul2_o_res_vld),
@@ -67,8 +83,8 @@ module PE(
     multiplier_32bit multiplier3(
         .clk(clk),
         .rst(rst),
-        .i_a(in6),
-        .i_b(in7),
+        .i_a(mul3_ia),
+        .i_b(mul3_ib),
         .i_vld(i_vld),
         .o_res(mul3_o_res),
         .o_res_vld(mul3_o_res_vld),
@@ -112,8 +128,8 @@ module PE(
         .overflow(add2_overflow)
     );
 	 
-	 assign accumulate_in = bias_add ? bias_val : add2_o_res;
-	 assign acc_vld = bias_add ? bias_add : add2_o_res_vld;
+	 assign accumulate_in = add2_o_res;
+	 assign acc_vld = add2_o_res_vld;
 
     adder_32bit adder_acumulate(
         .clk(clk),
@@ -127,6 +143,6 @@ module PE(
     );
 
     assign out_node = out_reg_out;
-	 assign out_valid = bias_add && add_acc_o_res_vld;
+	 assign out_valid = bias_add_clk[0] && add_acc_o_res_vld;
 
 endmodule
