@@ -313,7 +313,7 @@ Net importModel(std::string path)
       layer.layer_output.height()= (base.height() - attributes.kernel_shape[1] + attributes.pads[2] + attributes.pads[3]) / attributes.strides[1] + 1;
       layer.layer_output.data = ch_arrcreate(float, layer.layer_output.channel() * layer.layer_output.width() * layer.layer_output.height());
 
-      aModel.commands.reserve(aModel.commands.size() + layer.layer_output.batch() * layer.layer_output.channel() * layer.layer_output.width() * layer.layer_output.height());
+      ch_array cmdStack = ch_arrstack(NetCommand, aModel.commands.size() + layer.layer_output.batch() * layer.layer_output.channel() * layer.layer_output.width() * layer.layer_output.height());
       for (uint z = 0; z < layer.layer_output.channel(); z++)
       {
         int outY = 0;
@@ -326,7 +326,6 @@ Net importModel(std::string path)
           {
             NetCommand comm;
             comm.type = MAC;
-            comm.referenceLayer=&layer;
             comm.mac.N = kernel.width() * kernel.height();
             comm.mac.repeat=base.channel();
             comm.mac.repeatShiftA = base.getIndex(0, 1, 0, 0) - base.getIndex(0, 0, 0, 0);
@@ -385,19 +384,23 @@ Net importModel(std::string path)
             }
             if (canRepeatHor && previousCommandRepeat)
             {
-              aModel.commands.back().mac.horShifts++;
+              ((NetCommand*)cmdStack._end)->mac.horShifts++;
             }
             else
             {
               comm.mac.indexes = (int *)malloc(sizeof(int) * 2 * kernel.width() * kernel.height());
               memcpy(comm.mac.indexes, temporaryIndexStore, sizeof(int) * 2 * kernel.width() * kernel.height());
-              aModel.commands.push_back(comm);
+              ch_arrpush(NetCommand, cmdStack, comm);
             }
             previousCommandRepeat = canRepeatHor;
           }
         }
       }
-      aModel.commands.shrink_to_fit();
+      for(int i=0;i<ch_arrlength(NetCommand,cmdStack);i++)
+      {
+        aModel.commands.push_back(ch_arrget(NetCommand, cmdStack, i));
+      }
+      ch_arrfree(cmdStack);
     }
     else if (node.op_type() == "Constant")
     {
@@ -423,7 +426,6 @@ Net importModel(std::string path)
       layer.layer_output.data = ch_arrcopy(base.data);
       NetCommand comm;
       comm.type = CLIP;
-      comm.referenceLayer=&layer;
       comm.clip.N = ch_arrlength(float, base.data);
       comm.clip.addrA = (float *)base.data._start;
       comm.clip.addrMin = (float *)min.data._start;
@@ -439,7 +441,6 @@ Net importModel(std::string path)
       layer.layer_output.data = ch_arrcopy(tensorA.data);
       NetCommand comm;
       comm.type = ADD;
-      comm.referenceLayer = &layer;
       comm.add.N = ch_arrlength(float, tensorA.data);
       comm.add.addrA = (float *)tensorA.data._start;
       comm.add.addrB = (float *)tensorB.data._start;
@@ -460,7 +461,6 @@ Net importModel(std::string path)
         {
           NetCommand comm;
           comm.type = GAP;
-          comm.referenceLayer=&layer;
           comm.mac.repeat=1;
           comm.mac.repeatShiftA = 0;
           comm.mac.repeatShiftB = 0;
@@ -489,8 +489,8 @@ Net importModel(std::string path)
     {
       const Tensor &base = *layer.layer_input[0];
       layer.layer_output.dim = ch_arrcopy(base.dim);
-      layer.layer_output.batch() = 1;
-      layer.layer_output.channel() = base.batch() * base.channel() * base.width() * base.height();
+      layer.layer_output.batch() = base.batch() * base.channel() * base.width() * base.height();
+      layer.layer_output.channel() = 1;
       layer.layer_output.width() = 1;
       layer.layer_output.height() = 1;
       layer.layer_output.data = ch_arrcopy(base.data);
@@ -501,10 +501,15 @@ Net importModel(std::string path)
       const Tensor &tensorB = *layer.layer_input[1];
       const Tensor &tensorC = *layer.layer_input[2];
       layer.layer_output.dim = ch_arrcopy(tensorC.dim);
-      layer.layer_output.data = ch_arrcopy(tensorC.data);
 
-      if (attributes.transA != 0 || attributes.transB != 0)
-        chprinterr("oops, gemm transpose not implemented teehee");
+      const int M = attributes.transA ? tensorA.batch() : tensorA.channel();
+      const int N = attributes.transB ? tensorB.channel() : tensorB.batch();
+
+      layer.layer_output.batch() = M;
+      layer.layer_output.channel() = N;
+      layer.layer_output.width() = 1;
+      layer.layer_output.height() = 1;
+      layer.layer_output.data = ch_arrcreate(float, M *N);
 
       NetCommand comm;
       comm.type=GEMM;

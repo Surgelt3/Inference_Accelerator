@@ -89,13 +89,13 @@ void Net::calculate()
 
     case GEMM:
     {
-      addrA = comm.gemm.addrA; // (M,K)
-      addrB = comm.gemm.addrB; // (K,N)
-      float*addrC=comm.gemm.addrC;// (M,N)
+      addrA = comm.gemm.addrA; // (N,K)
+      addrB = comm.gemm.addrB; // (K,M)
+      float *addrC = comm.gemm.addrC; // (M,N)
 
-      const int K = comm.gemm.transA ? comm.gemm.dimsA[0] : comm.gemm.dimsA[1];
-      const int M = comm.gemm.transA ? comm.gemm.dimsA[1] : comm.gemm.dimsA[0];
-      const int N = comm.gemm.transB ? comm.gemm.dimsB[0] : comm.gemm.dimsA[1];
+      const int K = comm.gemm.transA ? comm.gemm.dimsA[1] : comm.gemm.dimsA[0];
+      const int N = comm.gemm.transA ? comm.gemm.dimsA[0] : comm.gemm.dimsA[1];
+      const int M = comm.gemm.transB ? comm.gemm.dimsB[1] : comm.gemm.dimsB[0];
 
       for (int X = 0; X < M; X++)
       {
@@ -104,11 +104,11 @@ void Net::calculate()
           float val = 0;
           for (int i = 0; i < K; i++)
           {
-            int aX = comm.gemm.transA ? i : X;
-            int aY = comm.gemm.transA ? Y : i;
+            int aX = comm.gemm.transA ? Y : i;
+            int aY = comm.gemm.transA ? i : Y;
 
-            int bX = comm.gemm.transB ? X : i;
-            int bY = comm.gemm.transB ? i : Y;
+            int bX = comm.gemm.transB ? i : X;
+            int bY = comm.gemm.transB ? X : i;
 
             val += comm.gemm.alpha * (addrA[aX + aY * comm.gemm.dimsA[0]]) * (addrB[bX + bY * comm.gemm.dimsB[0]]);
           }
@@ -121,7 +121,8 @@ void Net::calculate()
           else if ((comm.gemm.dimsC[0] == 1 || comm.gemm.dimsC[0] == 0) && comm.gemm.dimsC[0] == comm.gemm.dimsC[1])
             val += comm.gemm.beta * (addrC[0]);
           else
-            chprinterr("incompatible length for C tensor in gemm");
+            chprinterr("incompatible length for C tensor in gemm\n");
+          comm.gemm.out[X + Y * M] = val;
         }
       }
       break;
