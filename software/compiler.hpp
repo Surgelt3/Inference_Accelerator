@@ -158,43 +158,6 @@ class Compiler
       case NetCommandType::GAP:
         break;
       
-      case NetCommandType::MOV:
-      //   addrA = comm.mov.addrA;
-      //   addrB = comm.mov.addrB;
-      //   if ((long)comm.mov.addrA < 10)
-      //   {
-      //     tmpData[(long)comm.mov.addrA] = (float *)realloc(tmpData[(long)comm.mov.addrA], sizeof(float) * comm.mov.N);
-      //     addrA = tmpData[(long)comm.mov.addrA];
-      //   }
-      //   if ((long)comm.mov.addrB < 10)
-      //   {
-      //     tmpData[(long)comm.mov.addrB] = (float *)realloc(tmpData[(long)comm.mov.addrB], sizeof(float) * comm.mov.N);
-      //     addrB = tmpData[(long)comm.mov.addrB];
-      //   }
-
-      //   memcpy(addrA, addrB, sizeof(float) * comm.mov.N);
-      //   break;
-      // case NetCommandType::ADDI:
-      //   addrA = comm.opImm.addrA;
-      //   if ((long)comm.opImm.addrA < 10)
-      //     addrA = tmpData[(long)comm.opImm.addrA];
-      //   for (int i = 0; i < comm.opImm.N; i++)
-      //   {
-      //     comm.opImm.out[i] = comm.opImm.c + addrA[i];
-      //   }
-
-      //   break;
-      // case NetCommandType::MULI:
-      //   addrA = comm.opImm.addrA;
-      //   if ((long)comm.opImm.addrA < 10)
-      //     addrA = tmpData[(long)comm.opImm.addrA];
-      //   for (int i = 0; i < comm.opImm.N; i++)
-      //   {
-      //     comm.opImm.out[i] = comm.opImm.c * addrA[i];
-      //   }
-
-        break;
-
       default:
         break;
       }

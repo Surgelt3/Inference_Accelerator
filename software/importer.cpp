@@ -501,74 +501,26 @@ Net importModel(std::string path)
       const Tensor &tensorB = *layer.layer_input[1];
       const Tensor &tensorC = *layer.layer_input[2];
       layer.layer_output.dim = ch_arrcopy(tensorC.dim);
-      if (layer.layer_output.channel() == 0)
-        layer.layer_output.channel() = 1;
       layer.layer_output.data = ch_arrcopy(tensorC.data);
 
       if (attributes.transA != 0 || attributes.transB != 0)
-        chprinterr("oops, not implemented teehee");
+        chprinterr("oops, gemm transpose not implemented teehee");
 
-      const bool tensorAAxis = tensorA.batch() != layer.layer_output.batch(); // 1
-      const bool tensorBAxis = tensorB.batch() != layer.layer_output.batch(); // 0
-      const size_t loopValue = (tensorAAxis == 0) ? tensorA.batch() : tensorA.channel(); // 1280
+      NetCommand comm;
+      comm.type=GEMM;
+      comm.gemm.alpha=attributes.alpha;
+      comm.gemm.beta=attributes.beta;
+      comm.gemm.transA=attributes.transA;
+      comm.gemm.transB=attributes.transB;
+      comm.gemm.addrA = (float *)tensorA.data._start;
+      comm.gemm.addrB = (float *)tensorB.data._start;
+      comm.gemm.addrC = (float *)tensorC.data._start;
+      comm.gemm.out = (float *)layer.layer_output.data._start;
+      comm.gemm.dimsA = (int *)tensorA.dim._start;
+      comm.gemm.dimsB = (int *)tensorB.dim._start;
+      comm.gemm.dimsC = (int *)tensorC.dim._start;
 
-      for (int x = 0; x < layer.layer_output.batch(); x++) // 1000
-      {
-        for (int y = 0; y < layer.layer_output.channel(); y++) // 1
-        {
-          NetCommand comm;
-          comm.type = MAC;
-          comm.mac.repeat = 1;
-          comm.mac.repeatShiftA = 0;
-          comm.mac.repeatShiftB = 0;
-          comm.mac.N = loopValue;
-          comm.mac.horShifts = 0;
-          comm.mac.vertShift = 1;
-          comm.mac.addrA = (float *)tensorA.data._start;
-          comm.mac.addrB = (float *)tensorB.data._start;
-          comm.mac.addrC = 0;
-          // this will error as out is not big enough to store entire result
-          comm.mac.out = ((float *)layer.layer_output.data._start) + x + y * layer.layer_output.batch();
-          comm.mac.indexes = (int *)malloc(sizeof(int) * 2 * loopValue); // 1280*2
-
-          for (int j = 0; j < loopValue; j++)
-          {
-            comm.mac.indexes[j * 2 + 0] = tensorAAxis ? x + j * tensorA.batch() : j + y * tensorA.batch();
-            comm.mac.indexes[j * 2 + 1] = tensorBAxis ? x + j * tensorB.batch() : j + y * tensorB.batch();
-          }
-          aModel.commands.push_back(comm);
-        }
-      }
-
-      NetCommand movComm;
-      movComm.type = MOV;
-      movComm.mov.N = layer.layer_output.batch() * layer.layer_output.channel();
-      movComm.mov.addrA = (float*)layer.layer_output.data._start;
-      movComm.mov.addrB = 0;
-      aModel.commands.push_back(movComm);
-
-      NetCommand mulI;
-      mulI.type = MULI;
-      mulI.opImm.N = layer.layer_output.batch() * layer.layer_output.channel();
-      mulI.opImm.addrA = 0;
-      mulI.opImm.c = attributes.alpha;
-      mulI.opImm.out = (float *)layer.layer_output.data._start;
-      aModel.commands.push_back(mulI);
-      aModel.commands.push_back(movComm);
-
-      mulI.opImm.addrA=(float*)tensorC.data._start;
-      mulI.opImm.c = attributes.beta;
-      aModel.commands.push_back(mulI);
-      movComm.mov.addrB = (float*)1;
-      aModel.commands.push_back(movComm);
-
-      NetCommand addComm;
-      addComm.type=ADD;
-      addComm.add.N = layer.layer_output.batch() * layer.layer_output.channel();
-      addComm.add.addrA=0;
-      addComm.add.addrB=(float*)1;
-      addComm.add.out = (float *)layer.layer_output.data._start;
-      aModel.commands.push_back(addComm);
+      aModel.commands.push_back(comm);
     }
     else
     {

@@ -76,9 +76,7 @@ enum NetCommandType
   CLIP,
   ADD,
   GAP,  // just mac
-  MOV,
-  ADDI, // opImm
-  MULI  // opImm
+  GEMM
 };
 struct NetCommand
 {
@@ -102,12 +100,6 @@ struct NetCommand
       float *addrA, *addrB, *addrC, *out;
       int *indexes;
     } mac;
-    struct 
-    {
-      int N;
-      float *addrA, *out;
-      float c;
-    } opImm;
     struct
     {
       /*
@@ -125,15 +117,12 @@ struct NetCommand
       float *addrA, *addrB,*out;
     } add;
 
-    struct
-    {
-      /*
-        if addrB is 0-10, create a temp array of size N
-        if temp array is already allocated, clear current data and resize
-      */
-      int N;
-      float *addrA,*addrB;
-    }mov;
+    struct {
+      float alpha,beta;
+      int transA,transB;
+      float*addrA,*addrB,*addrC,*out;
+      int *dimsA,*dimsB,*dimsC;
+    }gemm;
   };
 
   std::string toString()

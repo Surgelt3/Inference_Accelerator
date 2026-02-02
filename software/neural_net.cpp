@@ -86,43 +86,46 @@ void Net::calculate()
         comm.add.out[i] = addrA[i] + addrB[i];
       }
       break;
-    case MOV:
-      addrA = comm.mov.addrA;
-      addrB = comm.mov.addrB;
-      if ((long)comm.mov.addrA < 10)
-      {
-        tmpData[(long)comm.mov.addrA] = (float *)realloc(tmpData[(long)comm.mov.addrA], sizeof(float) * comm.mov.N);
-        addrA = tmpData[(long)comm.mov.addrA];
-      }
-      if ((long)comm.mov.addrB < 10)
-      {
-        tmpData[(long)comm.mov.addrB] = (float *)realloc(tmpData[(long)comm.mov.addrB], sizeof(float) * comm.mov.N);
-        addrB = tmpData[(long)comm.mov.addrB];
-      }
 
-      memcpy(addrA, addrB, sizeof(float) * comm.mov.N);
+    case GEMM:
+    {
+      addrA = comm.gemm.addrA; // (M,K)
+      addrB = comm.gemm.addrB; // (K,N)
+      float*addrC=comm.gemm.addrC;// (M,N)
+
+      const int K = comm.gemm.transA ? comm.gemm.dimsA[0] : comm.gemm.dimsA[1];
+      const int M = comm.gemm.transA ? comm.gemm.dimsA[1] : comm.gemm.dimsA[0];
+      const int N = comm.gemm.transB ? comm.gemm.dimsB[0] : comm.gemm.dimsA[1];
+
+      for (int X = 0; X < M; X++)
+      {
+        for (int Y = 0; Y < N; Y++)
+        {
+          float val = 0;
+          for (int i = 0; i < K; i++)
+          {
+            int aX = comm.gemm.transA ? i : X;
+            int aY = comm.gemm.transA ? Y : i;
+
+            int bX = comm.gemm.transB ? X : i;
+            int bY = comm.gemm.transB ? i : Y;
+
+            val += comm.gemm.alpha * (addrA[aX + aY * comm.gemm.dimsA[0]]) * (addrB[bX + bY * comm.gemm.dimsB[0]]);
+          }
+          if (comm.gemm.dimsC[0] == M && comm.gemm.dimsC[1] == N)
+            val += comm.gemm.beta * (addrC[X + Y * comm.gemm.dimsC[0]]);
+          else if (comm.gemm.dimsC[0] == M && (comm.gemm.dimsC[1] == 1 || comm.gemm.dimsC[1] == 0))
+            val += comm.gemm.beta * (addrC[X]);
+          else if ((comm.gemm.dimsC[0] == 1 || comm.gemm.dimsC[0] == 0) && comm.gemm.dimsC[1] == N)
+            val += comm.gemm.beta * (addrC[Y]);
+          else if ((comm.gemm.dimsC[0] == 1 || comm.gemm.dimsC[0] == 0) && comm.gemm.dimsC[0] == comm.gemm.dimsC[1])
+            val += comm.gemm.beta * (addrC[0]);
+          else
+            chprinterr("incompatible length for C tensor in gemm");
+        }
+      }
       break;
-    case ADDI:
-      addrA = comm.opImm.addrA;
-      if ((long)comm.opImm.addrA < 10)
-        addrA = tmpData[(long)comm.opImm.addrA];
-      for (int i = 0; i < comm.opImm.N; i++)
-      {
-        comm.opImm.out[i] = comm.opImm.c + addrA[i];
-      }
-
-      break;
-    case MULI:
-      addrA = comm.opImm.addrA;
-      if ((long)comm.opImm.addrA < 10)
-        addrA = tmpData[(long)comm.opImm.addrA];
-      for (int i = 0; i < comm.opImm.N; i++)
-      {
-        comm.opImm.out[i] = comm.opImm.c * addrA[i];
-      }
-
-      break;
-
+    }
     default:
       break;
     }
