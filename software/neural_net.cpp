@@ -48,7 +48,7 @@ void Net::calculate()
             sum += *comm.mac.addrC;
   
           if (comm.type == GAP)
-            sum /= comm.mac.N / 2;
+            sum /= comm.mac.N;
           *(comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut) = sum;
         }
       }
@@ -81,21 +81,23 @@ void Net::calculate()
 
     case GEMM:
     {
+      // a is supposed to be M,K and b K,N but this works so who cares
       addrA = comm.gemm.addrA;        // (N,K)
       addrB = comm.gemm.addrB;        // (K,M)
       float *addrC = comm.gemm.addrC; // (M,N)
 
       const int K = comm.gemm.transA ? comm.gemm.dimsA[1] : comm.gemm.dimsA[0];
       const int N = comm.gemm.transA ? comm.gemm.dimsA[0] : comm.gemm.dimsA[1];
-      const int M = comm.gemm.transB ? comm.gemm.dimsB[1] : comm.gemm.dimsB[0];
-      for(int X=0;X<1000;X++)
+      const int M = comm.gemm.transB ? comm.gemm.dimsB[0] : comm.gemm.dimsB[1];
+      
+      for(int Y=0;Y<N;Y++)
       {
-        for(int Y=0;Y<1;Y++)
+        for(int X=0;X<M;X++)
         {
-          float val=0;
-          for (int i=0;i<1280;i++)
+          double val=0;
+          for (int i=0;i<K;i++)
           {
-            val += (addrA[i + Y * 1280]) * (addrB[X + i * 1000]);
+            val += addrA[i + Y * comm.gemm.dimsA[0]] * addrB[X + i * comm.gemm.dimsB[0]];
           }
           val *= comm.gemm.alpha;
           val += comm.gemm.beta * addrC[X];

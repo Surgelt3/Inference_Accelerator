@@ -1,7 +1,7 @@
 #include "compiler.hpp"
 #include "importer.hpp"
 
-#if 0
+#if 1
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 int main()
@@ -53,37 +53,69 @@ int main()
   assert(w==h&&w==224);
 
   Tensor*input=model.input;
-  for (int x=0;x<224;x++)
+  for (int x = 0; x < 224; x++)
   {
-    for(int y=0;y<224;y++)
+    for (int y = 0; y < 224; y++)
     {
-      for(int c=0;c<3;c++)
+      for (int c = 0; c < 3; c++)
       {
         int arrIndex = input->getIndex(0, c, x, y);
-        int imIndex = 3 * (y * w + x) + c;
-        ch_arrget(float,input->data,arrIndex)=image[imIndex];
+        int imIndex = c + 3 * (y * 224 + x);
+        // ch_arrget(float, input->data, arrIndex) = (float)image[imIndex] / 255.0;
+        ch_arrget(float, input->data, arrIndex) = ((float)c+x+y)/(224*224*3);
+        // ch_arrget(float, input->data, arrIndex) = 0;
       }
     }
   }
-  
+  // ch_arrget(float, input->data, 0) = 1;
+  // ch_arrget(float, input->data, 224) = 1;
+  // ch_arrget(float, input->data, 224*224) = 1;
+  // ch_arrget(float, input->data, 1) = 1;
+  // ch_arrget(float, input->data, 2) = 1;
+
   // compiler.compileModel(model);
 
   // for (int i = 0; i < ch_arrlength(float, model.input->data); i++)
   // {
   //   ch_arrget(float, model.input->data, i) = (float)i / ch_arrlength(float, model.input->data);
   // }
-
+  // return 0;
   model.calculate();
   chprintln("calculated");
 
-  for (int i = 0; i < ch_arrlength(float, model.output->data); i++)
+  for(int i=2;i<3;i++)
   {
-    float prob = ch_arrget(float, model.output->data, i);
-    if(prob>0.1){
-      chprintln(prob);
+    const int h=7;
+    const int w=7;
+    for(int y=0;y<h;y++)
+    {
+      for(int x=0;x<w;x++)
+      {
+        float &prob = ch_arrget(float, model.output->data, i*h*w+y*w+x);
+        chprint(prob,", ");
+      }
+      chprintln();
     }
+    chprintln();
   }
-  model.free();
+  // for (int i = 0; i < ch_arrlength(float, model.output->data); i++)
+  // {
+  //   float prob = ch_arrget(float, model.output->data, i);
+  //   // if(prob>0.1){
+  //     chprintln(i,": ",prob);
+  //   // }
+  //     // if (i >= 111)
+  //     //   break;
+  // }
+  chprintln(ch_arrget(float, model.output->data, 0));
+  chprintln(ch_arrget(float, model.output->data, 1));
+  chprintln(ch_arrget(float, model.output->data, 2));
+  chprintln(ch_arrget(float, model.output->data, 3));
+  chprintln(ch_arrget(float, model.output->data, 4));
+  chprintln(ch_arrget(float, model.output->data, 5));
+
+  // chprintln(ch_arrget(float,model.output->data,263));
+  // model.free();
 
   return 0;
 }

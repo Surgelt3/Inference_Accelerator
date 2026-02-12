@@ -8,36 +8,6 @@
 
 #define chprint chprintln
 
-class MDAManager
-{
-  // hash to map local app memory to shared mem
-  // might need to check if we can free mem at some point
-  void*deviceMem;
-
-  void transferMem(float *data, size_t size)
-  {
-  
-  }
-  
-  // functions to translate local addr to device mem
-  std::string LOADInstruction(int reg, float *data)
-  {
-    return "";
-  }
-  std::string WRITEInstruction(int reg, float *data)
-  {
-    return "";
-  }
-  std::string MACInstruction(int regA, int regB, int regC)
-  {
-    return "";
-  }
-  std::string APPLYInstruction()
-  {
-    return "";
-  }
-} MDAMem;
-
 static Tensor parseTensor(onnx::TensorProto t)
 {
   size_t size = 1;
@@ -295,13 +265,13 @@ Net importModel(std::string path)
       {
         if (node.attribute(j).type() != onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INT)
           chprinterr("%s is the wrong type\n", attName.c_str());
-        attributes.transA = node.attribute(j).f();
+        attributes.transA = node.attribute(j).i();
       }
       else if (attName == "transB")
       {
         if (node.attribute(j).type() != onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INT)
           chprinterr("%s is the wrong type\n", attName.c_str());
-        attributes.transB = node.attribute(j).f();
+        attributes.transB = node.attribute(j).i();
       }
       else
       {
@@ -496,7 +466,7 @@ Net importModel(std::string path)
           {
             for (int y = 0; y < base.height(); y++)
             {
-              comm.mac.indexes[2 * (x + y * base.width())] = k + base.channel() * (x + base.width() * (y + base.height() * j));
+              comm.mac.indexes[2 * (x + y * base.width())] = base.getIndex(j,k,x,y);
               comm.mac.indexes[2 * (x + y * base.width()) + 1] = -2;
             }
           }
@@ -522,7 +492,7 @@ Net importModel(std::string path)
       layer.layer_output.dim = ch_arrcopy(tensorC.dim);
 
       const int M = attributes.transA ? tensorA.batch() : tensorA.channel();
-      const int N = attributes.transB ? tensorB.channel() : tensorB.batch();
+      const int N = attributes.transB ? tensorB.batch() : tensorB.channel();
 
       layer.layer_output.batch() = M;
       layer.layer_output.channel() = N;

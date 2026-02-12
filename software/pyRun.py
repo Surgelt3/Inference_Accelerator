@@ -2,7 +2,11 @@
 import cv2
 import numpy as np
 import onnxruntime
+import onnx
 import urllib.request
+from onnx import shape_inference
+from onnx import numpy_helper
+
 
 labels={
 0: 	"tench, Tinca tinca",
@@ -1008,7 +1012,8 @@ labels={
 }
 
 # Load the image
-image = cv2.imread("images/glasses.jpg")
+image = cv2.imread("/home/chevan/Documents/school/2025-2026/fall term/elec 490/Inference_Accelerator/software/images/DogResize.jpg")
+# image = cv2.imread("images/glasses.jpg")
 # url="https://organicfeeds.com/wp-content/uploads/2022/09/01-Most-Popular-Breeds-of-Chickens-2.jpg"
 # url_response = urllib.request.urlopen(url)
 # img_array = np.array(bytearray(url_response.read()), dtype=np.uint8)
@@ -1017,7 +1022,7 @@ image = cv2.imread("images/glasses.jpg")
 
 
 # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-image=cv2.normalize(image, image, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+# image=cv2.normalize(image, image, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
 
 
 # Check if the image has been loaded successfully
@@ -1035,16 +1040,34 @@ if height <= 0 or width <= 0:
 dsize = (224, 224)
 
 # Resize the image using cv2.resize
-resized_image = cv2.resize(image, dsize)
+resized_image = image
+# resized_image = cv2.resize(image, dsize)
 
 
 # Display the resized image
-cv2.imshow("Resized Image", resized_image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# cv2.imshow("Resized Image", resized_image)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 
 # Load the ONNX model
-session = onnxruntime.InferenceSession("mobilenet-v2-pytorch/mobilenet_v2.onnx")
+onnx_model=onnx.load("mobilenet-v2-pytorch/mobilenet_v2.onnx")
+# print(onnx_model.graph.initializer)
+# numpy_array=numpy_helper.to_array(onnx_model.graph.initializer[0]).copy()
+# numpy_array[1,:,:,:]=0
+# numpy_array[1,0]=[[0,0,0],[0,1,1],[0,0,0]]
+# numpy_array[1,1]=[[0,0,0],[0,0,0],[0,0,0]]
+# numpy_array[1,2]=[[0,0,0],[0,0,0],[0,0,0]]
+# tensor = numpy_helper.from_array(numpy_array,onnx_model.graph.initializer[0].name)
+# onnx_model.graph.initializer[0].CopyFrom(tensor)
+
+# numpy_array=numpy_helper.to_array(onnx_model.graph.initializer[1]).copy()
+# numpy_array[1]=0
+# tensor = numpy_helper.from_array(numpy_array,onnx_model.graph.initializer[1].name)
+# onnx_model.graph.initializer[1].CopyFrom(tensor)
+
+
+
+session=onnxruntime.InferenceSession(onnx_model.SerializeToString())
 
 # Check if the model has been loaded successfully
 if session is None:
@@ -1061,8 +1084,21 @@ output_name = session.get_outputs()[0].name
 
 img_batch = np.expand_dims(resized_image, axis=0)
 img_transposed = np.transpose(img_batch, (0, 3, 1, 2))
+img_transposed=img_transposed.astype(np.float32)/255
 
-prediction = session.run([output_name], {input_name: img_transposed.astype(np.float32)/255})[0]
+# img_transposed[:,:,:,:]=0
+# img_transposed[0,0,0,0]=1
+# img_transposed[0,0,1,0]=1
+# img_transposed[0,1,0,0]=1
+# img_transposed[0,0,0,1]=1
+# img_transposed[0,0,0,2]=1
+
+for c in range(3):
+    for x in range(224):
+        for y in range(224):
+            img_transposed[0,c,x,y]=(c+x+y)/(224*224*3)
+
+prediction = session.run([output_name], {input_name: img_transposed})[0]
 
 
 
@@ -1075,4 +1111,28 @@ prediction = session.run([output_name], {input_name: img_transposed.astype(np.fl
 # print(np.argmax(prediction[0]))
 # print(prediction.argmax(-1).item())
 # print(prediction[0])
-print("Labels:", labels[np.argmax(prediction[0])])
+
+# print(len(prediction[0,1]))
+print(prediction[0,2])
+# for i in range(32):
+#     print(prediction[0,i,0])
+#     print()
+    
+
+# inferred_model = shape_inference.infer_shapes(onnx_model)
+# print(inferred_model.graph.value_info)
+
+# for k in range(len(prediction[0])):
+#     for j in range(len(prediction[0,k])):
+#         for i in range(len(prediction[0,k,j])):
+#             print(i,",",j,",",k," ",prediction[0,k,j,i])
+# print()
+print(0,prediction[0,0])
+print(1,prediction[0,1])
+print(1,prediction[0,2])
+print(1,prediction[0,3])
+print(1,prediction[0,4])
+print(1,prediction[0,5])
+# print(0,prediction[0,1,0,0])
+# print(np.argmax(prediction[0]),prediction[0,np.argmax(prediction[0])])
+# print("Labels:", labels[np.argmax(prediction[0])])
