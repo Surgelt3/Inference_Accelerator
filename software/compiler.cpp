@@ -83,21 +83,21 @@ int main()
   model.calculate();
   chprintln("calculated");
 
-  for(int i=2;i<3;i++)
-  {
-    const int h=7;
-    const int w=7;
-    for(int y=0;y<h;y++)
-    {
-      for(int x=0;x<w;x++)
-      {
-        float &prob = ch_arrget(float, model.output->data, i*h*w+y*w+x);
-        chprint(prob,", ");
-      }
-      chprintln();
-    }
-    chprintln();
-  }
+  // for(int i=2;i<3;i++)
+  // {
+  //   const int h=7;
+  //   const int w=7;
+  //   for(int y=0;y<h;y++)
+  //   {
+  //     for(int x=0;x<w;x++)
+  //     {
+  //       float &prob = ch_arrget(float, model.output->data, i*h*w+y*w+x);
+  //       chprint(prob,", ");
+  //     }
+  //     chprintln();
+  //   }
+  //   chprintln();
+  // }
   // for (int i = 0; i < ch_arrlength(float, model.output->data); i++)
   // {
   //   float prob = ch_arrget(float, model.output->data, i);

@@ -475,8 +475,8 @@ Net importModel(std::string path)
     {
       const Tensor &base = *layer.layer_input[0];
       layer.layer_output.dim = ch_arrcopy(base.dim);
-      layer.layer_output.batch() = base.batch() * base.channel() * base.width() * base.height();
-      layer.layer_output.channel() = 1;
+      layer.layer_output.batch() = 1;
+      layer.layer_output.channel() = base.batch() * base.channel() * base.width() * base.height();
       layer.layer_output.width() = 1;
       layer.layer_output.height() = 1;
       layer.layer_output.data = base.data;
@@ -488,8 +488,8 @@ Net importModel(std::string path)
       const Tensor &tensorC = *layer.layer_input[2];
       layer.layer_output.dim = ch_arrcopy(tensorC.dim);
 
-      const int M = attributes.transA ? tensorA.batch() : tensorA.channel();
-      const int N = attributes.transB ? tensorB.batch() : tensorB.channel();
+      const int M = !attributes.transA ? tensorA.batch() : tensorA.channel();
+      const int N = !attributes.transB ? tensorB.channel() : tensorB.batch();
 
       layer.layer_output.batch() = M;
       layer.layer_output.channel() = N;

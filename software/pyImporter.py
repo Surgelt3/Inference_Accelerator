@@ -65,10 +65,12 @@ onnx_model=onnx.load("mobilenet-v2-pytorch/mobilenet_v2.onnx")
 # onnx_model.graph.node.remove(onnx_model.graph.node[-1])
 # onnx_model.graph.node.remove(onnx_model.graph.node[-1])
 # onnx_model.graph.node[-1].attribute[0].f=0
-onnx_model.graph.node[-1].attribute[1].f=0
 # onnx_model.graph.node[-1].attribute[1].f=0
-print(onnx_model.graph.node[-1].attribute)
+# onnx_model.graph.node[-1].attribute[1].f=0
+# print(onnx_model.graph.node[-1].attribute)
+print(onnx_model.graph.node)
 # onnx_model.graph.output.remove(onnx_model.graph.output[-1])
+# onnx_model.graph.output.append(onnx.helper.make_tensor_value_info("/GlobalAveragePool_output_0", 1, (1,1280,1,1)))
 # onnx_model.graph.output.append(onnx.helper.make_tensor_value_info("/Flatten_output_0", 1, (1,1280,1,1)))
 
 # for node in onnx_model.graph.node:
