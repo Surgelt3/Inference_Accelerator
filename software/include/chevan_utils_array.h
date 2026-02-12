@@ -17,12 +17,13 @@ static inline ch_array ch_arrcreate(size_t size)
 #define ch_arrcreate(type, size) ch_arrcreate(sizeof(type) * size)
 static inline ch_array ch_arrstack(size_t maxSize)
 {
-  ch_array a = {malloc(maxSize), 0, 0};
+  ch_array a;
+  a._start = malloc(maxSize);
   a._end = a._start;
   a._max = (uchar *)a._start + maxSize;
   return a;
 }
-#define ch_arrstack(type, size) ch_arrstack(sizeof(type) * size)
+#define ch_arrstack(type, size) ch_arrstack(sizeof(type) * (size))
 #define ch_arrlength(type, arr) (((uchar *)arr._end - (uchar *)arr._start) / sizeof(type))
 static inline ch_array ch_arrcopy(ch_array arr)
 {
@@ -49,7 +50,7 @@ static inline void *ch_arrgetp(size_t _size, ch_array arr, int i)
 #define ch_arrget(type, arr, i) (*((type *)ch_arrget(sizeof(type), arr, i)))
 
 #define ch_arrpush(type, arr, e)                 \
-  if (arr._end != arr._max)                      \
+  if (arr._end < arr._max)                       \
   {                                              \
     *(type *)arr._end = e;                       \
     arr._end = (uchar *)arr._end + sizeof(type); \

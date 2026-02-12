@@ -1,6 +1,7 @@
 #include "importer.hpp"
 #include <utils.hpp>
 #include <fstream>
+#include <math.h>
 
 #include <onnx.pb.h>
 
@@ -176,7 +177,7 @@ Net importModel(std::string path)
     aModel.layers.push_back(Layer());
     Layer &layer = aModel.layers.back();
 
-    auto &node = model.graph().node(i);
+    const onnx::NodeProto &node = model.graph().node(i);
     chprint("name ", i, ": ", node.name());
     chprint("\top: ", node.op_type());
 
@@ -229,7 +230,10 @@ Net importModel(std::string path)
         if (node.attribute(j).type() != onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INTS)
           chprinterr("%s is the wrong type\n", attName.c_str());
         for (int k = 0; k < node.attribute(j).ints_size(); k++)
+        {
           attributes.dilations[k] = node.attribute(j).ints(k);
+          assert(attributes.dilations[k] == 1);
+        }
       }
       else if (attName == "group")
       {
@@ -249,14 +253,19 @@ Net importModel(std::string path)
         if (node.attribute(j).type() != onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INTS)
           chprinterr("%s is the wrong type\n", attName.c_str());
         for (int k = 0; k < node.attribute(j).ints_size(); k++)
+        {
           attributes.pads[k] = node.attribute(j).ints(k);
+          assert(attributes.pads[k]<=1);
+        }
       }
       else if (attName == "strides")
       {
         if (node.attribute(j).type() != onnx::AttributeProto_AttributeType::AttributeProto_AttributeType_INTS)
           chprinterr("%s is the wrong type\n", attName.c_str());
         for (int k = 0; k < node.attribute(j).ints_size(); k++)
+        {
           attributes.strides[k] = node.attribute(j).ints(k);
+        }
       }
       else if (attName == "value")
       {
@@ -307,27 +316,28 @@ Net importModel(std::string path)
       const Tensor &bias = *layer.layer_input[2];
       int *temporaryIndexStore = (int *)malloc(sizeof(int) * 2 * kernel.width() * kernel.height());
       layer.layer_output.dim = ch_arrcreate(int, 4);
-      layer.layer_output.batch()=1;
-      layer.layer_output.channel()=kernel.batch();
+      layer.layer_output.batch() = 1;
+      layer.layer_output.channel() = kernel.batch();
       layer.layer_output.width() = (base.width() - attributes.kernel_shape[0] + attributes.pads[0] + attributes.pads[1]) / attributes.strides[0] + 1;
       layer.layer_output.height()= (base.height() - attributes.kernel_shape[1] + attributes.pads[2] + attributes.pads[3]) / attributes.strides[1] + 1;
       layer.layer_output.data = ch_arrcreate(float, layer.layer_output.channel() * layer.layer_output.width() * layer.layer_output.height());
 
-      ch_array cmdStack = ch_arrstack(NetCommand, aModel.commands.size() + layer.layer_output.batch() * layer.layer_output.channel() * layer.layer_output.width() * layer.layer_output.height());
+      ch_array cmdStack = ch_arrstack(NetCommand, layer.layer_output.batch() * layer.layer_output.channel() * layer.layer_output.width() * layer.layer_output.height());
       for (uint z = 0; z < layer.layer_output.channel(); z++)
       {
         int outY = 0;
         int shiftY = 0;
-        for (int y = -attributes.pads[2]; y < base.height() - attributes.kernel_shape[1] + attributes.pads[3]; y += attributes.strides[1] + shiftY, outY++)
+        for (int y = -attributes.pads[1]; y <= base.height() - attributes.kernel_shape[1] + attributes.pads[3]; y += attributes.strides[1] + shiftY, outY++)
         {
           int outX=0;
           bool previousCommandRepeat = false;
-          for (int x = -attributes.pads[0]; x < base.width() - attributes.kernel_shape[0] + attributes.pads[1]; x += attributes.strides[0], outX++)
+          for (int x = -attributes.pads[0]; x <= base.width() - attributes.kernel_shape[0] + attributes.pads[2]; x += attributes.strides[0], outX++)
           {
             NetCommand comm;
             comm.type = MAC;
             comm.mac.N = kernel.width() * kernel.height();
-            comm.mac.repeat=base.channel();
+            comm.mac.repeat = base.channel() / attributes.group;
+            comm.mac.repeatB = kernel.channel();
             comm.mac.repeatShiftA = base.getIndex(0, 1, 0, 0) - base.getIndex(0, 0, 0, 0);
             comm.mac.repeatShiftB = kernel.getIndex(0, 1, 0, 0) - base.getIndex(0, 0, 0, 0);
             comm.mac.horShifts = 0;
@@ -352,21 +362,26 @@ Net importModel(std::string path)
               for (int dx = 0; dx < attributes.kernel_shape[0]; dx++)
               {
                 int aIndex = 0;
-                if (x + dx < 0 || y + dy < 0 || x + dx > base.width() || y + dy > base.height())
+                if (x + dx < 0 || y + dy < 0 || x + dx >= base.width() || y + dy >= base.height())
                 {
                   aIndex = -1;
                 }
                 else
                 {
-                  aIndex = base.getIndex(0, 0, x + dx, y + dy);
+                  if (attributes.group != 1)
+                    aIndex = base.getIndex(0, z, x + dx, y + dy);
+                  else
+                    aIndex = base.getIndex(0, 0, x + dx, y + dy);
                   vertIsOOB[dx] = false;
                   horIsOOB = false;
                 }
                 const int bIndex = kernel.getIndex(z, 0, dx, dy);
+                assert(!isnan(ch_arrget(float,kernel.data,bIndex)));
                 temporaryIndexStore[0 + 2 * (attributes.kernel_shape[1] * dy + dx)] = aIndex;
                 temporaryIndexStore[1 + 2 * (attributes.kernel_shape[1] * dy + dx)] = bIndex;
               }
               canRepeatVert = canRepeatVert && !horIsOOB;
+              canRepeatVert=false;
             }
             for (int dx = 0; dx < attributes.kernel_shape[0]; dx++)
             {
@@ -374,9 +389,9 @@ Net importModel(std::string path)
             }
             if (canRepeatVert)
             {
-              comm.mac.vertShift = layer.layer_output.height();
-              comm.mac.vertShiftSize = base.getIndex(0, 0, 0, attributes.strides[1]) - base.getIndex(0, 0, 0, 0) - 2;
-              shiftY = comm.mac.vertShiftSize;
+              comm.mac.vertShift = layer.layer_output.height()-2;
+              comm.mac.vertShiftSize = base.getIndex(0, 0, 0, attributes.strides[1]) - base.getIndex(0, 0, 0, 0);
+              shiftY = comm.mac.vertShift * attributes.strides[1];
             }
             else
             {
@@ -384,13 +399,16 @@ Net importModel(std::string path)
             }
             if (canRepeatHor && previousCommandRepeat)
             {
-              ((NetCommand*)cmdStack._end)->mac.horShifts++;
+              ((NetCommand *)cmdStack._end - 1)->mac.horShifts++;
             }
             else
             {
               comm.mac.indexes = (int *)malloc(sizeof(int) * 2 * kernel.width() * kernel.height());
               memcpy(comm.mac.indexes, temporaryIndexStore, sizeof(int) * 2 * kernel.width() * kernel.height());
-              ch_arrpush(NetCommand, cmdStack, comm);
+              ch_arrpush(NetCommand, cmdStack, comm) else
+              {
+                chprinterr("stack full\n");
+              }
             }
             previousCommandRepeat = canRepeatHor;
           }
@@ -461,7 +479,8 @@ Net importModel(std::string path)
         {
           NetCommand comm;
           comm.type = GAP;
-          comm.mac.repeat=1;
+          comm.mac.repeat = 1;
+          comm.mac.repeatB = 1;
           comm.mac.repeatShiftA = 0;
           comm.mac.repeatShiftB = 0;
           comm.mac.N = base.width() * base.height();
@@ -493,7 +512,7 @@ Net importModel(std::string path)
       layer.layer_output.channel() = 1;
       layer.layer_output.width() = 1;
       layer.layer_output.height() = 1;
-      layer.layer_output.data = ch_arrcopy(base.data);
+      layer.layer_output.data = base.data;
     }
     else if (node.op_type() == "Gemm")
     {

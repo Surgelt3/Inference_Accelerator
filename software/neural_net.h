@@ -93,7 +93,8 @@ struct NetCommand
         MAC N,addrA,addrB,addrC,x,a,y,b,z,c,x1,a1,y1,b1,z1,c1 -> addrC[0]+addrA[x]*addrB[a]+addrA[y]*addrB[b]+addrA[z]*addrB[c]+...,addrA[x1]*addrB[a1]+addrA[y1]*addrB[b1]+addrA[z1]*addrB[c1]
       */
       int N;
-      int repeat,repeatShiftA,repeatShiftB;
+      int repeat,repeatShiftA;
+      int repeatB,repeatShiftB;
       int horShifts,horShiftSize;
       int vertShift,vertShiftSize,vertShiftSizeOut;
       float *addrA, *addrB, *addrC, *out;
