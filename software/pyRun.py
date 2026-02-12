@@ -1113,7 +1113,7 @@ prediction = session.run([output_name], {input_name: img_transposed})[0]
 # print(prediction[0])
 
 # print(len(prediction[0,1]))
-print(prediction[0,2])
+# print(prediction[0,2])
 # for i in range(32):
 #     print(prediction[0,i,0])
 #     print()

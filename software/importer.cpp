@@ -6,8 +6,6 @@
 #include <onnx.pb.h>
 
 
-#define chprint chprintln
-
 static Tensor parseTensor(onnx::TensorProto t)
 {
   size_t size = 1;
@@ -148,8 +146,8 @@ Net importModel(std::string path)
     Layer &layer = aModel.layers.back();
 
     const onnx::NodeProto &node = model.graph().node(i);
-    chprint("name ", i, ": ", node.name());
-    chprint("\top: ", node.op_type());
+    chprintln("name ", i, ": ", node.name());
+    chprintln("\top: ", node.op_type());
 
     for (int j = 0; j < node.input().size(); j++)
     {
@@ -190,7 +188,6 @@ Net importModel(std::string path)
     for (int j = 0; j < node.attribute_size(); j++)
     {
       const std::string &attName = node.attribute(j).name();
-      // chprint(attName);
       if (attName == "auto_pad")
       {
         chstop("TODO");
@@ -520,8 +517,8 @@ Net importModel(std::string path)
     {
       chprinterr("unimplemented layer type %s\n", node.op_type().c_str());
     }
-    chprint("\tout size: ", layer.layer_output.batch(), ",", layer.layer_output.channel(), ",", layer.layer_output.width(), ",", layer.layer_output.height());
-    chprint("\tcommands: ",aModel.commands.size());
+    chprintln("\tout size: ", layer.layer_output.batch(), ",", layer.layer_output.channel(), ",", layer.layer_output.width(), ",", layer.layer_output.height());
+    chprintln("\tcommands: ",aModel.commands.size());
   }
   aModel.output = ch_hashget(Tensor *, arrayNameMap, model.graph().output(0).name().c_str());
   chassert(aModel.output != ch_hash_NOTFOUND, "Output array not found");
@@ -531,26 +528,3 @@ Net importModel(std::string path)
 
   return aModel;
 }
-
-// int main()
-// {
-
-  
-//   Net model = importModel("../mobilenet-v2-pytorch/mobilenet_v2.onnx");
-//   chprint("done");
-
-//   for (int i = 0; i < ch_arrlength(float, model.input->data); i++)
-//   {
-//     ch_arrget(float, model.input->data, i) = (float)i / ch_arrlength(float, model.input->data);
-//   }
-//   model.calculate();
-//   chprint("calculated");
-
-//   for(int i=0;i<ch_arrlength(float,model.output->data);i++)
-//   {
-//     chprint(ch_arrget(float,model.output->data,i));
-//   }
-//   model.free();
-
-//   return 0;
-// }

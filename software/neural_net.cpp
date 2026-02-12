@@ -49,6 +49,7 @@ void Net::calculate()
   
           if (comm.type == GAP)
             sum /= comm.mac.N;
+          sum = MIN(MAX(sum, 0), 6);
           *(comm.mac.out + shift + vShift * comm.mac.vertShiftSizeOut) = sum;
         }
       }
@@ -104,36 +105,6 @@ void Net::calculate()
           comm.gemm.out[X + Y * 1000] = val;
         }
       }
-      // for (int Y = 0; Y < N; Y++)
-      // {
-      //   for (int X = 0; X < M; X++)
-      //   {
-      //     float val = 0;
-      //     for (int i = 0; i < K; i++)
-      //     {
-      //       int aX = comm.gemm.transA ? Y : i;
-      //       int aY = comm.gemm.transA ? i : Y;
-
-      //       int bX = comm.gemm.transB ? i : X;
-      //       int bY = comm.gemm.transB ? X : i;
-
-      //       val += (addrA[aX + aY * comm.gemm.dimsA[0]]) * (addrB[bX + bY * comm.gemm.dimsB[0]]);
-      //     }
-      //     val *= comm.gemm.alpha;
-          
-      //     if (comm.gemm.dimsC[0] == M && comm.gemm.dimsC[1] == N)
-      //       val += comm.gemm.beta * (addrC[X + Y * comm.gemm.dimsC[0]]);
-      //     else if (comm.gemm.dimsC[0] == M && (comm.gemm.dimsC[1] == 1 || comm.gemm.dimsC[1] == 0))
-      //       val += comm.gemm.beta * (addrC[X]);
-      //     else if ((comm.gemm.dimsC[0] == 1 || comm.gemm.dimsC[0] == 0) && comm.gemm.dimsC[1] == N)
-      //       val += comm.gemm.beta * (addrC[Y]);
-      //     else if ((comm.gemm.dimsC[0] == 1 || comm.gemm.dimsC[0] == 0) && comm.gemm.dimsC[0] == comm.gemm.dimsC[1])
-      //       val += comm.gemm.beta * (addrC[0]);
-      //     else
-      //       chprinterr("incompatible length for C tensor in gemm\n");
-      //     comm.gemm.out[X + Y * M] = val;
-      //   }
-      // }
       break;
     }
     default:
