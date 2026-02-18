@@ -1,8 +1,8 @@
 module PE_SWITCH(
 	input [1:0] sel,
 	input[31:0] in1, in2,
-	output out_valid,
-	output [31:0] out
+	output reg out_valid,
+	output reg [31:0] out
 );
 
 	always @(*) begin

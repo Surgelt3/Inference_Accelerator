@@ -25,7 +25,7 @@ module FIFO #(
 	assign pop = out_valid && out_ready; 
 	
 	assign out_valid = count > 0;
-	assign out_data = fifo[rptr];'
+	assign out_data = fifo[rptr];
 	assign extra_out = extra_fifo[rptr];
 	
 	always @(*) begin

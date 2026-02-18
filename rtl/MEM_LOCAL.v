@@ -1,24 +1,43 @@
 
 module MEM_LOCAL(
 	input clk, rst,
-	input write_en,
-	input [1:0] read_size, 
+	input write_en, read_en, 
+	input bias_add, 
+	input classifier_bit, 
+	input [1:0] read_size, bias_loc, 
+	input [8:0] write_address, 
 	input [8:0] address, param_loc, 
-	input [31:0] write_data,
+	input [767:0] write_data,
+	output reg classifier_bit_out,
+	output reg read_valid_out, 
+	output reg bias_add_out, 
+	output reg [1:0] bias_loc_out, read_size_out, 
 	output reg [767:0] read_data
 );
 
 	reg [31:0] mem [0:511];
 	
+	initial begin
+		#20 $readmemh("C:/\Users/\lucas/\Desktop/\ELEC_49X/\Inference_Accelerator/\mem.hex", mem);
+	end
+	
 	always @(posedge clk) begin
-		if (rst)
-			for (integer i = 0; i < 512; i++) begin
-				mem[i] <= 32'd0;
-			end
+		read_valid_out <= 1'b0;
+		if (rst) begin
+		
+		end	
 		else begin
-			if (write_en)
-				mem[address] <= write_data;
-			else
+			bias_loc_out <= bias_loc;
+			classifier_bit_out <= classifier_bit;
+			bias_add_out <= bias_add;
+			read_size_out <= read_size;
+			if (write_en) begin
+			  for (integer i = 0; i < 16; i = i + 1) begin
+					mem[write_address + i] <= write_data[i*32 +: 32];
+			  end
+			end
+			else if (read_en) begin
+				read_valid_out <= 1'b1;
 				case (read_size)
 					2'b01: begin
 								read_data <= {
@@ -50,6 +69,7 @@ module MEM_LOCAL(
 									read_data <= {768{1'b0}};
 								end
 				endcase
+			end
 		end
 	end
 	

@@ -3,13 +3,25 @@ module NPU(
 	input clk, rst, 
 	input [31:0] instr,
 	output npu_instr_ready, 
+	
+	input load_data_in_valid,
+	input [8:0] load_data_in_address,
+	input [31:0] load_data_in_data, 
+	output load_data_in_ready, 
+
 );
 
 	// instr breakdown
 	// opcode (3 bits): 31-29
-	// start_loc (8 bits): 28-21
-	// length (8 bits): 20-13
-	// param_loc (8 bits): 12-5
+	// start_loc (9 bits): 28-20
+	// length (9 bits): 19-11
+	// param_loc (10 bits): 10-1
+	// unused: 0
+	
+	// MAC opcode: 3'b000
+	// LOAD opcode: 3'b001
+	// START opcode: 3'b010
+	// END opcode: 3'b011
 	
 	
 	
@@ -41,8 +53,8 @@ module NPU(
 	reg local_mem_read_num, local_mem_write_num;
 	
 	//wires for mem_local
-	wire [1:0] mem_local0_read_size, mem_local`_read_size;
-	wire mem_local0_wire_en, mem_local1_wire_en;
+	wire [1:0] mem_local0_read_size, mem_local1_read_size;
+	wire mem_local0_write_en, mem_local1_write_en;
 	wire mem_local0_bias_add, mem_local1_bias_add;
 	wire [8:0] mem_local0_address, mem_local1_address;
 	wire [31:0] mem_local0_write_data, mem_local1_write_data;
@@ -53,25 +65,86 @@ module NPU(
 	
 	wire [31:0] pc_in, pc_out;
 	wire classifier_bit;
-	wire [2:0] curr_opcode;
-	wire [3:0] op_len;
+	wire [2:0] opcode_out;
+	wire [8:0] start_loc_out, param_loc_out;
+	wire [9:0] length_out;
+	wire curr_classifier_bit;
 	
 	always @(posedge clk) begin
 		if (rst) begin
 			local_mem_read_num <= 1'b0;
 			local_mem_write_num <= 1'b1;
 		end
-			
+		else if (swap_mem_signal_control_unit) begin
+			local_mem_read_num <= !local_mem_read_num;
+			local_mem_write_num <= !local_mem_write_num;
+		end
 	end
 	
-	assign mem_local0_wire_en = local_mem_write_num ? 1'b0 : relu_valid;
-	assign mem_local1_wire_en = local_mem_write_num ? relu_valid : 1'b0;
-	assign mem_local0_address = local_mem_write_num ? ;
-	assign mem_local1_address = local_mem_write_num ? ;
+		
+	wire load_data_control_unit;
+	wire load_data_out_valid;
+	wire [8:0] load_data_write_address;
+	wire [511:0] load_data_mem_write_data;
 	
-	assign mem_local0_bias_add = (!local_mem_read_num) ? (pe0_bias_add) : 1'b0;
-	assign mem_local1_bias_add = (local_mem_read_num) ? (pe1_bias_add) : 1'b0;
+	IN_DATA_BUFFER in_data_buffer(
+		.clk(clk), .rst(rst),
+		.out_ready(load_data_control_unit), 
+		.in_valid(load_data_in_valid), 
+		.in_address(load_data_in_address),
+		.in_data(load_data_in_data), 
+		.out_valid(load_data_out_valid),
+		.in_ready(load_data_in_ready), 
+		.out_address(load_data_write_address),
+		.out_data(load_data_mem_write_data)
+	);
 
+	
+	INSTR_DECODER instr_decoder(
+		.clk(clk), .rst(rst), 
+		.opcode(instr[31:29]),
+		.start_loc(instr[28:20]), .param_loc(instr[10:1]),
+		.length(instr[19:11]),
+		.pe_busy(pe_busy), 
+		.pc_in(pc_in),
+		.classifier_bit_out(classifier_bit),
+		.opcode_out(curr_opcode),
+		.start_loc_out(start_loc_out), .param_loc_out(param_loc_out),
+		.length_out(length_out),
+		.pc_out(pc_out)
+		
+	);
+	
+	wire bias_add;
+	wire [8:0] out_address; 
+	
+	
+	wire run_end_control_unit;
+	wire [1:0] mem_local0_read_size_out, mem_local1_read_size_out;
+	wire [31:0] write_data_mem_local;
+	wire classifier_bit_fifo, mem_local0_classifier_bit_out, mem_local1_classifier_bit_out, curr_classifier_bit;
+	
+	wire [1:0] mem_local_bias_loc, mem_local0_bias_loc, mem_local1_bias_loc;
+	
+	wire pe_fifo_in_valid;
+	wire fifo_bias_add;
+	wire mem_read_en;
+
+	
+	assign mem_local0_write_en = load_data_out_valid && load_data_control_unit;
+	
+	assign mem_local0_bias_add = bias_add_control_unit;
+	assign mem_local1_bias_add = bias_add_control_unit;
+	assign mem_local0_read_size = read_size_control_unit;
+	assign mem_local1_read_size = read_size_control_unit;
+	assign mem_local0_address = local_mem_read_num ? out_address : mem_local_address_control_unit;
+	assign mem_local1_address = local_mem_read_num ? mem_local_address_control_unit : out_address;
+	assign mem_local0_param_loc = mem_local_param_loc_control_unit;
+	assign mem_local1_param_loc = mem_local_param_loc_control_unit;
+	assign mem_local0_write_data = write_data_mem_local;
+	assign mem_local1_write_data = write_data_mem_local;
+	
+	assign classifier_bit_fifo = local_mem_read_num ? mem_local1_classifier_bit_out : mem_local0_classifier_bit_out;
 	
 	assign pe0_fifo_in_data0 = local_mem_read_num ? mem_local1_read_data[0:255] : mem_local0_read_data[0:255];
 	assign pe1_fifo_in_data0 = local_mem_read_num ? mem_local1_read_data[0:255] : mem_local0_read_data[0:255];
@@ -80,55 +153,74 @@ module NPU(
 	assign pe0_fifo_in_data2 = local_mem_read_num ? mem_local1_read_data[512:767] : mem_local0_read_data[512:767];
 	assign pe1_fifo_in_data2 = local_mem_read_num ? mem_local1_read_data[512:767] : mem_local0_read_data[512:767];
 
-
-	INSTR_DECODER instr_decoder(
-		.clk(clk), .rst(rst), 
-		.opcode(instr[31:29]),
-		.start_loc(instr[28:21]), .length(instr[20:13]), .param_loc(instr[12:5]),
-		.pe_busy(pe_busy), 
-		.pc_in(pc_in),
-		.opcode_out(curr_opcode),
-		.classifier_bit_out(classifier_bit),
-		.op_len(op_len),
-		.pc_out(pc_out)
-		
-	);
+	
+	assign pe0_fifo_out_ready = 1'b1;
+	assign pe1_fifo_out_ready = 1'b1;
+	assign pe_fifo_in_valid = local_mem_read_num ? mem_local1_read_valid_out : mem_local0_read_valid_out;
+	assign mem_local_read_size_out = local_mem_read_num ? mem_local1_read_size_out : mem_local0_read_size_out;
+	assign pe0_fifo_in_valid = ((classifier_bit_fifo == 0) && (pe_fifo_in_valid)) ? mem_local_read_size_out : 2'b00;
+	assign pe1_fifo_in_valid = ((classifier_bit_fifo == 1) && (pe_fifo_in_valid)) ? mem_local_read_size_out : 2'b00;
 
 	
+	assign fifo_bias_add = local_mem_read_num ? mem_local1_bias_add_out : mem_local0_bias_add_out;
 	
+	
+	assign pe0_fifo_bias_add0 = ((mem_local_read_size_out == 2'b01) && (classifier_bit_fifo == 0)) ? fifo_bias_add: 1'b0;
+	assign pe0_fifo_bias_add1 = ((mem_local_read_size_out == 2'b10) && (classifier_bit_fifo == 0)) ? fifo_bias_add: 1'b0;
+	assign pe0_fifo_bias_add2 = ((mem_local_read_size_out == 2'b11) && (classifier_bit_fifo == 0)) ? fifo_bias_add: 1'b0;
+	assign pe1_fifo_bias_add0 = ((mem_local_read_size_out == 2'b01) && (classifier_bit_fifo == 1)) ? fifo_bias_add: 1'b0;
+	assign pe1_fifo_bias_add1 = ((mem_local_read_size_out == 2'b10) && (classifier_bit_fifo == 1)) ? fifo_bias_add: 1'b0;
+	assign pe1_fifo_bias_add2 = ((mem_local_read_size_out == 2'b11) && (classifier_bit_fifo == 1)) ? fifo_bias_add: 1'b0;
+
+	
+	assign mem_local_bias_loc = local_mem_read_num ? mem_local1_bias_loc : mem_local0_bias_loc;;
+	assign pe0_fifo_bias_loc = (classifier_bit_fifo == 0) ? mem_local_bias_loc : 2'b00;
+	assign pe1_fifo_bias_loc = (classifier_bit_fifo == 1) ? mem_local_bias_loc : 2'b00;
+	
+	assign mem_local0_write_data = {{256{1'b0}}, mem_write_data};
+	
+	
+	wire load_signal, relu_signal, pool_signal, mac_signal;
+	
+	wire [1:0] pe_fifo_bias_loc_control_unit;
+	wire [1:0] read_size_control_unit;
+	wire [2:0] bias_add_control_unit;
+	wire [8:0] mem_local_address_control_unit, mem_local_param_loc_control_unit;
 	
 	CONTROL_UNIT control_unit(
 		.clk(clk), .rst(rst), 
-		.opcode(curr_opcode),
+		.opcode(opcode_out),
 		.classifier_bit(classifier_bit),
-		.op_len(op_len), 
-		.pe0_fifo_out_ready(pe0_fifo_out_ready), .pe1_fifo_out_ready(pe1_fifo_out_ready),
-		.pe0_bias_add(pe0_bias_add), .pe1_bias_add(pe1_bias_add), 
-		.run_end(run_end),
+		.address(start_loc_out), .length(length_out), .param_loc(param_loc_out), 
+		.pe_fifo_bias_loc(pe_fifo_bias_loc_control_unit),
+		.read_size(read_size_control_unit), 
+		.bias_add(bias_add_control_unit), 
+		.mem_local_address(mem_local_address_control_unit), .mem_local_param_loc(mem_local_param_loc_control_unit), 
+		.curr_classifier_bit(curr_classifier_bit), 
+		.load_signal(load_signal), .relu_signal(relu_signal), .pool_signal(pool_signal), .mac_signal(mac_signal), 
 		.pe_busy(pe_busy)
 	);
-
-	// provide memory range, then load all those values into fifo with a single param
-	// load in the entire kernel
+	
+	assign mem_read_en = (classifier_bit_fifo == 1) ? pe1_fifo_in_ready : pe0_fifo_in_ready;
+	
+	wire read_en;
+	assign read_en = mac_signal | pool_signal;
 	
 	
 	MEM_LOCAL mem_local0(
 		.clk(clk), .rst(rst),
-		.write_en(mem_local0_wire_en),
-		.read_size(mem_local0_read_size), 
-		.address(mem_local0_address), .param_loc(), 
-		.write_data(mem_local0_write_data),
+		.write_en(mem_local0_write_en), .read_en(read_en), 
+		.bias_add(mem_local0_bias_add), 
+		.classifier_bit(curr_classifier_bit), 
+		.read_size(mem_local0_read_size), .bias_loc(pe_fifo_bias_loc_control_unit), 
+		.write_address(load_data_write_address)
+		.address(mem_local0_address), .param_loc(mem_local0_param_loc), 
+		.write_data(load_data_mem_write_data),
+		.classifier_bit_out(mem_local0_classifier_bit_out), 
+		.read_valid_out(mem_local0_read_valid_out), 
+		.bias_add_out(mem_local0_bias_add_out), 
+		.bias_loc_out(mem_local0_bias_loc), .read_size_out(mem_local0_read_size_out), 
 		.read_data(mem_local0_read_data)
-	);
-
-
-	MEM_LOCAL mem_local1(
-		.clk(clk), .rst(rst),
-		.write_en(mem_local1_wire_en),
-		.read_size(mem_local1_read_size), 
-		.address(mem_local1_address), .param_loc(), 
-		.write_data(mem_local1_write_data),
-		.read_data(mem_local1_read_data)
 	);
 
 	
@@ -139,7 +231,7 @@ module NPU(
 		.clk(clk), .reset(rst),
 		.out_ready(pe0_fifo_out_ready), 
 		.in_valid(pe0_fifo_in_valid), 
-		.extra_in0({pe0_fifo_bias_add0, pe0_fifo_bias_loc}), .extra_in1({pe0_fifo_bias_add0, pe0_fifo_bias_loc}), .extra_in2({pe0_fifo_bias_add0, pe0_fifo_bias_loc}),
+		.extra_in0({pe0_fifo_bias_add0, pe0_fifo_bias_loc}), .extra_in1({pe0_fifo_bias_add1, pe0_fifo_bias_loc}), .extra_in2({pe0_fifo_bias_add2, pe0_fifo_bias_loc}),
 		.in_data0(pe0_fifo_in_data0), .in_data1(pe0_fifo_in_data1), .in_data2(pe0_fifo_in_data2),
 		.out_valid(pe0_in_valid),
 		.in_ready(pe0_fifo_in_ready),
@@ -157,6 +249,9 @@ module NPU(
 		.out_valid(pe0_out_valid), 
 		.out_node(pe0_out)
 	);
+	
+	// FIFO Singls to assign
+	// to be used pe1_fifo_in_ready
 	
 	
 	FIFO pe1_fifo #(
@@ -204,7 +299,9 @@ module NPU(
 		.out_data(relu_out)
 	);
 	
+	assign write_data_mem_local = relu_out;
 
+	
 	
 	
 
