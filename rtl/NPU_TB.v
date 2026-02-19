@@ -44,6 +44,20 @@ module NPU_TB(
 		endcase
 	end
 	
+	// instr breakdown
+	// opcode (3 bits): 31-29
+	// start_loc (9 bits): 28-20
+	// length (10 bits): 19-10
+	// param_loc (9 bits): 9-1
+	// unused: 0
+	
+	// MAC opcode: 3'b000
+	// LOAD opcode: 3'b001
+	// START opcode: 3'b010
+	// END opcode: 3'b011
+	
+	0000001001
+	001110000
 	
 	always @(posedge clk) begin
 		case (Present_state)
@@ -54,7 +68,7 @@ module NPU_TB(
 					rst <= 1;
 					#20 rst <= 0;
 					
-					instr <= ;
+					instr <= 32'0000000000000000001001001110000;
 					#20;
 					instr <= ;
 					#20; 

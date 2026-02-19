@@ -14,8 +14,8 @@ module NPU(
 	// instr breakdown
 	// opcode (3 bits): 31-29
 	// start_loc (9 bits): 28-20
-	// length (9 bits): 19-11
-	// param_loc (10 bits): 10-1
+	// length (10 bits): 19-10
+	// param_loc (9 bits): 9-1
 	// unused: 0
 	
 	// MAC opcode: 3'b000
@@ -41,7 +41,6 @@ module NPU(
 	//Wire for PE units
 	wire pe0_reset, pe1_reset;
 	wire pe0_out_valid, pe1_out_valid;
-	wire pe0_bias_add, pe1_bias_add;
 	wire [31:0] pe0_out, pe1_out;
 	//wires for PE Switch and Activation Function
 	wire pe_sWitch_valid;
@@ -68,7 +67,6 @@ module NPU(
 	wire [2:0] opcode_out;
 	wire [8:0] start_loc_out, param_loc_out;
 	wire [9:0] length_out;
-	wire curr_classifier_bit;
 	
 	always @(posedge clk) begin
 		if (rst) begin
@@ -99,8 +97,8 @@ module NPU(
 	INSTR_DECODER instr_decoder(
 		.clk(clk), .rst(rst), 
 		.opcode(instr[31:29]),
-		.start_loc(instr[28:20]), .param_loc(instr[10:1]),
-		.length(instr[19:11]),
+		.start_loc(instr[28:20]), .param_loc(instr[9:1]),
+		.length(instr[19:10]),
 		.pe_busy(pe_busy), 
 		.pc_in(pc_in),
 		.classifier_bit_out(classifier_bit),
@@ -142,12 +140,12 @@ module NPU(
 	
 	assign classifier_bit_fifo = local_mem_read_num ? mem_local1_classifier_bit_out : mem_local0_classifier_bit_out;
 	
-	assign pe0_fifo_in_data0 = local_mem_read_num ? mem_local1_read_data[0:255] : mem_local0_read_data[0:255];
-	assign pe1_fifo_in_data0 = local_mem_read_num ? mem_local1_read_data[0:255] : mem_local0_read_data[0:255];
-	assign pe0_fifo_in_data1 = local_mem_read_num ? mem_local1_read_data[256:511] : mem_local0_read_data[256:511];
-	assign pe1_fifo_in_data1 = local_mem_read_num ? mem_local1_read_data[256:511] : mem_local0_read_data[256:511];
-	assign pe0_fifo_in_data2 = local_mem_read_num ? mem_local1_read_data[512:767] : mem_local0_read_data[512:767];
-	assign pe1_fifo_in_data2 = local_mem_read_num ? mem_local1_read_data[512:767] : mem_local0_read_data[512:767];
+	assign pe0_fifo_in_data0 = mem_local0_read_data[255:0];
+	assign pe1_fifo_in_data0 = mem_local0_read_data[255:0];
+	assign pe0_fifo_in_data1 = mem_local0_read_data[511:256];
+	assign pe1_fifo_in_data1 = mem_local0_read_data[511:256];
+	assign pe0_fifo_in_data2 = mem_local0_read_data[767:512];
+	assign pe1_fifo_in_data2 = mem_local0_read_data[767:512];
 
 	
 	assign pe0_fifo_out_ready = 1'b1;
@@ -169,7 +167,7 @@ module NPU(
 	assign pe1_fifo_bias_add2 = ((mem_local_read_size_out == 2'b11) && (classifier_bit_fifo == 1)) ? fifo_bias_add: 1'b0;
 
 	
-	assign mem_local_bias_loc = local_mem_read_num ? mem_local1_bias_loc : mem_local0_bias_loc;;
+	assign mem_local_bias_loc = local_mem_read_num ? mem_local1_bias_loc : mem_local0_bias_loc;
 	assign pe0_fifo_bias_loc = (classifier_bit_fifo == 0) ? mem_local_bias_loc : 2'b00;
 	assign pe1_fifo_bias_loc = (classifier_bit_fifo == 1) ? mem_local_bias_loc : 2'b00;
 	
@@ -235,8 +233,8 @@ module NPU(
 	PE pe0(
 		.clk(clk), .rst(pe0_reset), .i_vld(pe0_in_valid), .bias_add(pe0_bias_add),  
 		.bias_loc(pe0_bias_loc), 
-		.in0(pe0_data[0:31]), .in1(pe0_data[32:63]), .in2(pe0_data[64:95]), .in3(pe0_data[96:127]), 
-		.in4(pe0_data[128:159]), .in5(pe0_data[160:191]), .in6(pe0_data[192:223]), .in7(pe0_data[224:255]), 
+		.in0(pe0_data[31:0]), .in1(pe0_data[63:32]), .in2(pe0_data[95:64]), .in3(pe0_data[127:96]), 
+		.in4(pe0_data[159:128]), .in5(pe0_data[191:160]), .in6(pe0_data[223:192]), .in7(pe0_data[255:224]), 
 		.out_valid(pe0_out_valid), 
 		.out_node(pe0_out)
 	);
@@ -261,8 +259,8 @@ module NPU(
 	PE pe1(
 		.clk(clk), .rst(pe1_reset), .i_vld(pe1_in_valid), .bias_add(pe1_bias_add),  
 		.bias_loc(pe1_bias_loc), 
-		.in0(pe1_data[0:31]), .in1(pe1_data[32:63]), .in2(pe1_data[64:95]), .in3(pe1_data[96:127]), 
-		.in4(pe1_data[128:159]), .in5(pe1_data[160:191]), .in6(pe1_data[192:223]), .in7(pe1_data[224:255]), 
+		.in0(pe1_data[31:0]), .in1(pe1_data[63:32]), .in2(pe1_data[95:64]), .in3(pe1_data[127:96]), 
+		.in4(pe1_data[159:128]), .in5(pe1_data[191:160]), .in6(pe1_data[223:192]), .in7(pe1_data[255:224]), 
 		.out_valid(pe1_out_valid), 
 		.out_node(pe1_out)
 	);

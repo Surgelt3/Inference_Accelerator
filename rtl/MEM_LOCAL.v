@@ -18,8 +18,10 @@ module MEM_LOCAL(
 	reg [31:0] mem [0:511];
 	
 	initial begin
-		#20 $readmemh("C:/Users/lucas/Desktop/ELEC_49X/Inference_Accelerator/mem.hex", mem);
+		#20 $readmemh("C:/Users/lucas/Desktop/ELEC_49X/Inference_Accelerator/rtl/mem.hex", mem);
 	end
+	
+	integer i;
 	
 	always @(posedge clk) begin
 		read_valid_out <= 1'b0;
@@ -32,7 +34,7 @@ module MEM_LOCAL(
 			bias_add_out <= bias_add;
 			read_size_out <= read_size;
 			if (write_en) begin
-			  for (integer i = 0; i < 16; i = i + 1) begin
+			  for (i = 0; i < 16; i = i + 1) begin
 					mem[write_address + i] <= write_data[i*32 +: 32];
 			  end
 			end
