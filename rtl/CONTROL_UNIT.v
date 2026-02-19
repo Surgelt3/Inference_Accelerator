@@ -10,17 +10,24 @@ module CONTROL_UNIT(
 	output reg [8:0] mem_local_address, mem_local_param_loc, 
 	output reg curr_classifier_bit, 
 	output reg load_signal, relu_signal, pool_signal, mac_signal,
-	output reg [1:0] pe_busy,
+	output reg [1:0] pe_busy
 );
 	
-	
-		
+	reg [1:0] pe_busy_next;
 	reg [8:0] pe0_address, pe1_address;
 	reg [8:0] pe0_param_loc, pe1_param_loc;
-	reg [8:0] pe0_length, pe1_length;
-	reg [8:0] cur_length;
-	
-	reg curr_classifier_bit;
+	reg [9:0] pe0_length, pe0_length_next, pe1_length, pe1_length_next;
+	reg [9:0] pe_length;
+	reg [9:0] cur_length;
+
+	reg [1:0] pe_fifo_bias_loc_next;
+	reg [2:0] bias_add_next;
+	reg [1:0] read_size_next;
+	reg [8:0] mem_local_param_loc_next, mem_local_address_next;
+
+	reg curr_classifier_bit_next;
+
+
 	wire [8:0] curr_adress, curr_param_loc;
 	reg mem_calc_ready; 
 	
@@ -35,11 +42,6 @@ module CONTROL_UNIT(
 		pool_signal <= 1'b0;
 		mac_signal <= 1'b0;
 		if (rst) begin
-			pe0_fifo_out_ready <= 1'b0;
-			pe1_fifo_out_ready <= 1'b0;
-			pe0_bias_add <= 1'b0;
-			pe1_bias_add <= 1'b0;
-			run_end <= 1'b0;
 			pe_busy <= 2'b00;
 			
 			curr_classifier_bit <= 1'b0;

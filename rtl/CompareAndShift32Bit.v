@@ -1,4 +1,3 @@
-`timescale 1ns / 1ps
 
 module CompareAndShift32Bit (
     input [7:0] exp_a,

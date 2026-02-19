@@ -18,7 +18,7 @@ module MEM_LOCAL(
 	reg [31:0] mem [0:511];
 	
 	initial begin
-		#20 $readmemh("C:/\Users/\lucas/\Desktop/\ELEC_49X/\Inference_Accelerator/\mem.hex", mem);
+		#20 $readmemh("C:/Users/lucas/Desktop/ELEC_49X/Inference_Accelerator/mem.hex", mem);
 	end
 	
 	always @(posedge clk) begin

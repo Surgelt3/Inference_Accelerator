@@ -1,8 +1,7 @@
-`timescale 1ns / 1ps
 
 module adder_32bit(
     input clk,
-    inout rst,
+    input rst,
     input [31:0] i_a,
     input [31:0] i_b,
     input i_vld,

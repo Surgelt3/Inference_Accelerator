@@ -1,4 +1,3 @@
-`timescale 1ns / 1ps
 
 module Addition32Bit (
     input sign_a,

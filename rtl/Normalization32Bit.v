@@ -1,4 +1,3 @@
-`timescale 1ns / 1ps
 
 module Normalization32Bit (
     input [24:0] res,

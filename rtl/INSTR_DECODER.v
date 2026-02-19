@@ -16,7 +16,6 @@ module INSTR_DECODER(
 		if (rst) begin
 			pc_out <= 32'd0;
 			classifier_bit_out <= 1'b0;
-			load_data_flag <= 1'b0;
 		end
 		opcode_out <= opcode;
 		start_loc_out <= start_loc;
@@ -27,6 +26,7 @@ module INSTR_DECODER(
 			if (!pe_busy[0] | !pe_busy[1]) begin
 				if (!pe_busy[0]) begin
 					classifier_bit_out <= 0;
+				end 
 				else if (!pe_busy[1]) begin
 					classifier_bit_out <= 1;
 				end 

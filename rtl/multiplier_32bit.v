@@ -1,6 +1,5 @@
 // from https://github.com/Rishadd/32bit-FPU/blob/main/rtl/multiplier_32bit.v
 
-`timescale 1ns / 1ps
 
 module multiplier_32bit (
     input clk,

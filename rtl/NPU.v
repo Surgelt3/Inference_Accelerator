@@ -7,7 +7,7 @@ module NPU(
 	input load_data_in_valid,
 	input [8:0] load_data_in_address,
 	input [31:0] load_data_in_data, 
-	output load_data_in_ready, 
+	output load_data_in_ready
 
 );
 
@@ -75,10 +75,6 @@ module NPU(
 			local_mem_read_num <= 1'b0;
 			local_mem_write_num <= 1'b1;
 		end
-		else if (swap_mem_signal_control_unit) begin
-			local_mem_read_num <= !local_mem_read_num;
-			local_mem_write_num <= !local_mem_write_num;
-		end
 	end
 	
 		
@@ -87,7 +83,7 @@ module NPU(
 	wire [8:0] load_data_write_address;
 	wire [511:0] load_data_mem_write_data;
 	
-	IN_DATA_BUFFER in_data_buffer(
+	WRITE_BUFF write_buff(
 		.clk(clk), .rst(rst),
 		.out_ready(load_data_control_unit), 
 		.in_valid(load_data_in_valid), 
@@ -141,8 +137,8 @@ module NPU(
 	assign mem_local1_address = local_mem_read_num ? mem_local_address_control_unit : out_address;
 	assign mem_local0_param_loc = mem_local_param_loc_control_unit;
 	assign mem_local1_param_loc = mem_local_param_loc_control_unit;
-	assign mem_local0_write_data = write_data_mem_local;
-	assign mem_local1_write_data = write_data_mem_local;
+	//assign mem_local0_write_data = write_data_mem_local;
+	//assign mem_local1_write_data = write_data_mem_local;
 	
 	assign classifier_bit_fifo = local_mem_read_num ? mem_local1_classifier_bit_out : mem_local0_classifier_bit_out;
 	
@@ -156,13 +152,13 @@ module NPU(
 	
 	assign pe0_fifo_out_ready = 1'b1;
 	assign pe1_fifo_out_ready = 1'b1;
-	assign pe_fifo_in_valid = local_mem_read_num ? mem_local1_read_valid_out : mem_local0_read_valid_out;
+	assign pe_fifo_in_valid = mem_local0_read_valid_out;
 	assign mem_local_read_size_out = local_mem_read_num ? mem_local1_read_size_out : mem_local0_read_size_out;
 	assign pe0_fifo_in_valid = ((classifier_bit_fifo == 0) && (pe_fifo_in_valid)) ? mem_local_read_size_out : 2'b00;
 	assign pe1_fifo_in_valid = ((classifier_bit_fifo == 1) && (pe_fifo_in_valid)) ? mem_local_read_size_out : 2'b00;
 
 	
-	assign fifo_bias_add = local_mem_read_num ? mem_local1_bias_add_out : mem_local0_bias_add_out;
+	assign fifo_bias_add = mem_local0_bias_add_out;
 	
 	
 	assign pe0_fifo_bias_add0 = ((mem_local_read_size_out == 2'b01) && (classifier_bit_fifo == 0)) ? fifo_bias_add: 1'b0;
@@ -177,7 +173,7 @@ module NPU(
 	assign pe0_fifo_bias_loc = (classifier_bit_fifo == 0) ? mem_local_bias_loc : 2'b00;
 	assign pe1_fifo_bias_loc = (classifier_bit_fifo == 1) ? mem_local_bias_loc : 2'b00;
 	
-	assign mem_local0_write_data = {{256{1'b0}}, mem_write_data};
+	assign mem_local0_write_data = {{256{1'b0}}, load_data_mem_write_data};
 	
 	
 	wire load_signal, relu_signal, pool_signal, mac_signal;
@@ -213,7 +209,7 @@ module NPU(
 		.bias_add(mem_local0_bias_add), 
 		.classifier_bit(curr_classifier_bit), 
 		.read_size(mem_local0_read_size), .bias_loc(pe_fifo_bias_loc_control_unit), 
-		.write_address(load_data_write_address)
+		.write_address(load_data_write_address),
 		.address(mem_local0_address), .param_loc(mem_local0_param_loc), 
 		.write_data(load_data_mem_write_data),
 		.classifier_bit_out(mem_local0_classifier_bit_out), 
@@ -224,10 +220,7 @@ module NPU(
 	);
 
 	
-	FIFO pe0_fifo #(
-		W = 256,
-		length = 32
-	)(
+	FIFO pe0_fifo (
 		.clk(clk), .reset(rst),
 		.out_ready(pe0_fifo_out_ready), 
 		.in_valid(pe0_fifo_in_valid), 
@@ -239,13 +232,11 @@ module NPU(
 		.out_data(pe0_data)
 	);
 	
-
 	PE pe0(
 		.clk(clk), .rst(pe0_reset), .i_vld(pe0_in_valid), .bias_add(pe0_bias_add),  
 		.bias_loc(pe0_bias_loc), 
 		.in0(pe0_data[0:31]), .in1(pe0_data[32:63]), .in2(pe0_data[64:95]), .in3(pe0_data[96:127]), 
 		.in4(pe0_data[128:159]), .in5(pe0_data[160:191]), .in6(pe0_data[192:223]), .in7(pe0_data[224:255]), 
-		.bias_val(pe0_data[0:31]), 
 		.out_valid(pe0_out_valid), 
 		.out_node(pe0_out)
 	);
@@ -254,10 +245,7 @@ module NPU(
 	// to be used pe1_fifo_in_ready
 	
 	
-	FIFO pe1_fifo #(
-		W = 256,
-		length = 32
-	)(
+	FIFO pe1_fifo (
 		.clk(clk), .reset(rst),
 		.out_ready(pe1_fifo_out_ready), 
 		.in_valid(pe1_fifo_in_valid),
@@ -275,7 +263,6 @@ module NPU(
 		.bias_loc(pe1_bias_loc), 
 		.in0(pe1_data[0:31]), .in1(pe1_data[32:63]), .in2(pe1_data[64:95]), .in3(pe1_data[96:127]), 
 		.in4(pe1_data[128:159]), .in5(pe1_data[160:191]), .in6(pe1_data[192:223]), .in7(pe1_data[224:255]), 
-		.bias_val(pe1_data[0:31]),  
 		.out_valid(pe1_out_valid), 
 		.out_node(pe1_out)
 	);

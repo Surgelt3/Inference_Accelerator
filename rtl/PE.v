@@ -34,16 +34,16 @@ module PE(
         end else begin
             out_reg <= out_reg_out;
 		  end
-		  bias_add_clk = {bias_add, bias_add_clk[2], bias_add_clk[1]};
+		  bias_add_clk <= {bias_add, bias_add_clk[2], bias_add_clk[1]};
     end
 	 
-	 assign mul0_ia = (bias_add && (bias_loc == 2'b00)) ? in0: 1'b1;
+	 assign mul0_ia = (bias_add && (bias_loc == 2'b00)) ? in0: 'b0;
 	 assign mul0_ib = in1;
-	 assign mul1_ia = (bias_add && (bias_loc == 2'b01)) ? in2: 1'b1;
+	 assign mul1_ia = (bias_add && (bias_loc == 2'b01)) ? in2: 'b0;
 	 assign mul1_ib = in3;
-	 assign mul2_ia = (bias_add && (bias_loc == 2'b10)) ? in4: 1'b1;
+	 assign mul2_ia = (bias_add && (bias_loc == 2'b10)) ? in4: 'b0;
 	 assign mul2_ib = in5;
-	 assign mul3_ia = (bias_add && (bias_loc == 2'b11)) ? in6: 1'b1;
+	 assign mul3_ia = (bias_add && (bias_loc == 2'b11)) ? in6: 'b0;
 	 assign mul3_ib = in7;
 
 
@@ -91,6 +91,7 @@ module PE(
         .overflow(mul3_overflow)
     );
 
+    wire i_vld_adder0, i_vld_adder1;
     assign i_vld_adder0 = mul0_o_res_vld & mul1_o_res_vld;
     assign i_vld_adder1 = mul2_o_res_vld & mul3_o_res_vld;
 
