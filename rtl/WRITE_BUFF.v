@@ -4,10 +4,10 @@ module WRITE_BUFF(
 	input out_ready,
 	input in_valid,
 	input [31:0] in_data, 
-	input [31:0] in_address,
+	input [8:0] in_address,
 	output in_ready,
 	output reg out_valid,
-	output reg [31:0] out_address,
+	output reg [8:0] out_address,
 	output reg [255:0] out_data
 );
 

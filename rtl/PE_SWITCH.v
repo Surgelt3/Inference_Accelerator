@@ -9,7 +9,7 @@ module PE_SWITCH(
 		case (sel)
 			2'b00: begin
 						out_valid = 1'b0;
-						out = '0;
+						out = 32'd0;
 					end
 			2'b01: begin 
 						out_valid = 1'b1;

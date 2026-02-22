@@ -56,17 +56,25 @@ module NPU(
 	wire mem_local0_write_en, mem_local1_write_en;
 	wire mem_local0_bias_add, mem_local1_bias_add;
 	wire [8:0] mem_local0_address, mem_local1_address;
-	wire [31:0] mem_local0_write_data, mem_local1_write_data;
+	wire [767:0] mem_local0_write_data, mem_local1_write_data;
 	wire [767:0] mem_local0_read_data, mem_local1_read_data;
 	
 	wire run_end;
-	wire [2:0] pe_busy;
+	wire [1:0] pe_busy;
 	
 	wire [31:0] pc_in, pc_out;
 	wire classifier_bit;
 	wire [2:0] opcode_out;
 	wire [8:0] start_loc_out, param_loc_out;
 	wire [9:0] length_out;
+	
+	wire load_signal, relu_signal, pool_signal, mac_signal;
+	
+	wire [1:0] pe_fifo_bias_loc_control_unit;
+	wire [1:0] read_size_control_unit;
+	wire bias_add_control_unit;
+	wire [8:0] mem_local_address_control_unit, mem_local_param_loc_control_unit;
+
 	
 	always @(posedge clk) begin
 		if (rst) begin
@@ -79,7 +87,10 @@ module NPU(
 	wire load_data_control_unit;
 	wire load_data_out_valid;
 	wire [8:0] load_data_write_address;
-	wire [511:0] load_data_mem_write_data;
+	wire [255:0] load_data_mem_write_data;
+	
+	wire mem_local0_read_valid_out;
+	wire mem_local0_bias_add_out;
 	
 	WRITE_BUFF write_buff(
 		.clk(clk), .rst(rst),
@@ -102,7 +113,7 @@ module NPU(
 		.pe_busy(pe_busy), 
 		.pc_in(pc_in),
 		.classifier_bit_out(classifier_bit),
-		.opcode_out(curr_opcode),
+		.opcode_out(opcode_out),
 		.start_loc_out(start_loc_out), .param_loc_out(param_loc_out),
 		.length_out(length_out),
 		.pc_out(pc_out)
@@ -123,7 +134,12 @@ module NPU(
 	wire pe_fifo_in_valid;
 	wire fifo_bias_add;
 	wire mem_read_en;
-
+	
+	wire [255:0] pe0_fifo_in_data0, pe1_fifo_in_data0;
+	wire [255:0] pe0_fifo_in_data1, pe1_fifo_in_data1;
+	wire [255:0] pe0_fifo_in_data2, pe1_fifo_in_data2;
+	
+	wire [8:0] mem_local0_param_loc;
 	
 	assign mem_local0_write_en = load_data_out_valid && load_data_control_unit;
 	
@@ -173,14 +189,7 @@ module NPU(
 	
 	assign mem_local0_write_data = {{256{1'b0}}, load_data_mem_write_data};
 	
-	
-	wire load_signal, relu_signal, pool_signal, mac_signal;
-	
-	wire [1:0] pe_fifo_bias_loc_control_unit;
-	wire [1:0] read_size_control_unit;
-	wire [2:0] bias_add_control_unit;
-	wire [8:0] mem_local_address_control_unit, mem_local_param_loc_control_unit;
-	
+		
 	CONTROL_UNIT control_unit(
 		.clk(clk), .rst(rst), 
 		.opcode(opcode_out),
@@ -209,7 +218,7 @@ module NPU(
 		.read_size(mem_local0_read_size), .bias_loc(pe_fifo_bias_loc_control_unit), 
 		.write_address(load_data_write_address),
 		.address(mem_local0_address), .param_loc(mem_local0_param_loc), 
-		.write_data(load_data_mem_write_data),
+		.write_data(mem_local0_write_data),
 		.classifier_bit_out(mem_local0_classifier_bit_out), 
 		.read_valid_out(mem_local0_read_valid_out), 
 		.bias_add_out(mem_local0_bias_add_out), 

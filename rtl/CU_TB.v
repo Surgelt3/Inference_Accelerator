@@ -1,29 +1,29 @@
-module NPU_TB(
-
-);
-
-
+module CU_TB();
 	
 	
 	reg clk, rst;
 	reg [31:0] instr;
-	wire npu_instr_ready;
+	reg classifier_bit;
+
+	wire [1:0] pe_fifo_bias_loc, read_size, pe_busy;
+	wire bias_add, curr_classifier_bit, load_signal, relu_signal, pool_signal, mac_signal;
+	wire [8:0] mem_local_address, mem_local_param_loc;
 	
-	reg load_data_in_valid;
-	reg [8:0] load_data_in_address;
-	reg [31:0] load_data_in_data;
-	wire load_data_in_ready;
 		
-		
-	NPU DUT(
-		clk, rst, 
-		instr,
-		npu_instr_ready, 
-		load_data_in_valid,
-		load_data_in_address,
-		load_data_in_data, 
-		load_data_in_ready
-	);
+	 CONTROL_UNIT DUT(
+			clk, rst, 
+			instr[31:29],
+			classifier_bit,
+			instr[28:20], instr[9:1],
+			instr[19:10],
+			pe_fifo_bias_loc,
+			read_size, 
+			bias_add, 
+			mem_local_address, mem_local_param_loc, 
+			curr_classifier_bit, 
+			load_signal, relu_signal, pool_signal, mac_signal,
+			pe_busy
+		);
 
 	parameter Default = 5'b00000, Init = 5'b00001, Test = 5'b00010, Done = 5'b01111;
 	reg [4:0] Present_state = Default;
@@ -54,23 +54,24 @@ module NPU_TB(
 	// LOAD opcode: 3'b001
 	// START opcode: 3'b010
 	// END opcode: 3'b011
+	
 		
 	always @(posedge clk) begin
 		case (Present_state)
 			Init: begin
-					load_data_in_valid <= 1'b0; 
-					load_data_in_address <= 1'b0;
-					load_data_in_data <= 32'b0;
 					rst <= 1;
 					#20 rst <= 0;
-					
-					instr <= 32'b00000000000000000010010011011110;
+					classifier_bit <= 1'b0;
+					instr <= 32'b00000000000000000010010011100000;
 					#20;
-					instr <= 32'b00000000000000000010010011011110;
+					classifier_bit <= 1'b1;
+					instr <= 32'b00000000000000000010010011100000;
 					#20; 
-					instr <= 32'b00000000000000000010010011011110;
+					classifier_bit <= 1'b0;
+					instr <= 32'b00000000000000000010010011100000;
 					#20;
-					instr <= 32'b00000000000000000010010011011110;
+					classifier_bit <= 1'b1;
+					instr <= 32'b00000000000000000010010011100000;
 					
 			end
 			Test: begin
@@ -82,6 +83,7 @@ module NPU_TB(
 			end
 		endcase
 	end
+
 
 
 

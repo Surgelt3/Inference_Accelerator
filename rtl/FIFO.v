@@ -41,9 +41,9 @@ module FIFO #(
 	
 	always @(posedge clk) begin
 		if (reset) begin
-			wptr <= '0;
-			rptr <= '0;
-			count <= '0;
+			wptr <= 5'd0;
+			rptr <= 5'd0;
+			count <= 6'd0;
 		end 
 		else begin
 						
