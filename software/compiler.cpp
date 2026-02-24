@@ -49,8 +49,7 @@ int main()
   unsigned char *image = stbi_load("/home/chevan/Documents/school/2025-2026/fall term/elec 490/Inference_Accelerator/software/images/DogResize.jpg",
      &w, &h, &comp, STBI_rgb);
 
-  
-  assert(w==h&&w==224);
+  assert(w == h && w == 224 && comp == 3);
 
   Tensor*input=model.input;
   for (int x = 0; x < 224; x++)
@@ -60,9 +59,12 @@ int main()
       for (int c = 0; c < 3; c++)
       {
         int arrIndex = input->getIndex(0, c, x, y);
-        int imIndex = c + 3 * (y * 224 + x);
-        // ch_arrget(float, input->data, arrIndex) = (float)image[imIndex] / 255.0;
-        ch_arrget(float, input->data, arrIndex) = ((float)c+x+y)/(224*224*3);
+        int imIndex = (c * -1 + 2) + 3 * (y * 224 + x);
+        // int imIndex=
+        // if(x==0&&y==0)
+        //   chprintln(image[imIndex]);
+        ch_arrget(float, input->data, arrIndex) = (float)image[imIndex] / 255.0;
+        // ch_arrget(float, input->data, arrIndex) = ((float)c+x+y)/(224*224*3);
         // ch_arrget(float, input->data, arrIndex) = 0;
       }
     }
@@ -73,14 +75,16 @@ int main()
   // ch_arrget(float, input->data, 1) = 1;
   // ch_arrget(float, input->data, 2) = 1;
 
-  // compiler.compileModel(model);
+  Compiler compiler=Compiler();
+  compiler.compileModel(model);
 
   // for (int i = 0; i < ch_arrlength(float, model.input->data); i++)
   // {
   //   ch_arrget(float, model.input->data, i) = (float)i / ch_arrlength(float, model.input->data);
   // }
   // return 0;
-  model.calculate();
+  // model.calculate();
+  
   chprintln("calculated");
 
   // for(int i=2;i<3;i++)
@@ -107,12 +111,26 @@ int main()
   //     // if (i >= 111)
   //     //   break;
   // }
-  chprintln(ch_arrget(float, model.output->data, 0));
-  chprintln(ch_arrget(float, model.output->data, 1));
-  chprintln(ch_arrget(float, model.output->data, 2));
-  chprintln(ch_arrget(float, model.output->data, 3));
-  chprintln(ch_arrget(float, model.output->data, 4));
-  chprintln(ch_arrget(float, model.output->data, 5));
+  return 0;
+
+
+
+
+
+  chprintln(0,": ",ch_arrget(float, model.output->data, 0));
+  chprintln(1,": ",ch_arrget(float, model.output->data, 1));
+  chprintln(2,": ",ch_arrget(float, model.output->data, 2));
+  chprintln(3,": ",ch_arrget(float, model.output->data, 3));
+  chprintln(4,": ",ch_arrget(float, model.output->data, 4));
+  chprintln(999,": ",ch_arrget(float, model.output->data, 999));
+  int maxIndex=0;
+  for (int i = 0; i < ch_arrlength(float, model.output->data); i++)
+  {
+    float prob = ch_arrget(float, model.output->data, i);
+    if (prob >= ch_arrget(float, model.output->data, maxIndex))
+      maxIndex=i;
+  }
+  chprintln(maxIndex, ": ", ch_arrget(float, model.output->data, maxIndex));
 
   // chprintln(ch_arrget(float,model.output->data,263));
   // model.free();

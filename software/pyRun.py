@@ -1013,6 +1013,7 @@ labels={
 
 # Load the image
 image = cv2.imread("/home/chevan/Documents/school/2025-2026/fall term/elec 490/Inference_Accelerator/software/images/DogResize.jpg")
+print(image[0,0])
 # image = cv2.imread("images/glasses.jpg")
 # url="https://organicfeeds.com/wp-content/uploads/2022/09/01-Most-Popular-Breeds-of-Chickens-2.jpg"
 # url_response = urllib.request.urlopen(url)
@@ -1093,10 +1094,10 @@ img_transposed=img_transposed.astype(np.float32)/255
 # img_transposed[0,0,0,1]=1
 # img_transposed[0,0,0,2]=1
 
-for c in range(3):
-    for x in range(224):
-        for y in range(224):
-            img_transposed[0,c,x,y]=(c+x+y)/(224*224*3)
+# for c in range(3):
+#     for x in range(224):
+#         for y in range(224):
+#             img_transposed[0,c,x,y]=(c+x+y)/(224*224*3)
 
 prediction = session.run([output_name], {input_name: img_transposed})[0]
 
@@ -1132,7 +1133,7 @@ print(1,prediction[0,1])
 print(2,prediction[0,2])
 print(3,prediction[0,3])
 print(4,prediction[0,4])
-print(5,prediction[0,5])
+print(999,prediction[0,999])
 # print(0,prediction[0,1,0,0])
-# print(np.argmax(prediction[0]),prediction[0,np.argmax(prediction[0])])
-# print("Labels:", labels[np.argmax(prediction[0])])
+print(np.argmax(prediction[0]),prediction[0,np.argmax(prediction[0])])
+print("Labels:", labels[np.argmax(prediction[0])])

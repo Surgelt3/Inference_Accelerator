@@ -82,6 +82,7 @@ typedef struct ch_hashPair
 {
   uchar key[ch_hash_STRING_SIZE];
   // 1 for taken data
+  // 2 for ok to del
   uchar flag;
   void *data;
 } ch_hashPair;
@@ -128,8 +129,8 @@ static void *ch_hashgetInt(ch_hash h, size_t k, size_t _size)
   size_t _k = h.hash ? h.hash(&k) : k % h.size;
   for (int i = 0; i < h.size; i++)
   {
-    ch_hashPair *p = (ch_hashPair *)(((uchar *)h.arr) + (i + _k) * (sizeof(ch_hashPair) + _size - sizeof(void *)));
-    if (!memcmp(&k, p->key, sizeof(k)))
+    ch_hashPair *p = (ch_hashPair *)(((uchar *)h.arr) + ((i + _k) % h.size) * (sizeof(ch_hashPair) + _size - sizeof(void *)));
+    if ((!memcmp(&k, p->key, sizeof(k))) && !(p->flag & 0x2))
       return ((uchar *)p) + offsetof(ch_hashPair, data);
     if (!(p->flag & 0x1))
       break;
@@ -144,7 +145,7 @@ static void *ch_hashgetStr(ch_hash h, const char *k, size_t _size)
   for (int i = 0; i < h.size; i++)
   {
     ch_hashPair *p = (ch_hashPair *)(((uchar *)h.arr) + ((i + _k) % h.size) * (sizeof(ch_hashPair) - sizeof(void *) + _size));
-    if (!memcmp(k, p->key, MIN(strlen(k), ch_hash_STRING_SIZE)))
+    if ((!memcmp(k, p->key, MIN(strlen(k), ch_hash_STRING_SIZE))) && !(p->flag & 0x2))
       return ((uchar *)p) + offsetof(ch_hashPair, data);
     if (!(p->flag & 0x1))
       break;
@@ -152,24 +153,25 @@ static void *ch_hashgetStr(ch_hash h, const char *k, size_t _size)
   return &ch_hash_NOTFOUND;
 }
 #ifndef __cplusplus
-#define ch_hashget(type, hash, key) (*((type *)_Generic((key), \
+#define ch_hashgetp(type, hash, key) ((type *)_Generic((key), \
     int: ch_hashgetInt,                                        \
     uint: ch_hashgetInt,                                       \
     long: ch_hashgetInt,                                       \
     uint64_t: ch_hashgetInt,                                   \
     char *: ch_hashgetStr,                                     \
-    const char *: ch_hashgetStr)(hash, (key), sizeof(type))))
+    const char *: ch_hashgetStr)(hash, (key), sizeof(type)))
+#define ch_hashget(type,hash,key) (*ch_hashgetp(type,hash,key))
 #else
-static inline void *ch_hashget(ch_hash h, size_t key, size_t _size)
+static inline void *_ch_hashget(ch_hash h, size_t key, size_t _size)
 {
   return ch_hashgetInt(h, key, _size);
 }
-static inline void *ch_hashget(ch_hash h, const char *key, size_t _size)
+static inline void *_ch_hashget(ch_hash h, const char *key, size_t _size)
 {
   return ch_hashgetStr(h, key, _size);
 }
-#define ch_hashgetp(type, hash, key) ((type *)ch_hashget(hash, key, sizeof(type)))
-#define ch_hashget(type, hash, key) (*(type *)ch_hashget(hash, key, sizeof(type)))
+#define ch_hashgetp(type, hash, key) ((type *)_ch_hashget(hash, key, sizeof(type)))
+#define ch_hashget(type, hash, key) (*(type *)_ch_hashget(hash, key, sizeof(type)))
 #endif
 
 static void *ch_hashinsInt(ch_hash h, size_t k, size_t _size)
@@ -178,10 +180,9 @@ static void *ch_hashinsInt(ch_hash h, size_t k, size_t _size)
   for (int i = 0; i < h.size; i++)
   {
     ch_hashPair *p = (ch_hashPair *)(((uchar *)h.arr) + ((i + _k) % h.size) * (sizeof(ch_hashPair) + _size - sizeof(void *)));
-    if (memcmp(&k, p->key, sizeof(k)) && p->flag & 0x1)
+    if (memcmp(&k, p->key, sizeof(k)) && p->flag & 0x1 && !(p->flag & 0x2))
       continue;
     p->flag = 0x1;
-
     memset(p->key, 0, sizeof(p->key));
     memcpy(p->key, &k, sizeof(k));
     return ((uchar *)p) + offsetof(ch_hashPair, data);
@@ -194,7 +195,7 @@ static void *ch_hashinsStr(ch_hash h, const char *k, size_t _size)
   for (int i = 0; i < h.size; i++)
   {
     ch_hashPair *p = (ch_hashPair *)(((uchar *)h.arr) + ((i + _k) % h.size) * (sizeof(ch_hashPair) - sizeof(void *) + _size));
-    if (memcmp(k, p->key, MIN(strlen(k), ch_hash_STRING_SIZE)) && p->flag & 0x1)
+    if (memcmp(k, p->key, MIN(strlen(k), ch_hash_STRING_SIZE)) && p->flag & 0x1 && !(p->flag & 0x2))
       continue;
     p->flag = 0x1;
     memset(p->key, 0, sizeof(p->key));
@@ -253,5 +254,55 @@ static inline ch_hash ch_hashclear(size_t _tsize, ch_hash h)
   return h;
 }
 #define ch_hashclear(type, hash) ch_hashclear(sizeof(type), hash)
+
+static void ch_hashremInt(ch_hash h, size_t k, size_t _size)
+{
+  if (!h.arr || !h.size)
+    return;
+  size_t _k = h.hash ? h.hash(&k) : k % h.size;
+  for (int i = 0; i < h.size; i++)
+  {
+    ch_hashPair *p = (ch_hashPair *)(((uchar *)h.arr) + ((i + _k) % h.size) * (sizeof(ch_hashPair) + _size - sizeof(void *)));
+    if (!memcmp(&k, p->key, sizeof(k)))
+    {
+      p->flag |= 2;
+      return;
+    }
+    if (!(p->flag & 0x1))
+      break;
+  }
+  return;
+}
+static void ch_hashremStr(ch_hash h, const char *k, size_t _size)
+{
+  if (!h.arr || !h.size)
+    return;
+  size_t _k = h.hash ? h.hash((void *)k) : ch_stringHash(k) % h.size;
+  for (int i = 0; i < h.size; i++)
+  {
+    ch_hashPair *p = (ch_hashPair *)(((uchar *)h.arr) + ((i + _k) % h.size) * (sizeof(ch_hashPair) - sizeof(void *) + _size));
+    if (!memcmp(k, p->key, MIN(strlen(k), ch_hash_STRING_SIZE)))
+    {
+      p->flag|=2;
+      return;
+    }
+    if (!(p->flag & 0x1))
+      break;
+  }
+  return;
+}
+#ifndef __cplusplus
+#define ch_hashrem(type, hash, key) assert(0);
+#else
+static inline void ch_hashrem(ch_hash h, size_t key, size_t _size)
+{
+  return ch_hashremInt(h, key, _size);
+}
+static inline void ch_hashrem(ch_hash h, const char *key, size_t _size)
+{
+  return ch_hashremStr(h, key, _size);
+}
+#define ch_hashrem(type, hash, key) ch_hashrem(hash,key,sizeof(type))
+#endif
 
 #endif
