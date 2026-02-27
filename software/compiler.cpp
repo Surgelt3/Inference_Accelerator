@@ -1,7 +1,228 @@
 #include "compiler.hpp"
 #include "importer.hpp"
 
-#if 1
+static uint32_t currentPC = 0;
+#define writeData(ptr, size)                   \
+  {                                            \
+    ++currentPC;                               \
+    manager.writeData((float *)(ptr), (size)); \
+  }
+void Compiler::writeInstructions(const Net &net)
+{
+  float *loadedKernel = 0;
+  for (const NetCommand &comm : net.commands)
+  {
+    switch (comm.type)
+    {
+    case NetCommandType::MAC:
+    {
+      float *addrA = comm.mac.addrA;
+      float *addrB = comm.mac.addrB;
+      for (int c = 0; c < comm.mac.repeat; c++)
+      {
+        for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
+        {
+          float *kernel = addrB + (comm.mac.indexes[1] + (c % comm.mac.repeatB) * comm.mac.repeatShiftB);
+          if (loadedKernel != kernel || c != 0)
+          {
+            if (comm.mac.N == 9)
+            {
+              manager.writeInstruction(LOAD_Instruction(0x0));
+              manager.writeInstruction(LOAD_Instruction(0x8 * sizeof(float)));
+              // wInstr("LOAD", 0x0);
+              // wInstr("LOAD", 0x8 * sizeof(float));
+            }
+            else if (comm.mac.N == 1)
+            {
+              manager.writeInstruction(LOAD_Instruction(0x0));
+              // wInstr("LOAD", 0x0);
+            }
+            else
+            {
+              chprinterr("no");
+            }
+            loadedKernel = kernel;
+          }
+
+          float *dataAddr = addrA + (comm.mac.indexes[0] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize);
+          if (comm.mac.indexes[0] <= 0)
+          {
+            dataAddr = manager.temporaryLoadAddress;
+          }
+          manager.writeInstruction(LOAD_Instruction((size_t)dataAddr));
+          // wInstr("LOAD", dataAddr);
+          if (comm.mac.N == 9)
+            manager.writeInstruction(LOAD_Instruction((size_t)(dataAddr + 8)));
+            // wInstr("LOAD", dataAddr + 8);
+          manager.writeInstruction(MAC_Instruction(dataAddr, comm.mac.N, loadedKernel));
+          // wInstr("MAC", dataAddr, comm.mac.N, loadedKernel);
+        }
+
+        if (c == comm.mac.repeat - 1)
+          manager.writeInstruction(RELU_Instruction());
+          // wInstr("RELU");
+      }
+      break;
+    }
+    case NetCommandType::CLIP:
+      // do nothing
+      break;
+    case NetCommandType::GAP:
+    {
+      // waiting on lucas
+      break;
+    }
+
+    default:
+      break;
+    }
+  }
+}
+
+void Compiler::compileModel(const Net &net)
+{
+  float *loadedKernel = 0;
+  int count = 0;
+  for (const NetCommand &comm : net.commands)
+  {
+    chprintln("command: ", count++);
+    switch (comm.type)
+    {
+    case NetCommandType::MAC:
+    {
+      float *addrA = comm.mac.addrA;
+      float *addrB = comm.mac.addrB;
+      ch_array toWrite = ch_arrcreate(float, 16);
+      for (int c = 0; c < comm.mac.repeat; c++)
+      {
+        for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
+        {
+          float *kernel = addrB + (comm.mac.indexes[1] + (c % comm.mac.repeatB) * comm.mac.repeatShiftB);
+          if (loadedKernel != kernel || c != 0)
+          {
+            loadedKernel = kernel;
+            if (comm.mac.N == 1)
+            {
+              struct
+              {
+                float kernel;
+                float bias;
+                float _zeroPad[2];
+              } params;
+              memset(&params, 0, sizeof(params));
+              params.kernel = addrB[comm.mac.indexes[1]];
+              if (c == 0)
+                params.bias = comm.mac.addrC ? *comm.mac.addrC : 0;
+              else
+                params.bias = *(comm.mac.out + shift);
+              writeData(loadedKernel, sizeof(params));
+            }
+            else if (comm.mac.N == 9)
+            {
+              struct
+              {
+                float kernel[9];
+                float bias;
+                float _zeroPad[2];
+              } params;
+              memset(&params, 0, sizeof(params));
+              for (int i = 0; i < 9; i++)
+              {
+                params.kernel[i] = addrB[comm.mac.indexes[1 + 2 * i]];
+              }
+              if (c == 0)
+                params.bias = comm.mac.addrC ? *comm.mac.addrC : 0;
+              else
+                params.bias = *(comm.mac.out + shift);
+              writeData(loadedKernel, sizeof(params));
+            }
+            else
+            {
+              chprinterr("unrecognized kernel size");
+            }
+          }
+
+          memset(toWrite._start, 0, sizeof(float) * 16);
+          for (int i = 0; i < comm.mac.N; i++)
+          {
+            if (comm.mac.indexes[2 * i] == -1)
+              ch_arrget(float, toWrite, i) = 0;
+            else if (comm.mac.indexes[2 * i] == -2)
+              ch_arrget(float, toWrite, i) = 1;
+            else
+              ch_arrget(float, toWrite, i) = addrA[comm.mac.indexes[2 * i] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize];
+          }
+          writeData(toWrite._start, sizeof(float) * (comm.mac.N + (4 - comm.mac.N % 4)));
+          // mac
+          ++currentPC;
+          *(comm.mac.out + shift) = manager.getResult(currentPC);
+
+          if (c == comm.mac.repeat - 1)
+          {
+            //  relu
+            ++currentPC;
+            *(comm.mac.out + shift) = manager.getResult(currentPC);
+          }
+        }
+      }
+      ch_arrfree(toWrite);
+      break;
+    }
+    case NetCommandType::CLIP:
+      // do nothing as this is done in mac
+      break;
+    case NetCommandType::GAP:
+    {
+      // waiting on lucas
+      break;
+    }
+    case NetCommandType::GEMM:
+    {
+      float *addrA = comm.gemm.addrA; // (K,M)
+      float *addrB = comm.gemm.addrB; // (N,K)
+      float *addrC = comm.gemm.addrC; // (M,N)
+
+      const int K = !comm.gemm.transA ? comm.gemm.dimsA[1] : comm.gemm.dimsA[0];
+      const int M = !comm.gemm.transA ? comm.gemm.dimsA[0] : comm.gemm.dimsA[1];
+      const int N = !comm.gemm.transB ? comm.gemm.dimsB[1] : comm.gemm.dimsB[0];
+
+      for (int Y = 0; Y < N; Y++)
+      {
+        for (int X = 0; X < M; X++)
+        {
+          float val = 0;
+          for (int i = 0; i < K; i++)
+          {
+            // I have no clue how the logic works out to be the right indices, but it works!
+            float valA = (!comm.gemm.transA ? addrA[X + i * comm.gemm.dimsA[0]] : addrA[i + X * comm.gemm.dimsA[1]]);
+            float valB = (!comm.gemm.transB ? addrB[Y + i * comm.gemm.dimsB[0]] : addrB[i + Y * comm.gemm.dimsB[1]]);
+
+            val += valA * valB;
+          }
+          val *= comm.gemm.alpha;
+          if (comm.gemm.dimsC[0] == M && comm.gemm.dimsC[1] == N)
+            val += comm.gemm.beta * (addrC[X + Y * comm.gemm.dimsC[0]]);
+          else if ((comm.gemm.dimsC[0] == M && (comm.gemm.dimsC[1] == 1 || comm.gemm.dimsC[1] == 0)) ||
+                   (comm.gemm.dimsC[1] == M && (comm.gemm.dimsC[0] == 1 || comm.gemm.dimsC[0] == 0)))
+            val += comm.gemm.beta * (addrC[X]);
+          else if (((comm.gemm.dimsC[0] == 1 || comm.gemm.dimsC[0] == 0) && comm.gemm.dimsC[1] == N) ||
+                   ((comm.gemm.dimsC[1] == 1 || comm.gemm.dimsC[1] == 0) && comm.gemm.dimsC[0] == N))
+            val += comm.gemm.beta * (addrC[Y]);
+          else if ((comm.gemm.dimsC[0] == 1 || comm.gemm.dimsC[0] == 0) && comm.gemm.dimsC[0] == comm.gemm.dimsC[1])
+            val += comm.gemm.beta * (addrC[0]);
+          else
+            chprinterr("incompatible length for C tensor in gemm\n");
+          comm.gemm.out[X + Y * M] = val;
+        }
+      }
+      break;
+    }
+    default:
+      break;
+    }
+  }
+}
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 int main()
@@ -76,6 +297,7 @@ int main()
   // ch_arrget(float, input->data, 2) = 1;
 
   Compiler compiler=Compiler();
+  compiler.writeInstructions(model);
   compiler.compileModel(model);
 
   // for (int i = 0; i < ch_arrlength(float, model.input->data); i++)
@@ -137,34 +359,4 @@ int main()
 
   return 0;
 }
-#else
-int main(){
-  uchar *VIRT_MEM = (uchar *)malloc(0x5000);
-  float *readPtr = (float*)(VIRT_MEM + 512 + sizeof(float) * 2);
-  MemManager manager = MemManager(VIRT_MEM);
-
-  float data[]={1,2,3};
-  float data1[12][1]={{420.69},{4},{5}};
-  manager.schedule(data,sizeof(float)*3);
-  readPtr = (float *)manager.use(data, sizeof(int) * 3);
-  chprintln(readPtr);
-  chprintln(*manager.constant0, " ", *manager.constant1);
-  chprintln(readPtr[0], " ", readPtr[1], " ", readPtr[2]);
-  ((uint32_t *)readPtr)[-1] &= ~0x1;
-  for (int i = 0; i < 12; i++)
-  {
-    manager.schedule(data1[i], sizeof(float) * 1);
-  }
-
-  readPtr=(float*)manager.request(data, sizeof(float) * 3);
-  chprintln(readPtr);
-  chprintln(*manager.constant0," ",*manager.constant1);
-  chprintln(readPtr[0]," ",readPtr[1]," ",readPtr[2]);
-
-  readPtr=(float*)manager.request(data1[0],sizeof(float));
-  chprintln(readPtr[0]);
-
-  return 0;
-}
-#endif
 
