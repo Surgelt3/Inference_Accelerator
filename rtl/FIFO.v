@@ -18,7 +18,7 @@ module FIFO #(
 	reg [W-1:0] fifo [0:length-1];
 	reg [2:0] extra_fifo [0:length-1];
 	reg [ADDR_W:0] count;
-	wire [2:0] push;
+	wire [1:0] push;
 	wire pop;
 	
 	assign push = (in_valid > in_ready) ? in_ready : in_valid;
@@ -50,23 +50,23 @@ module FIFO #(
 			case (push)
 				2'b01: begin
 							fifo[wptr] <= in_data0;
-							extra_fifo[rptr] <= extra_in0;
+							extra_fifo[wptr] <= extra_in0;
 							wptr <= wptr + 'd1;
 						end
 				2'b10: begin
 							fifo[wptr] <= in_data0;
 							fifo[wptr+1] <= in_data1;
-							extra_fifo[rptr] <= extra_in0;
-							extra_fifo[rptr+1] <= extra_in1;
+							extra_fifo[wptr] <= extra_in0;
+							extra_fifo[wptr+1] <= extra_in1;
 							wptr <= wptr + 'd2;
 						end
 				2'b11: begin
 							fifo[wptr] <= in_data0;
 							fifo[wptr+1] <= in_data1;
 							fifo[wptr+2] <= in_data2;
-							extra_fifo[rptr] <= extra_in0;
-							extra_fifo[rptr+1] <= extra_in1;
-							extra_fifo[rptr+2] <= extra_in2;
+							extra_fifo[wptr] <= extra_in0;
+							extra_fifo[wptr+1] <= extra_in1;
+							extra_fifo[wptr+2] <= extra_in2;
 							wptr <= wptr + 'd3;
 						end
 			endcase

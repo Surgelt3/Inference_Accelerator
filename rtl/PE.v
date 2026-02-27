@@ -1,5 +1,6 @@
 module PE(
     input clk, rst, i_vld, bias_add,
+	 input clear_out_reg,
 	 input [1:0] bias_loc, 
     input [31:0] in0, in1, in2, in3, in4, in5, in6, in7, 
 	 output out_valid,
@@ -25,25 +26,28 @@ module PE(
 	 
 	 wire acc_vld;
 	 wire [31:0] accumulate_in;
-	 reg [2:0] bias_add_clk;
+	 reg [3:0] bias_add_clk;
 
-    always @(posedge clk) begin
-        if (rst) begin
-            out_reg <= 32'd0;
-				bias_add_clk <= 3'b000;
-        end else begin
-            out_reg <= out_reg_out;
-		  end
-		  bias_add_clk <= {bias_add, bias_add_clk[2], bias_add_clk[1]};
+	always @(posedge clk) begin
+		if (rst) begin
+			out_reg <= 32'd0;
+			bias_add_clk <= 4'b0000;
+		end 
+		else if (clear_out_reg) begin
+			out_reg <= 32'd0;
+		end else begin
+			out_reg <= out_reg_out;
+		end
+		bias_add_clk <= {bias_add, bias_add_clk[3], bias_add_clk[2], bias_add_clk[1]};
     end
 	 
-	 assign mul0_ia = (bias_add && (bias_loc == 2'b00)) ? in0: 'b0;
+	 assign mul0_ia = (bias_add && (bias_loc == 2'b00)) ? 32'd0: in0;
 	 assign mul0_ib = in1;
-	 assign mul1_ia = (bias_add && (bias_loc == 2'b01)) ? in2: 'b0;
+	 assign mul1_ia = (bias_add && (bias_loc == 2'b01)) ? 32'd0: in2;
 	 assign mul1_ib = in3;
-	 assign mul2_ia = (bias_add && (bias_loc == 2'b10)) ? in4: 'b0;
+	 assign mul2_ia = (bias_add && (bias_loc == 2'b10)) ? 32'd0: in4;
 	 assign mul2_ib = in5;
-	 assign mul3_ia = (bias_add && (bias_loc == 2'b11)) ? in6: 'b0;
+	 assign mul3_ia = (bias_add && (bias_loc == 2'b11)) ? 32'd0: in6;
 	 assign mul3_ib = in7;
 
 

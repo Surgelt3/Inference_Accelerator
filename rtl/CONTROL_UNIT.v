@@ -1,5 +1,6 @@
 module CONTROL_UNIT(
 	input clk, rst, 
+	input instr_valid,
 	input [2:0] opcode,
 	input classifier_bit,
 	input [8:0] address, param_loc, 
@@ -44,9 +45,41 @@ module CONTROL_UNIT(
 			curr_classifier_bit <= 1'b0;
 			read_size <= 2'b00;
 		end
-		else if (opcode == 3'b000) begin
-			// MAC Operation
-			mac_signal <= 1'b1;
+		if (instr_valid) begin
+			if (opcode == 3'b000) begin
+				// MAC Operation
+				mac_signal <= 1'b1;
+				mem_local_address <= mem_local_address_next;
+				mem_local_param_loc <= mem_local_param_loc_next;
+				read_size <= read_size_next;
+				bias_add <= bias_add_next;
+				pe_fifo_bias_loc <= pe_fifo_bias_loc_next;
+				pe_busy <= pe_busy_next;
+				curr_classifier_bit <= curr_classifier_bit_next;
+				
+				pe1_length <= pe1_length_next;
+				pe1_address <= pe1_address_next;
+				pe1_param_loc <= pe1_param_loc_next;
+				pe0_length <= pe0_length_next;
+				pe0_address <= pe0_address_next;
+				pe0_param_loc <= pe0_param_loc_next;
+
+
+				end
+			else if (opcode == 3'b001) begin
+				// LOAD
+				load_signal <= 1'b1;
+			end
+			else if (opcode == 3'b010) begin
+				// RELU Operation
+				relu_signal <= 1'b1;
+			end
+			else if (opcode == 3'b011) begin
+				// POOL Operation
+				pool_signal <= 1'b1;
+			end
+		end
+		else begin
 			mem_local_address <= mem_local_address_next;
 			mem_local_param_loc <= mem_local_param_loc_next;
 			read_size <= read_size_next;
@@ -61,27 +94,13 @@ module CONTROL_UNIT(
 			pe0_length <= pe0_length_next;
 			pe0_address <= pe0_address_next;
 			pe0_param_loc <= pe0_param_loc_next;
-
-
-			end
-		else if (opcode == 3'b001) begin
-			// LOAD
-			load_signal <= 1'b1;
-		end
-		else if (opcode == 3'b010) begin
-			// RELU Operation
-			relu_signal <= 1'b1;
-		end
-		else if (opcode == 3'b011) begin
-			// POOL Operation
-			pool_signal <= 1'b1;
 		end
 
 	end
 	
 	always @(*) begin
 		
-		if (pe_busy[classifier_bit] == 0) begin
+		if (pe_busy[classifier_bit] == 0 && instr_valid) begin
 			curr_length_next = length;
 			curr_address_next = address;
 			curr_param_loc_next = param_loc;
@@ -89,7 +108,13 @@ module CONTROL_UNIT(
 			pe_busy_next = pe_busy | (2'b01 << classifier_bit); 
 		end
 		else begin
-			curr_classifier_bit_next = !curr_classifier_bit;
+			if (instr_valid) begin
+				curr_classifier_bit_next = !curr_classifier_bit;
+			end 
+			else begin
+				curr_classifier_bit_next = pe_busy[curr_classifier_bit] ? curr_classifier_bit : !curr_classifier_bit;
+			end
+			
 			if (curr_classifier_bit_next) begin
 				curr_length_next = pe1_length;
 				curr_address_next = pe1_address;
