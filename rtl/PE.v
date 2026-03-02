@@ -1,9 +1,12 @@
 module PE(
     input clk, rst, i_vld, bias_add,
-	 input clear_out_reg,
 	 input [1:0] bias_loc, 
+	 input [1:0] cntrl_in,
+	 input [31:0] pc_in,
     input [31:0] in0, in1, in2, in3, in4, in5, in6, in7, 
 	 output out_valid,
+	 output reg [1:0] cntrl_clock,
+	 output reg [31:0] pc_clock,
     output [31:0] out_node
 );
 
@@ -27,18 +30,37 @@ module PE(
 	 wire acc_vld;
 	 wire [31:0] accumulate_in;
 	 reg [3:0] bias_add_clk;
+	 reg [31:0] pc_clk_reg_0, pc_clk_reg_1, pc_clk_reg_2, pc_clk_reg_3, pc_clk_reg_4;
+	 reg [1:0] cntrl_clk_reg_0, cntrl_clk_reg_1, cntrl_clk_reg_2, cntrl_clk_reg_3, cntrl_clk_reg_4;
+	 
+	 
 
 	always @(posedge clk) begin
 		if (rst) begin
 			out_reg <= 32'd0;
 			bias_add_clk <= 4'b0000;
 		end 
-		else if (clear_out_reg) begin
+		else if (bias_add_clk[1] && add_acc_o_res_vld) begin
 			out_reg <= 32'd0;
 		end else begin
 			out_reg <= out_reg_out;
 		end
 		bias_add_clk <= {bias_add, bias_add_clk[3], bias_add_clk[2], bias_add_clk[1]};
+				
+		pc_clk_reg_4 <= pc_in;
+		pc_clk_reg_3 <= pc_clk_reg_4;
+		pc_clk_reg_2 <= pc_clk_reg_3;
+		pc_clk_reg_1 <= pc_clk_reg_2;
+		pc_clk_reg_0 <= pc_clk_reg_1;
+		pc_clock <= pc_clk_reg_0;
+		
+		cntrl_clk_reg_4 <= cntrl_in;
+		cntrl_clk_reg_3 <= cntrl_clk_reg_4;
+		cntrl_clk_reg_2 <= cntrl_clk_reg_3;
+		cntrl_clk_reg_1 <= cntrl_clk_reg_2;
+		cntrl_clk_reg_0 <= cntrl_clk_reg_1;
+		cntrl_clock <= cntrl_clk_reg_0;
+		
     end
 	 
 	 assign mul0_ia = (bias_add && (bias_loc == 2'b00)) ? 32'd0: in0;

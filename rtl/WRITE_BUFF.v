@@ -1,44 +1,20 @@
-
 module WRITE_BUFF(
 	input clk, rst,
-	input out_ready,
 	input in_valid,
 	input [31:0] in_data, 
-	input [8:0] in_address,
-	output in_ready,
+	input [31:0] pc_in,
 	output reg out_valid,
-	output reg [8:0] out_address,
-	output reg [255:0] out_data
+	output reg [63:0] out_data
 );
 
-
-	reg [3:0] ptr;
-	reg [255:0] data;
+	localparam [31:0] offset = 32'd120;
 
 	always @(posedge clk) begin
-		if (rst) begin
-			data <= 256'd0;
-			ptr <= 4'd0;
-			out_valid <= 1'b0;
-		end else begin
-			out_valid <= 1'b0;
-			if (in_valid) begin
-				if (ptr == 4'd7) begin
-					out_valid <= 1'b1;
-					out_data <= {in_data, data[255:32]};
-					out_address <= in_address;
-					ptr <= 4'd0;
-				end
-				else begin
-					ptr <= ptr + 4'd1;
-				end
-				data <= {in_data, data[255:32]};
-			end
-		end
-		
+		out_valid <= 1'b0;
+		if (in_valid) begin
+			out_data <= {in_data, pc_in + offset};
+			out_valid <= 1'b1;
+		end		
 	end
-		
-// First store value then 
-		
-		
+
 endmodule

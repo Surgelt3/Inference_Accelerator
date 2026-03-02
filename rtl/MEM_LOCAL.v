@@ -4,14 +4,18 @@ module MEM_LOCAL(
 	input write_en, read_en, 
 	input bias_add, 
 	input classifier_bit, 
+	input [1:0] control_signals,
 	input [1:0] read_size, bias_loc, 
 	input [8:0] write_address, 
 	input [8:0] address, param_loc, 
+	input [31:0] pc_in,
 	input [767:0] write_data,
 	output reg classifier_bit_out,
 	output reg read_valid_out, 
 	output reg bias_add_out, 
 	output reg [1:0] bias_loc_out, read_size_out, 
+	output reg [1:0] control_signals_clock,
+	output reg [31:0] pc_clock,
 	output reg [767:0] read_data
 );
 
@@ -25,6 +29,8 @@ module MEM_LOCAL(
 	
 	always @(posedge clk) begin
 		read_valid_out <= 1'b0;
+		pc_clock <= pc_in;
+		control_signals_clock <= control_signals;
 		if (rst) begin
 		
 		end	
@@ -69,6 +75,7 @@ module MEM_LOCAL(
 							end
 					default: begin
 									read_data <= {768{1'b0}};
+									read_valid_out <= 1'b0;
 								end
 				endcase
 			end

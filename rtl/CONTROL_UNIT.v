@@ -5,13 +5,15 @@ module CONTROL_UNIT(
 	input classifier_bit,
 	input [8:0] address, param_loc, 
 	input [9:0] length,
+	input [31:0] pc_in,
 	output reg [1:0] pe_fifo_bias_loc,
 	output reg [1:0] read_size, 
 	output reg bias_add, 
 	output reg [8:0] mem_local_address, mem_local_param_loc, 
 	output reg curr_classifier_bit, 
-	output reg load_signal, relu_signal, pool_signal, mac_signal,
-	output reg [1:0] pe_busy
+	output reg load_signal, pool_signal, mac_signal,
+	output reg [1:0] pe_busy,
+	output reg [31:0] pc_clock
 );
 	
 	reg [1:0] pe_busy_next;
@@ -35,9 +37,9 @@ module CONTROL_UNIT(
 	
 
 	always @(posedge clk) begin
-	
+		
+		pc_clock <= pc_in;
 		load_signal <= 1'b0;
-		relu_signal <= 1'b0;
 		pool_signal <= 1'b0;
 		mac_signal <= 1'b0;
 		if (rst) begin
@@ -45,7 +47,7 @@ module CONTROL_UNIT(
 			curr_classifier_bit <= 1'b0;
 			read_size <= 2'b00;
 		end
-		if (instr_valid) begin
+		else if (instr_valid) begin
 			if (opcode == 3'b000) begin
 				// MAC Operation
 				mac_signal <= 1'b1;
@@ -72,7 +74,7 @@ module CONTROL_UNIT(
 			end
 			else if (opcode == 3'b010) begin
 				// RELU Operation
-				relu_signal <= 1'b1;
+				//relu_signal <= 1'b1;
 			end
 			else if (opcode == 3'b011) begin
 				// POOL Operation
@@ -99,6 +101,19 @@ module CONTROL_UNIT(
 	end
 	
 	always @(*) begin
+		mem_local_address_next = mem_local_address;
+		mem_local_param_loc_next = mem_local_param_loc;
+		read_size_next = read_size;
+		bias_add_next = bias_add;
+		pe_fifo_bias_loc_next = pe_fifo_bias_loc;
+		pe_busy_next = pe_busy;
+		curr_classifier_bit_next = curr_classifier_bit;
+		pe1_length_next = pe1_length;
+		pe1_address_next = pe1_address;
+		pe1_param_loc_next = pe1_param_loc;
+		pe0_length_next = pe0_length;
+		pe0_address_next = pe0_address;
+		pe0_param_loc_next = pe0_param_loc;
 		
 		if (pe_busy[classifier_bit] == 0 && instr_valid) begin
 			curr_length_next = length;
@@ -128,15 +143,19 @@ module CONTROL_UNIT(
 			pe_busy_next = pe_busy;
 		end
 		
-				
-		if (curr_length_next > 10'd8) begin
-			read_size_next = 2'b11;
+		if (pe_busy_next == 2'b00) begin
+			read_size_next = 2'b00;
 		end
-		else if (curr_length_next > 10'd4) begin
-			read_size_next = 2'b10;
-		end 
 		else begin
-			read_size_next = 2'b01;
+			if (curr_length_next > 10'd8) begin
+				read_size_next = 2'b11;
+			end
+			else if (curr_length_next > 10'd4) begin
+				read_size_next = 2'b10;
+			end 
+			else begin
+				read_size_next = 2'b01;
+			end
 		end
 		
 		mem_local_address_next = curr_address_next;

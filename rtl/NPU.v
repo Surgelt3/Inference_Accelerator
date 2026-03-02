@@ -1,15 +1,17 @@
-
 module NPU(
 	input clk, rst, 
 	input [31:0] instr,
 	input instr_valid, 
-	output npu_instr_ready, 
 	
 	input load_data_in_valid,
 	input [8:0] load_data_in_address,
 	input [31:0] load_data_in_data, 
 	output load_data_in_ready,
-	output [31:0] out_data
+	
+	output [31:0] pc_out,
+	
+	output out_valid,
+	output [63:0] out_data
 );
 
 	// instr breakdown
@@ -63,7 +65,7 @@ module NPU(
 	wire run_end;
 	wire [1:0] pe_busy;
 	
-	wire [31:0] pc_in, pc_out;
+	wire [31:0] pc_in;
 	wire classifier_bit;
 	wire [2:0] opcode_out;
 	wire [8:0] start_loc_out, param_loc_out;
@@ -85,18 +87,23 @@ module NPU(
 		end
 	end
 	
+	
+	
 		
 	wire load_data_control_unit;
 	wire load_data_out_valid;
 	wire [8:0] load_data_write_address;
 	wire [255:0] load_data_mem_write_data;
+	wire [31:0] pc_instr_dec, pc_control_unit, pc_mem_local, pc_fifo0, pc_fifo1;
 	
 	wire mem_local0_read_valid_out;
 	wire mem_local0_bias_add_out;
 	
 	wire instr_valid_control_unit;
 	
-	WRITE_BUFF write_buff(
+	assign pc_in = pc_out;
+	
+	READ_BUFF read_buff(
 		.clk(clk), .rst(rst),
 		.out_ready(load_data_control_unit), 
 		.in_valid(load_data_in_valid), 
@@ -119,11 +126,12 @@ module NPU(
 		.pc_in(pc_in),
 		.classifier_bit_out(classifier_bit),
 		.instr_valid_out(instr_valid_control_unit), 
+		.relu_signal(relu_signal),
 		.opcode_out(opcode_out),
 		.start_loc_out(start_loc_out), .param_loc_out(param_loc_out),
 		.length_out(length_out),
+		.pc_clock(pc_instr_dec), 
 		.pc_out(pc_out)
-		
 	);
 	
 	wire bias_add;
@@ -160,7 +168,7 @@ module NPU(
 	//assign mem_local0_write_data = write_data_mem_local;
 	//assign mem_local1_write_data = write_data_mem_local;
 	
-	assign classifier_bit_fifo = local_mem_read_num ? mem_local1_classifier_bit_out : mem_local0_classifier_bit_out;
+	assign classifier_bit_fifo = mem_local0_classifier_bit_out;
 	
 	assign pe0_fifo_in_data0 = mem_local0_read_data[255:0];
 	assign pe1_fifo_in_data0 = mem_local0_read_data[255:0];
@@ -201,35 +209,57 @@ module NPU(
 		.instr_valid(instr_valid_control_unit), 
 		.opcode(opcode_out),
 		.classifier_bit(classifier_bit),
-		.address(start_loc_out), .length(length_out), .param_loc(param_loc_out), 
+		.address(start_loc_out), .param_loc(param_loc_out), 
+		.length(length_out),
+		.pc_in(pc_instr_dec), 
 		.pe_fifo_bias_loc(pe_fifo_bias_loc_control_unit),
 		.read_size(read_size_control_unit), 
 		.bias_add(bias_add_control_unit), 
 		.mem_local_address(mem_local_address_control_unit), .mem_local_param_loc(mem_local_param_loc_control_unit), 
 		.curr_classifier_bit(curr_classifier_bit), 
-		.load_signal(load_signal), .relu_signal(relu_signal), .pool_signal(pool_signal), .mac_signal(mac_signal), 
-		.pe_busy(pe_busy)
+		.load_signal(load_signal), .pool_signal(pool_signal), .mac_signal(mac_signal), 
+		.pe_busy(pe_busy),
+		.pc_clock(pc_control_unit)
 	);
 	
 	assign mem_read_en = (classifier_bit_fifo == 1) ? pe1_fifo_in_ready : pe0_fifo_in_ready;
 	
 	wire read_en;
 	assign read_en = mac_signal | pool_signal;
+	wire [1:0] control_signals_mem_local, control_signals_fifo0, control_signals_fifo1;
+	
+	wire pool_signal_pe0, pool_signal_pe1;
+	wire relu_signal_pe0, relu_signal_pe1;
+	wire [31:0] pc_pe0, pc_pe1;
+	
+	wire pe_switch_out_taken;
+	wire pe_switch_out_valid;
+	wire pe_switch_relu_signal;
+	wire [31:0] pe_switch_out;
+	wire [31:0] pc_pe_switch_out;
+	
+	wire relu_in_valid;
+	
+	wire [31:0] pc_in_relu_out;
 	
 	
 	MEM_LOCAL mem_local0(
 		.clk(clk), .rst(rst),
 		.write_en(mem_local0_write_en), .read_en(read_en), 
 		.bias_add(mem_local0_bias_add), 
-		.classifier_bit(curr_classifier_bit), 
+		.classifier_bit(curr_classifier_bit),
+		.control_signals({pool_signal, relu_signal}),
 		.read_size(mem_local0_read_size), .bias_loc(pe_fifo_bias_loc_control_unit), 
 		.write_address(load_data_write_address),
 		.address(mem_local0_address), .param_loc(mem_local0_param_loc), 
+		.pc_in(pc_control_unit), 
 		.write_data(mem_local0_write_data),
 		.classifier_bit_out(mem_local0_classifier_bit_out), 
 		.read_valid_out(mem_local0_read_valid_out), 
 		.bias_add_out(mem_local0_bias_add_out), 
-		.bias_loc_out(mem_local0_bias_loc), .read_size_out(mem_local0_read_size_out), 
+		.bias_loc_out(mem_local0_bias_loc), .read_size_out(mem_local0_read_size_out),
+		.control_signals_clock(control_signals_mem_local), 
+		.pc_clock(pc_mem_local),
 		.read_data(mem_local0_read_data)
 	);
 
@@ -238,25 +268,25 @@ module NPU(
 		.clk(clk), .reset(rst),
 		.out_ready(pe0_fifo_out_ready), 
 		.in_valid(pe0_fifo_in_valid), 
-		.extra_in0({pe0_fifo_bias_add0, pe0_fifo_bias_loc}), .extra_in1({pe0_fifo_bias_add1, pe0_fifo_bias_loc}), .extra_in2({pe0_fifo_bias_add2, pe0_fifo_bias_loc}),
+		.extra_in0({pe0_fifo_bias_add0, pe0_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), .extra_in1({pe0_fifo_bias_add1, pe0_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), .extra_in2({pe0_fifo_bias_add2, pe0_fifo_bias_loc, pc_mem_local, control_signals_mem_local}),
 		.in_data0(pe0_fifo_in_data0), .in_data1(pe0_fifo_in_data1), .in_data2(pe0_fifo_in_data2),
 		.out_valid(pe0_in_valid),
 		.in_ready(pe0_fifo_in_ready),
-		.extra_out({pe0_bias_add, pe0_bias_loc}),
+		.extra_out({pe0_bias_add, pe0_bias_loc, pc_fifo0, control_signals_fifo0}),
 		.out_data(pe0_data)
 	);
 	
-	wire pe0_clear_out_reg, pe1_clear_out_reg;
-	assign pe0_clear_out_reg = pe0_out_valid;
-	assign pe1_clear_out_reg = pe1_out_valid;
 	
 	PE pe0(
-		.clk(clk), .rst(pe0_reset), .i_vld(pe0_in_valid), .bias_add(pe0_bias_add),  
-		.clear_out_reg(pe0_clear_out_reg),
+		.clk(clk), .rst(rst), .i_vld(pe0_in_valid), .bias_add(pe0_bias_add),  
 		.bias_loc(pe0_bias_loc), 
+		.cntrl_in(control_signals_fifo0), 
+		.pc_in(pc_fifo0), 
 		.in0(pe0_data[31:0]), .in1(pe0_data[63:32]), .in2(pe0_data[95:64]), .in3(pe0_data[127:96]), 
 		.in4(pe0_data[159:128]), .in5(pe0_data[191:160]), .in6(pe0_data[223:192]), .in7(pe0_data[255:224]), 
 		.out_valid(pe0_out_valid), 
+		.cntrl_clock({pool_signal_pe0, relu_signal_pe0}),
+		.pc_clock(pc_pe0), 
 		.out_node(pe0_out)
 	);
 	
@@ -268,50 +298,66 @@ module NPU(
 		.clk(clk), .reset(rst),
 		.out_ready(pe1_fifo_out_ready), 
 		.in_valid(pe1_fifo_in_valid),
-		.extra_in0({pe1_fifo_bias_add0, pe1_fifo_bias_loc}), .extra_in1({pe1_fifo_bias_add0, pe1_fifo_bias_loc}), .extra_in2({pe1_fifo_bias_add0, pe1_fifo_bias_loc}),
+		.extra_in0({pe1_fifo_bias_add0, pe1_fifo_bias_loc, control_signals_mem_local}), .extra_in1({pe1_fifo_bias_add0, pe1_fifo_bias_loc, control_signals_mem_local}), .extra_in2({pe1_fifo_bias_add0, pe1_fifo_bias_loc, control_signals_mem_local}),
 		.in_data0(pe1_fifo_in_data0), .in_data1(pe1_fifo_in_data1), .in_data2(pe1_fifo_in_data2),
 		.out_valid(pe1_in_valid),
 		.in_ready(pe1_fifo_in_ready),
-		.extra_out({pe1_bias_add, pe1_bias_loc}),
+		.extra_out({pe1_bias_add, pe1_bias_loc, pc_fifo1, control_signals_fifo1}),
 		.out_data(pe1_data)
 	);
 	
 	
 	PE pe1(
-		.clk(clk), .rst(pe1_reset), .i_vld(pe1_in_valid), .bias_add(pe1_bias_add),  
-		.clear_out_reg(pe0_clear_out_reg),
+		.clk(clk), .rst(rst), .i_vld(pe1_in_valid), .bias_add(pe1_bias_add),  
 		.bias_loc(pe1_bias_loc), 
+		.cntrl_in(control_signals_fifo1), 
+		.pc_in(pc_fifo1),
 		.in0(pe1_data[31:0]), .in1(pe1_data[63:32]), .in2(pe1_data[95:64]), .in3(pe1_data[127:96]), 
 		.in4(pe1_data[159:128]), .in5(pe1_data[191:160]), .in6(pe1_data[223:192]), .in7(pe1_data[255:224]), 
 		.out_valid(pe1_out_valid), 
+		.cntrl_clock({pool_signal_pe1, relu_signal_pe1}),
+		.pc_clock(pc_pe1), 
 		.out_node(pe1_out)
 	);
 	
-	
-	
-	
+	assign pe_switch_out_taken = relu_valid;
 	
 	PE_SWITCH pe_switch(
-		.sel(pe_sWitch_sel),
-		.in1(pe0_out), .in2(pe1_out),
-		.out_valid(pe_sWitch_valid),
-		.out(relu_in)
+		.clk(clk), .rst(rst), 
+		.out_taken(pe_switch_out_taken),
+		.relu_signal({relu_signal_pe1, relu_signal_pe0}),
+		.in_valid({pe1_out_valid, pe0_out_valid}),
+		.pc0(pc_pe0), .pc1(pc_pe1),
+		.in0(pe0_out), .in1(pe1_out),
+		.out_valid(pe_switch_out_valid),
+		.relu_out(pe_switch_relu_signal),
+		.out(pe_switch_out), .pc_out(pc_pe_switch_out)
 	);
+	
+	assign relu_in_valid = pe_switch_out_valid;
 	
 	RELU6 activation_func(
 		.clk(clk),
-		.in_valid(pe_sWitch_valid), 
-		.in_data(relu_in),
+		.in_valid(relu_in_valid), 
+		.use_relu(pe_switch_relu_signal), 
+		.pc_in(pc_pe_switch_out), 
+		.in_data(pe_switch_out),
 		.out_valid(relu_valid),
+		.pc_out(pc_in_relu_out), 
 		.out_data(relu_out)
 	);
 	
-	assign write_data_mem_local = relu_out;
+	
+	WRITE_BUFF write_buff(
+		.clk(clk), .rst(rst),
+		.in_valid(relu_valid),
+		.in_data(relu_out), 
+		.pc_in(pc_in_relu_out),
+		.out_valid(out_valid),
+		.out_data(out_data)
+	);
 
 	
-	
-	
-	assign out_data = write_data_mem_local;
 	
 
 endmodule
