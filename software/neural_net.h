@@ -192,5 +192,6 @@ struct Net
       }
     }
   }
+  void useCommand(const NetCommand&comm);
   void calculate();
 };

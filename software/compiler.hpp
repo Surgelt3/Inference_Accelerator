@@ -22,7 +22,6 @@ static uint32_t MAC_Instruction(float *start_loc, size_t size, float *param_loc)
 }
 static uint32_t RELU_Instruction()
 {
-  // waiting on lucas
   uint32_t i = 0;
   i |= RELU_OP << 29;
   return i;
@@ -85,5 +84,5 @@ public:
   {
   }
   void writeInstructions(const Net &net);
-  void compileModel(const Net &net);
+  void compileModel(Net &net);
 };

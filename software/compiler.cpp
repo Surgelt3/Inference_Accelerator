@@ -2,6 +2,7 @@
 #include "importer.hpp"
 
 static uint32_t currentPC = 0;
+static size_t maxDataAddr=(1<<20)*5;
 #define writeData(ptr, size)                   \
   {                                            \
     ++currentPC;                               \
@@ -44,11 +45,13 @@ void Compiler::writeInstructions(const Net &net)
             loadedKernel = kernel;
           }
 
-          float *dataAddr = addrA + (comm.mac.indexes[0] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize);
-          if (comm.mac.indexes[0] <= 0)
-          {
-            dataAddr = manager.temporaryLoadAddress;
-          }
+          float *dataAddr;
+          dataAddr = (float *)((manager.PC * 4 * 16) % (maxDataAddr - 4 * 16) + (4 * 16));
+          // dataAddr = addrA + (comm.mac.indexes[0] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize);
+          // if (comm.mac.indexes[0] <= 0)
+          // {
+          //   dataAddr = manager.temporaryLoadAddress;
+          // }
           manager.writeInstruction(LOAD_Instruction((size_t)dataAddr));
           // wInstr("LOAD", dataAddr);
           if (comm.mac.N == 9)
@@ -79,7 +82,7 @@ void Compiler::writeInstructions(const Net &net)
   }
 }
 
-void Compiler::compileModel(const Net &net)
+void Compiler::compileModel(Net &net)
 {
   float *loadedKernel = 0;
   int count = 0;
@@ -174,47 +177,12 @@ void Compiler::compileModel(const Net &net)
     case NetCommandType::GAP:
     {
       // waiting on lucas
+      net.useCommand(comm);
       break;
     }
     case NetCommandType::GEMM:
     {
-      float *addrA = comm.gemm.addrA; // (K,M)
-      float *addrB = comm.gemm.addrB; // (N,K)
-      float *addrC = comm.gemm.addrC; // (M,N)
-
-      const int K = !comm.gemm.transA ? comm.gemm.dimsA[1] : comm.gemm.dimsA[0];
-      const int M = !comm.gemm.transA ? comm.gemm.dimsA[0] : comm.gemm.dimsA[1];
-      const int N = !comm.gemm.transB ? comm.gemm.dimsB[1] : comm.gemm.dimsB[0];
-
-      for (int Y = 0; Y < N; Y++)
-      {
-        for (int X = 0; X < M; X++)
-        {
-          float val = 0;
-          for (int i = 0; i < K; i++)
-          {
-            // I have no clue how the logic works out to be the right indices, but it works!
-            float valA = (!comm.gemm.transA ? addrA[X + i * comm.gemm.dimsA[0]] : addrA[i + X * comm.gemm.dimsA[1]]);
-            float valB = (!comm.gemm.transB ? addrB[Y + i * comm.gemm.dimsB[0]] : addrB[i + Y * comm.gemm.dimsB[1]]);
-
-            val += valA * valB;
-          }
-          val *= comm.gemm.alpha;
-          if (comm.gemm.dimsC[0] == M && comm.gemm.dimsC[1] == N)
-            val += comm.gemm.beta * (addrC[X + Y * comm.gemm.dimsC[0]]);
-          else if ((comm.gemm.dimsC[0] == M && (comm.gemm.dimsC[1] == 1 || comm.gemm.dimsC[1] == 0)) ||
-                   (comm.gemm.dimsC[1] == M && (comm.gemm.dimsC[0] == 1 || comm.gemm.dimsC[0] == 0)))
-            val += comm.gemm.beta * (addrC[X]);
-          else if (((comm.gemm.dimsC[0] == 1 || comm.gemm.dimsC[0] == 0) && comm.gemm.dimsC[1] == N) ||
-                   ((comm.gemm.dimsC[1] == 1 || comm.gemm.dimsC[1] == 0) && comm.gemm.dimsC[0] == N))
-            val += comm.gemm.beta * (addrC[Y]);
-          else if ((comm.gemm.dimsC[0] == 1 || comm.gemm.dimsC[0] == 0) && comm.gemm.dimsC[0] == comm.gemm.dimsC[1])
-            val += comm.gemm.beta * (addrC[0]);
-          else
-            chprinterr("incompatible length for C tensor in gemm\n");
-          comm.gemm.out[X + Y * M] = val;
-        }
-      }
+      net.useCommand(comm);
       break;
     }
     default:
@@ -296,14 +264,14 @@ int main()
   // ch_arrget(float, input->data, 1) = 1;
   // ch_arrget(float, input->data, 2) = 1;
 
-  Compiler compiler=Compiler();
-  compiler.writeInstructions(model);
-  compiler.compileModel(model);
-
   // for (int i = 0; i < ch_arrlength(float, model.input->data); i++)
   // {
   //   ch_arrget(float, model.input->data, i) = (float)i / ch_arrlength(float, model.input->data);
   // }
+  Compiler compiler=Compiler();
+  compiler.writeInstructions(model);
+  compiler.compileModel(model);
+
   // return 0;
   // model.calculate();
   
