@@ -4,10 +4,8 @@ module READ_BUFF(
 	input out_ready,
 	input in_valid,
 	input [31:0] in_data, 
-	input [8:0] in_address,
 	output in_ready,
 	output reg out_valid,
-	output reg [8:0] out_address,
 	output reg [255:0] out_data
 );
 
@@ -26,7 +24,6 @@ module READ_BUFF(
 				if (ptr == 4'd7) begin
 					out_valid <= 1'b1;
 					out_data <= {in_data, data[255:32]};
-					out_address <= in_address;
 					ptr <= 4'd0;
 				end
 				else begin

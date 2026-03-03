@@ -1,7 +1,6 @@
 module TOP (
 	input clk, rst,
 	input load_data_in_valid,
-	input [8:0] load_data_in_address,
 	input [31:0] load_data_in_data, 
 	output load_data_in_ready,
 	output out_valid,
@@ -20,7 +19,6 @@ module TOP (
 		instr_valid, 
 		
 		load_data_in_valid,
-		load_data_in_address,
 		load_data_in_data, 
 		load_data_in_ready,
 		

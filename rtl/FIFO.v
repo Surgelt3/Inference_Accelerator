@@ -5,18 +5,18 @@ module FIFO #(
 	input clk, reset,
 	input out_ready, 
 	input [1:0] in_valid, 
-	input [5:0] extra_in0, extra_in1, extra_in2, 
+	input [36:0] extra_in0, extra_in1, extra_in2, 
 	input [W-1:0] in_data0, in_data1, in_data2, 
 	output out_valid,
 	output reg [1:0] in_ready, 
-	output [5:0] extra_out,
+	output [36:0] extra_out,
 	output [W-1:0] out_data
 );
 
 	localparam integer ADDR_W = $clog2(length);
 	reg [ADDR_W-1:0] wptr, rptr;
 	reg [W-1:0] fifo [0:length-1];
-	reg [2:0] extra_fifo [0:length-1];
+	reg [36:0] extra_fifo [0:length-1];
 	reg [ADDR_W:0] count;
 	wire [1:0] push;
 	wire pop;

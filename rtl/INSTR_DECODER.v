@@ -18,17 +18,17 @@ module INSTR_DECODER(
 
 	always @(posedge clk) begin
 		relu_signal <= 1'b0;
-		if (rst) begin
-			pc_out <= 32'd0;
-			classifier_bit_out <= 1'b0;
-		end
 		pc_clock <= pc_in;
 		instr_valid_out <= instr_valid;
 		opcode_out <= opcode;
 		start_loc_out <= start_loc;
 		param_loc_out <= param_loc;
 		length_out <= length;
-		if (instr_valid) begin
+
+		if (rst) begin
+			pc_out <= 32'd0;
+			classifier_bit_out <= 1'b0;
+		end else if (instr_valid) begin
 			if (opcode == 3'b000) begin
 				// MAC Operation
 				case (pe_busy) 

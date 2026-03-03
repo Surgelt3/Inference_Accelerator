@@ -11,26 +11,26 @@ module NPU_TB(
 	reg instr_valid;
 	
 	reg load_data_in_valid;
-	reg [8:0] load_data_in_address;
 	reg [31:0] load_data_in_data;
 	wire load_data_in_ready;
 	
 	wire out_valid;
 	wire [31:0] out_data;
+	wire [31:0] pc_out;
 		
 		
 	NPU DUT(
 		clk, rst, 
 		instr,
 		instr_valid, 
-		npu_instr_ready, 
 		load_data_in_valid,
-		load_data_in_address,
 		load_data_in_data, 
 		load_data_in_ready,
+		pc_out, 
 		out_valid,
 		out_data
 	);
+	
 
 	parameter Default = 5'b00000, Init = 5'b00001, Test = 5'b00010, Done = 5'b01111;
 	reg [4:0] Present_state = Default;
@@ -67,7 +67,6 @@ module NPU_TB(
 			Init: begin
 					instr_valid <= 1'b0;
 					load_data_in_valid <= 1'b0; 
-					load_data_in_address <= 1'b0;
 					load_data_in_data <= 32'b0;
 					rst <= 1;
 					#20 rst <= 0;
