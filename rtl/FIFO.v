@@ -5,8 +5,8 @@ module FIFO #(
 	input clk, reset,
 	input out_ready, 
 	input [1:0] in_valid, 
-	input [36:0] extra_in0, extra_in1, extra_in2, 
-	input [W-1:0] in_data0, in_data1, in_data2, 
+	input [36:0] extra_in0, extra_in1, 
+	input [W-1:0] in_data0, in_data1, 
 	output out_valid,
 	output reg [1:0] in_ready, 
 	output [36:0] extra_out,
@@ -59,15 +59,6 @@ module FIFO #(
 							extra_fifo[wptr] <= extra_in0;
 							extra_fifo[wptr+1] <= extra_in1;
 							wptr <= wptr + 'd2;
-						end
-				2'b11: begin
-							fifo[wptr] <= in_data0;
-							fifo[wptr+1] <= in_data1;
-							fifo[wptr+2] <= in_data2;
-							extra_fifo[wptr] <= extra_in0;
-							extra_fifo[wptr+1] <= extra_in1;
-							extra_fifo[wptr+2] <= extra_in2;
-							wptr <= wptr + 'd3;
 						end
 			endcase
 			

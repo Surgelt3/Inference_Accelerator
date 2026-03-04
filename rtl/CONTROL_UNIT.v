@@ -6,6 +6,7 @@ module CONTROL_UNIT(
 	input [8:0] address, param_loc, 
 	input [9:0] length,
 	input [31:0] pc_in,
+	input [31:0] load_data,
 	output reg [1:0] pe_fifo_bias_loc,
 	output reg [1:0] read_size, 
 	output reg bias_add, 
@@ -13,7 +14,8 @@ module CONTROL_UNIT(
 	output reg curr_classifier_bit, 
 	output reg load_signal, pool_signal, mac_signal,
 	output reg [1:0] pe_busy,
-	output reg [31:0] pc_clock
+	output reg [31:0] pc_clock,
+	output reg [31:0] write_data
 );
 	
 	reg [1:0] pe_busy_next;
@@ -39,6 +41,7 @@ module CONTROL_UNIT(
 	always @(posedge clk) begin
 		
 		pc_clock <= pc_in;
+		write_data <= load_data;
 		load_signal <= 1'b0;
 		pool_signal <= 1'b0;
 		mac_signal <= 1'b0;
@@ -147,10 +150,7 @@ module CONTROL_UNIT(
 			read_size_next = 2'b00;
 		end
 		else begin
-			if (curr_length_next > 10'd8) begin
-				read_size_next = 2'b11;
-			end
-			else if (curr_length_next > 10'd4) begin
+			if (curr_length_next > 10'd4) begin
 				read_size_next = 2'b10;
 			end 
 			else begin

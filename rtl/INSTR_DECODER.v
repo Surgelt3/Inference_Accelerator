@@ -1,6 +1,7 @@
 module INSTR_DECODER(
 	input clk, rst, 
 	input instr_valid,
+	input load_out_valid,
 	input [2:0] opcode,
 	input [8:0] start_loc, param_loc, 
 	input [9:0] length,
@@ -8,7 +9,7 @@ module INSTR_DECODER(
 	input [31:0] pc_in,
 	output reg classifier_bit_out,
 	output reg instr_valid_out, 
-	output reg relu_signal, 
+	output reg relu_signal, load_signal,
 	output reg [2:0] opcode_out,
 	output reg [8:0] start_loc_out, param_loc_out, 
 	output reg [9:0] length_out,
@@ -18,6 +19,7 @@ module INSTR_DECODER(
 
 	always @(posedge clk) begin
 		relu_signal <= 1'b0;
+		load_signal <= 1'b0;
 		pc_clock <= pc_in;
 		instr_valid_out <= instr_valid;
 		opcode_out <= opcode;
@@ -57,7 +59,15 @@ module INSTR_DECODER(
 				start_loc_out <= start_loc;
 				param_loc_out <= param_loc;
 				length_out <= length;
-				pc_out <= pc_in + 1;
+				if (load_out_valid) begin
+					pc_out <= pc_in + 1;
+					load_signal <= 1'b1;
+				end
+				else begin
+					pc_out <= pc_in + 1;
+					pc_out <= pc_in;
+					instr_valid_out <= 1'b0;
+				end
 			end
 			else if (opcode == 3'b010) begin
 				// RELU Operation

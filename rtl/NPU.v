@@ -59,7 +59,7 @@ module NPU(
 	wire mem_local0_bias_add, mem_local1_bias_add;
 	wire [8:0] mem_local0_address, mem_local1_address;
 	wire [255:0] mem_local0_write_data, mem_local1_write_data;
-	wire [767:0] mem_local0_read_data, mem_local1_read_data;
+	wire [511:0] mem_local0_read_data, mem_local1_read_data;
 	
 	wire run_end;
 	wire [1:0] pe_busy;
@@ -102,9 +102,11 @@ module NPU(
 	
 	assign pc_in = pc_out;
 	
+	wire load_data_ready;
+	
 	READ_BUFF read_buff(
 		.clk(clk), .rst(rst),
-		.out_ready(load_signal), 
+		.out_ready(load_data_ready), 
 		.in_valid(load_data_in_valid), 
 		.in_data(load_data_in_data), 
 		.out_valid(load_data_out_valid),
@@ -116,6 +118,7 @@ module NPU(
 	INSTR_DECODER instr_decoder(
 		.clk(clk), .rst(rst), 
 		.instr_valid(instr_valid),
+		.load_out_valid(load_data_out_valid),
 		.opcode(instr[31:29]),
 		.start_loc(instr[28:20]), .param_loc(instr[9:1]),
 		.length(instr[19:10]),
@@ -123,7 +126,7 @@ module NPU(
 		.pc_in(pc_in),
 		.classifier_bit_out(classifier_bit),
 		.instr_valid_out(instr_valid_control_unit), 
-		.relu_signal(relu_signal),
+		.relu_signal(relu_signal), .load_signal(load_data_ready), 
 		.opcode_out(opcode_out),
 		.start_loc_out(start_loc_out), .param_loc_out(param_loc_out),
 		.length_out(length_out),
@@ -152,7 +155,7 @@ module NPU(
 	
 	wire [8:0] mem_local0_param_loc;
 	
-	assign mem_local0_write_en = load_data_out_valid && load_signal;
+	assign mem_local0_write_en = load_signal;
 	
 	assign mem_local0_bias_add = bias_add_control_unit;
 	assign mem_local1_bias_add = bias_add_control_unit;
@@ -171,8 +174,8 @@ module NPU(
 	assign pe1_fifo_in_data0 = mem_local0_read_data[255:0];
 	assign pe0_fifo_in_data1 = mem_local0_read_data[511:256];
 	assign pe1_fifo_in_data1 = mem_local0_read_data[511:256];
-	assign pe0_fifo_in_data2 = mem_local0_read_data[767:512];
-	assign pe1_fifo_in_data2 = mem_local0_read_data[767:512];
+	//assign pe0_fifo_in_data2 = mem_local0_read_data[767:512];
+	//assign pe1_fifo_in_data2 = mem_local0_read_data[767:512];
 
 	
 	assign pe0_fifo_out_ready = 1'b1;
@@ -188,17 +191,16 @@ module NPU(
 	
 	assign pe0_fifo_bias_add0 = ((mem_local_read_size_out == 2'b01) && (classifier_bit_fifo == 0)) ? fifo_bias_add: 1'b0;
 	assign pe0_fifo_bias_add1 = ((mem_local_read_size_out == 2'b10) && (classifier_bit_fifo == 0)) ? fifo_bias_add: 1'b0;
-	assign pe0_fifo_bias_add2 = ((mem_local_read_size_out == 2'b11) && (classifier_bit_fifo == 0)) ? fifo_bias_add: 1'b0;
+	//assign pe0_fifo_bias_add2 = ((mem_local_read_size_out == 2'b11) && (classifier_bit_fifo == 0)) ? fifo_bias_add: 1'b0;
 	assign pe1_fifo_bias_add0 = ((mem_local_read_size_out == 2'b01) && (classifier_bit_fifo == 1)) ? fifo_bias_add: 1'b0;
 	assign pe1_fifo_bias_add1 = ((mem_local_read_size_out == 2'b10) && (classifier_bit_fifo == 1)) ? fifo_bias_add: 1'b0;
-	assign pe1_fifo_bias_add2 = ((mem_local_read_size_out == 2'b11) && (classifier_bit_fifo == 1)) ? fifo_bias_add: 1'b0;
+	//assign pe1_fifo_bias_add2 = ((mem_local_read_size_out == 2'b11) && (classifier_bit_fifo == 1)) ? fifo_bias_add: 1'b0;
 
 	
 	assign mem_local_bias_loc = local_mem_read_num ? mem_local1_bias_loc : mem_local0_bias_loc;
 	assign pe0_fifo_bias_loc = (classifier_bit_fifo == 0) ? mem_local_bias_loc : 2'b00;
 	assign pe1_fifo_bias_loc = (classifier_bit_fifo == 1) ? mem_local_bias_loc : 2'b00;
 	
-	assign mem_local0_write_data = load_data_mem_write_data;
 	
 		
 	CONTROL_UNIT control_unit(
@@ -209,6 +211,7 @@ module NPU(
 		.address(start_loc_out), .param_loc(param_loc_out), 
 		.length(length_out),
 		.pc_in(pc_instr_dec), 
+		.load_data(load_data_mem_write_data), 
 		.pe_fifo_bias_loc(pe_fifo_bias_loc_control_unit),
 		.read_size(read_size_control_unit), 
 		.bias_add(bias_add_control_unit), 
@@ -216,7 +219,8 @@ module NPU(
 		.curr_classifier_bit(curr_classifier_bit), 
 		.load_signal(load_signal), .pool_signal(pool_signal), .mac_signal(mac_signal), 
 		.pe_busy(pe_busy),
-		.pc_clock(pc_control_unit)
+		.pc_clock(pc_control_unit), 
+		.write_data(mem_local0_write_data)
 	);
 	
 	assign mem_read_en = (classifier_bit_fifo == 1) ? pe1_fifo_in_ready : pe0_fifo_in_ready;
@@ -247,7 +251,6 @@ module NPU(
 		.classifier_bit(curr_classifier_bit),
 		.control_signals({pool_signal, relu_signal}),
 		.read_size(mem_local0_read_size), .bias_loc(pe_fifo_bias_loc_control_unit), 
-		.write_address(mem_local0_address),
 		.address(mem_local0_address), .param_loc(mem_local0_param_loc), 
 		.pc_in(pc_control_unit), 
 		.write_data(mem_local0_write_data),
@@ -265,8 +268,8 @@ module NPU(
 		.clk(clk), .reset(rst),
 		.out_ready(pe0_fifo_out_ready), 
 		.in_valid(pe0_fifo_in_valid), 
-		.extra_in0({pe0_fifo_bias_add0, pe0_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), .extra_in1({pe0_fifo_bias_add1, pe0_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), .extra_in2({pe0_fifo_bias_add2, pe0_fifo_bias_loc, pc_mem_local, control_signals_mem_local}),
-		.in_data0(pe0_fifo_in_data0), .in_data1(pe0_fifo_in_data1), .in_data2(pe0_fifo_in_data2),
+		.extra_in0({pe0_fifo_bias_add0, pe0_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), .extra_in1({pe0_fifo_bias_add1, pe0_fifo_bias_loc, pc_mem_local, control_signals_mem_local}),
+		.in_data0(pe0_fifo_in_data0), .in_data1(pe0_fifo_in_data1), 
 		.out_valid(pe0_in_valid),
 		.in_ready(pe0_fifo_in_ready),
 		.extra_out({pe0_bias_add, pe0_bias_loc, pc_fifo0, control_signals_fifo0}),
@@ -295,8 +298,8 @@ module NPU(
 		.clk(clk), .reset(rst),
 		.out_ready(pe1_fifo_out_ready), 
 		.in_valid(pe1_fifo_in_valid),
-		.extra_in0({pe1_fifo_bias_add0, pe1_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), .extra_in1({pe1_fifo_bias_add0, pe1_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), .extra_in2({pe1_fifo_bias_add0, pe1_fifo_bias_loc, pc_mem_local, control_signals_mem_local}),
-		.in_data0(pe1_fifo_in_data0), .in_data1(pe1_fifo_in_data1), .in_data2(pe1_fifo_in_data2),
+		.extra_in0({pe1_fifo_bias_add0, pe1_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), .extra_in1({pe1_fifo_bias_add0, pe1_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), 
+		.in_data0(pe1_fifo_in_data0), .in_data1(pe1_fifo_in_data1), 
 		.out_valid(pe1_in_valid),
 		.in_ready(pe1_fifo_in_ready),
 		.extra_out({pe1_bias_add, pe1_bias_loc, pc_fifo1, control_signals_fifo1}),
