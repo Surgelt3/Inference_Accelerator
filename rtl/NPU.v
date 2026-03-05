@@ -9,6 +9,7 @@ module NPU(
 	
 	output [31:0] pc_out,
 	
+	input write_buff_out_ready,
 	output out_valid,
 	output [63:0] out_data
 );
@@ -104,6 +105,8 @@ module NPU(
 	
 	wire load_data_ready;
 	
+	wire write_buff_in_ready_pre;
+	
 	READ_BUFF read_buff(
 		.clk(clk), .rst(rst),
 		.out_ready(load_data_ready), 
@@ -119,6 +122,7 @@ module NPU(
 		.clk(clk), .rst(rst), 
 		.instr_valid(instr_valid),
 		.load_out_valid(load_data_out_valid),
+		.output_ready(write_buff_in_ready_pre), 
 		.opcode(instr[31:29]),
 		.start_loc(instr[28:20]), .param_loc(instr[9:1]),
 		.length(instr[19:10]),
@@ -350,10 +354,12 @@ module NPU(
 	
 	WRITE_BUFF write_buff(
 		.clk(clk), .rst(rst),
+		.out_ready(write_buff_out_ready),
 		.in_valid(relu_valid),
 		.in_data(relu_out), 
 		.pc_in(pc_in_relu_out),
 		.out_valid(out_valid),
+		.in_ready_pre(write_buff_in_ready_pre),
 		.out_data(out_data)
 	);
 

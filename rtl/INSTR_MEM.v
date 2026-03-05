@@ -4,7 +4,7 @@ module INSTR_MEM(
     output [31:0] instr
 );
       
-	reg [31:0] instructions[256:0];
+	reg [31:0] instructions[32767:0];
 
 	initial begin
 		$readmemh("C:/Users/lucas/Desktop/ELEC_49X/Inference_Accelerator/rtl/instr.txt", instructions);
@@ -13,7 +13,7 @@ module INSTR_MEM(
 	assign instr = instructions[pc];
  
 	always @(*) begin
-		if (instr == 32'd0) begin
+		if (instr == 32'hFFFFFFFF) begin
 			instr_valid = 1'b0;
 		end
 		else 

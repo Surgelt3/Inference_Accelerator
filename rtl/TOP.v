@@ -3,6 +3,7 @@ module TOP (
 	input load_data_in_valid,
 	input [31:0] load_data_in_data, 
 	output load_data_in_ready,
+	input write_buff_out_ready,
 	output out_valid,
 	output [63:0] out_data
 	
@@ -12,6 +13,8 @@ module TOP (
 	wire [31:0] pc;
 	wire instr_valid;
 	wire [31:0] instr;
+	
+
 
 	NPU npu(
 		clk, rst, 
@@ -23,7 +26,7 @@ module TOP (
 		load_data_in_ready,
 		
 		pc,
-		
+		write_buff_out_ready,
 		out_valid,
 		out_data
 	);

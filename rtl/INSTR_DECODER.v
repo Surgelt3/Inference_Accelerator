@@ -2,6 +2,7 @@ module INSTR_DECODER(
 	input clk, rst, 
 	input instr_valid,
 	input load_out_valid,
+	input output_ready,
 	input [2:0] opcode,
 	input [8:0] start_loc, param_loc, 
 	input [9:0] length,
@@ -17,6 +18,7 @@ module INSTR_DECODER(
 	output reg [31:0] pc_out
 );
 
+
 	always @(posedge clk) begin
 		relu_signal <= 1'b0;
 		load_signal <= 1'b0;
@@ -30,7 +32,7 @@ module INSTR_DECODER(
 		if (rst) begin
 			pc_out <= 32'd0;
 			classifier_bit_out <= 1'b0;
-		end else if (instr_valid) begin
+		end else if (instr_valid && output_ready) begin
 			if (opcode == 3'b000) begin
 				// MAC Operation
 				case (pe_busy) 
@@ -59,12 +61,11 @@ module INSTR_DECODER(
 				start_loc_out <= start_loc;
 				param_loc_out <= param_loc;
 				length_out <= length;
-				if (load_out_valid) begin
+				if (load_out_valid && !(load_signal)) begin
 					pc_out <= pc_in + 1;
 					load_signal <= 1'b1;
 				end
 				else begin
-					pc_out <= pc_in + 1;
 					pc_out <= pc_in;
 					instr_valid_out <= 1'b0;
 				end

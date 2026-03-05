@@ -1,20 +1,60 @@
 module WRITE_BUFF(
 	input clk, rst,
+	input out_ready, 
 	input in_valid,
 	input [31:0] in_data, 
 	input [31:0] pc_in,
-	output reg out_valid,
-	output reg [63:0] out_data
+	output out_valid,
+	output in_ready_pre, 
+	output [63:0] out_data
 );
 
 	localparam [31:0] offset = 32'd120;
+		
+
+	reg [4:0] rptr, wptr, counter;
+	reg [63:0] fifo [0:15];
+	
+	wire in_ready;
+	
+	assign in_ready_pre = (counter > 'd7);
+	assign out_valid = (counter > 0);
+	assign in_ready = (counter != 5'b11111);
+	
+	
+	assign pop = out_valid && out_ready;
+	assign push = in_valid && in_ready;
+	
+	
+	assign out_data = fifo[rptr];
 
 	always @(posedge clk) begin
-		out_valid <= 1'b0;
-		if (in_valid) begin
-			out_data <= {in_data, pc_in + offset};
-			out_valid <= 1'b1;
-		end		
+		if (rst) begin
+			counter <= 'd0;
+			wptr <= 'd0;
+			rptr <= 'd0;
+		end else begin
+		
+			if (pop) begin
+				rptr <= rptr + 'd1;
+			end
+			
+			
+			if (push) begin
+				fifo[wptr] <= {in_data, pc_in + offset};
+				wptr <= wptr + 'd1;
+			end
+			
+			case ({push, pop})
+				2'b01: counter <= counter - 'd1;
+				2'b10: counter <= counter + 'd1;
+				default: counter <= counter;
+			endcase
+			
+			
+		end
+		
 	end
+
 
 endmodule

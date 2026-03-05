@@ -4,6 +4,7 @@ module TOP_TB ();
 	
 	reg load_data_in_valid;
 	reg [31:0] load_data_in_data;
+	reg write_buff_out_ready;
 	wire load_data_in_ready;
 	
 	wire out_valid;
@@ -15,6 +16,7 @@ module TOP_TB ();
 		load_data_in_valid,
 		load_data_in_data, 
 		load_data_in_ready,
+		write_buff_out_ready,
 		out_valid,
 		out_data
 		
@@ -44,9 +46,11 @@ module TOP_TB ();
 			Init: begin
 					load_data_in_valid <= 1'b0; 
 					load_data_in_data <= 32'b0;
+					write_buff_out_ready <= 1'b1;
 					rst <= 1;
 					#20 
 					rst <= 0;
+					write_buff_out_ready <= 1'b1;
 					load_data_in_data <= 32'h00000000;
 					load_data_in_valid <= 1'b1;
 					#20
