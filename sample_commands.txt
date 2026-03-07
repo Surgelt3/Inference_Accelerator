@@ -1,0 +1,9 @@
+perl gen_top_tb.pl \
+  --input sample_data.txt \
+  --kernel k0.txt:0.125 \
+  --kernel k1.txt:-0.75 \
+  --output TOP_TB_gen.v \
+  --max-convs 100 \
+  --instr-output instr.hex \
+  --max-convs 16 \
+  --relu
