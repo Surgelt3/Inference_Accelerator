@@ -347,6 +347,14 @@
    type="VERILOG"
    library="NPU_TOP_0" />
  <file
+   path="simulation/submodules/MEM_LOCAL.v"
+   type="VERILOG"
+   library="NPU_TOP_0" />
+ <file
+   path="simulation/submodules/Normalization32Bit.v"
+   type="VERILOG"
+   library="NPU_TOP_0" />
+ <file
    path="simulation/submodules/Computer_System_ARM_A9_HPS.v"
    type="VERILOG"
    library="ARM_A9_HPS" />

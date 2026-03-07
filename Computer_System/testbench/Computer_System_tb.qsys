@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system name="$${FILENAME}">
+ <component
+   name="$${FILENAME}"
+   displayName="$${FILENAME}"
+   version="1.0"
+   description=""
+   tags=""
+   categories="" />
+ <parameter name="bonusData"><![CDATA[bonusData 
+{
+   element Computer_System_inst
+   {
+      datum _sortIndex
+      {
+         value = "0";
+         type = "int";
+      }
+   }
+   element Computer_System_inst_hps_io_bfm
+   {
+      datum _sortIndex
+      {
+         value = "3";
+         type = "int";
+      }
+   }
+   element Computer_System_inst_memory_bfm
+   {
+      datum _sortIndex
+      {
+         value = "4";
+         type = "int";
+      }
+   }
+   element Computer_System_inst_npu_top_0_conduit_end_bfm
+   {
+      datum _sortIndex
+      {
+         value = "5";
+         type = "int";
+      }
+   }
+   element Computer_System_inst_system_pll_ref_clk_bfm
+   {
+      datum _sortIndex
+      {
+         value = "1";
+         type = "int";
+      }
+   }
+   element Computer_System_inst_system_pll_ref_reset_bfm
+   {
+      datum _sortIndex
+      {
+         value = "2";
+         type = "int";
+      }
+   }
+}
+]]></parameter>
+ <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
+ <parameter name="device" value="5CSEBA6U23I7" />
+ <parameter name="deviceFamily" value="Cyclone V" />
+ <parameter name="deviceSpeedGrade" value="7" />
+ <parameter name="fabricMode" value="QSYS" />
+ <parameter name="generateLegacySim" value="false" />
+ <parameter name="generationId" value="0" />
+ <parameter name="globalResetBus" value="false" />
+ <parameter name="hdlLanguage" value="VERILOG" />
+ <parameter name="hideFromIPCatalog" value="false" />
+ <parameter name="lockedInterfaceDefinition" value="" />
+ <parameter name="maxAdditionalLatency" value="1" />
+ <parameter name="projectName">DE10_Nano_Computer.qpf</parameter>
+ <parameter name="sopcBorderPoints" value="false" />
+ <parameter name="systemHash" value="0" />
+ <parameter name="testBenchDutName" value="Computer_System" />
+ <parameter name="timeStamp" value="0" />
+ <parameter name="useTestBenchNamingPattern" value="true" />
+ <instanceScript></instanceScript>
+ <module
+   name="Computer_System_inst"
+   kind="Computer_System"
+   version="1.0"
+   enabled="1">
+  <parameter name="AUTO_DEVICE" value="5CSEBA6U23I7" />
+  <parameter name="AUTO_DEVICE_FAMILY" value="Cyclone V" />
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="7" />
+  <parameter name="AUTO_GENERATION_ID" value="0" />
+  <parameter name="AUTO_SYSTEM_PLL_REF_CLK_CLOCK_DOMAIN" value="1" />
+  <parameter name="AUTO_SYSTEM_PLL_REF_CLK_CLOCK_RATE" value="0" />
+  <parameter name="AUTO_SYSTEM_PLL_REF_CLK_RESET_DOMAIN" value="1" />
+  <parameter name="AUTO_UNIQUE_ID" value="Computer_System" />
+ </module>
+ <module
+   name="Computer_System_inst_hps_io_bfm"
+   kind="altera_conduit_bfm"
+   version="18.1"
+   enabled="1">
+  <parameter name="CLOCKED_SIGNAL" value="false" />
+  <parameter name="ENABLE_RESET" value="false" />
+  <parameter name="SIGNAL_DIRECTIONS">input,bidir,output,output,output,output,output,output,input,input,input,input,input,input,bidir,bidir,bidir,bidir,bidir,bidir,bidir,bidir,bidir,bidir,input,bidir,bidir,bidir,bidir,bidir,input,output,input,input,output,input,output,bidir,bidir,bidir,bidir,bidir,bidir,bidir,bidir,output,output,input</parameter>
+  <parameter name="SIGNAL_ROLES">hps_io_emac1_inst_MDC,hps_io_emac1_inst_MDIO,hps_io_emac1_inst_RXD0,hps_io_emac1_inst_RXD1,hps_io_emac1_inst_RXD2,hps_io_emac1_inst_RXD3,hps_io_emac1_inst_RX_CLK,hps_io_emac1_inst_RX_CTL,hps_io_emac1_inst_TXD0,hps_io_emac1_inst_TXD1,hps_io_emac1_inst_TXD2,hps_io_emac1_inst_TXD3,hps_io_emac1_inst_TX_CLK,hps_io_emac1_inst_TX_CTL,hps_io_gpio_inst_GPIO09,hps_io_gpio_inst_GPIO35,hps_io_gpio_inst_GPIO40,hps_io_gpio_inst_GPIO53,hps_io_gpio_inst_GPIO54,hps_io_gpio_inst_GPIO61,hps_io_i2c0_inst_SCL,hps_io_i2c0_inst_SDA,hps_io_i2c1_inst_SCL,hps_io_i2c1_inst_SDA,hps_io_sdio_inst_CLK,hps_io_sdio_inst_CMD,hps_io_sdio_inst_D0,hps_io_sdio_inst_D1,hps_io_sdio_inst_D2,hps_io_sdio_inst_D3,hps_io_spim1_inst_CLK,hps_io_spim1_inst_MISO,hps_io_spim1_inst_MOSI,hps_io_spim1_inst_SS0,hps_io_uart0_inst_RX,hps_io_uart0_inst_TX,hps_io_usb1_inst_CLK,hps_io_usb1_inst_D0,hps_io_usb1_inst_D1,hps_io_usb1_inst_D2,hps_io_usb1_inst_D3,hps_io_usb1_inst_D4,hps_io_usb1_inst_D5,hps_io_usb1_inst_D6,hps_io_usb1_inst_D7,hps_io_usb1_inst_DIR,hps_io_usb1_inst_NXT,hps_io_usb1_inst_STP</parameter>
+  <parameter name="SIGNAL_WIDTHS">1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1</parameter>
+ </module>
+ <module
+   name="Computer_System_inst_memory_bfm"
+   kind="altera_conduit_bfm"
+   version="18.1"
+   enabled="1">
+  <parameter name="CLOCKED_SIGNAL" value="false" />
+  <parameter name="ENABLE_RESET" value="false" />
+  <parameter name="SIGNAL_DIRECTIONS">input,input,input,input,input,input,input,input,bidir,bidir,bidir,input,input,input,input,output</parameter>
+  <parameter name="SIGNAL_ROLES">mem_a,mem_ba,mem_cas_n,mem_ck,mem_ck_n,mem_cke,mem_cs_n,mem_dm,mem_dq,mem_dqs,mem_dqs_n,mem_odt,mem_ras_n,mem_reset_n,mem_we_n,oct_rzqin</parameter>
+  <parameter name="SIGNAL_WIDTHS">15,3,1,1,1,1,1,4,32,4,4,1,1,1,1,1</parameter>
+ </module>
+ <module
+   name="Computer_System_inst_npu_top_0_conduit_end_bfm"
+   kind="altera_conduit_bfm"
+   version="18.1"
+   enabled="1">
+  <parameter name="CLOCKED_SIGNAL" value="false" />
+  <parameter name="ENABLE_RESET" value="false" />
+  <parameter name="SIGNAL_DIRECTIONS" value="input" />
+  <parameter name="SIGNAL_ROLES" value="readdata" />
+  <parameter name="SIGNAL_WIDTHS" value="64" />
+ </module>
+ <module
+   name="Computer_System_inst_system_pll_ref_clk_bfm"
+   kind="altera_avalon_clock_source"
+   version="18.1"
+   enabled="1">
+  <parameter name="CLOCK_RATE" value="50000000" />
+  <parameter name="CLOCK_UNIT" value="1" />
+ </module>
+ <module
+   name="Computer_System_inst_system_pll_ref_reset_bfm"
+   kind="altera_avalon_reset_source"
+   version="18.1"
+   enabled="1">
+  <parameter name="ASSERT_HIGH_RESET" value="1" />
+  <parameter name="INITIAL_RESET_CYCLES" value="50" />
+ </module>
+ <connection
+   kind="clock"
+   version="18.1"
+   start="Computer_System_inst_system_pll_ref_clk_bfm.clk"
+   end="Computer_System_inst_system_pll_ref_reset_bfm.clk" />
+ <connection
+   kind="clock"
+   version="18.1"
+   start="Computer_System_inst_system_pll_ref_clk_bfm.clk"
+   end="Computer_System_inst.system_pll_ref_clk" />
+ <connection
+   kind="conduit"
+   version="18.1"
+   start="Computer_System_inst_hps_io_bfm.conduit"
+   end="Computer_System_inst.hps_io">
+  <parameter name="endPort" value="" />
+  <parameter name="endPortLSB" value="0" />
+  <parameter name="startPort" value="" />
+  <parameter name="startPortLSB" value="0" />
+  <parameter name="width" value="0" />
+ </connection>
+ <connection
+   kind="conduit"
+   version="18.1"
+   start="Computer_System_inst_memory_bfm.conduit"
+   end="Computer_System_inst.memory">
+  <parameter name="endPort" value="" />
+  <parameter name="endPortLSB" value="0" />
+  <parameter name="startPort" value="" />
+  <parameter name="startPortLSB" value="0" />
+  <parameter name="width" value="0" />
+ </connection>
+ <connection
+   kind="conduit"
+   version="18.1"
+   start="Computer_System_inst_npu_top_0_conduit_end_bfm.conduit"
+   end="Computer_System_inst.npu_top_0_conduit_end">
+  <parameter name="endPort" value="" />
+  <parameter name="endPortLSB" value="0" />
+  <parameter name="startPort" value="" />
+  <parameter name="startPortLSB" value="0" />
+  <parameter name="width" value="0" />
+ </connection>
+ <connection
+   kind="reset"
+   version="18.1"
+   start="Computer_System_inst_system_pll_ref_reset_bfm.reset"
+   end="Computer_System_inst.system_pll_ref_reset" />
+ <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
+ <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
+</system>

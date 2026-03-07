@@ -12,7 +12,7 @@
 # or its authorized distributors. Please refer to the applicable 
 # agreement for further details.
 
-# ACDS 18.1 625 win32 2026.03.06.21:28:53
+# ACDS 18.1 625 win32 2026.03.06.22:51:29
 
 # ----------------------------------------
 # vcsmx - auto-generated simulation script
@@ -107,7 +107,7 @@
 # within the Quartus project, and generate a unified
 # script which supports all the Altera IP within the design.
 # ----------------------------------------
-# ACDS 18.1 625 win32 2026.03.06.21:28:53
+# ACDS 18.1 625 win32 2026.03.06.22:51:29
 # ----------------------------------------
 # initialize variables
 TOP_LEVEL_NAME="Computer_System"
@@ -300,6 +300,8 @@ if [ $SKIP_COM -eq 0 ]; then
   vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/submodules/WRITE_BUFF.v"                                                               -work NPU_TOP_0                                                            
   vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/submodules/adder_32bit.v"                                                              -work NPU_TOP_0                                                            
   vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/submodules/multiplier_32bit.v"                                                         -work NPU_TOP_0                                                            
+  vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/submodules/MEM_LOCAL.v"                                                                -work NPU_TOP_0                                                            
+  vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/submodules/Normalization32Bit.v"                                                       -work NPU_TOP_0                                                            
   vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/submodules/Computer_System_ARM_A9_HPS.v"                                               -work ARM_A9_HPS                                                           
   vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/Computer_System.v"                                                                                                                                                
 fi

@@ -10,8 +10,7 @@ module TOP (
 
 	output [63:0] readdata,
 	input read,
-	output waitrequest_read,
-	output [63:0] Q_export
+	output waitrequest_read
 );	
 
 	wire in_valid, in_ready;

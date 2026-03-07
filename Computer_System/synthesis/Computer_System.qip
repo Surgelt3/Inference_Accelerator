@@ -2,7 +2,7 @@ set_global_assignment -entity "Computer_System" -library "Computer_System" -name
 set_global_assignment -entity "Computer_System" -library "Computer_System" -name IP_TOOL_VERSION "18.1"
 set_global_assignment -entity "Computer_System" -library "Computer_System" -name IP_TOOL_ENV "Qsys"
 set_global_assignment -library "Computer_System" -name SOPCINFO_FILE [file join $::quartus(qip_path) "../../Computer_System.sopcinfo"]
-set_global_assignment -entity "Computer_System" -library "Computer_System" -name SLD_INFO "QSYS_NAME Computer_System HAS_SOPCINFO 1 GENERATION_ID 1772850560"
+set_global_assignment -entity "Computer_System" -library "Computer_System" -name SLD_INFO "QSYS_NAME Computer_System HAS_SOPCINFO 1 GENERATION_ID 1772855516"
 set_global_assignment -library "Computer_System" -name MISC_FILE [file join $::quartus(qip_path) "../Computer_System.cmp"]
 set_global_assignment -library "Computer_System" -name SLD_FILE [file join $::quartus(qip_path) "Computer_System.regmap"]
 set_global_assignment -library "Computer_System" -name MISC_FILE [file join $::quartus(qip_path) "../../C"]
@@ -18,7 +18,7 @@ set_global_assignment -entity "Computer_System" -library "Computer_System" -name
 set_global_assignment -entity "Computer_System" -library "Computer_System" -name IP_COMPONENT_REPORT_HIERARCHY "On"
 set_global_assignment -entity "Computer_System" -library "Computer_System" -name IP_COMPONENT_INTERNAL "Off"
 set_global_assignment -entity "Computer_System" -library "Computer_System" -name IP_COMPONENT_VERSION "MS4w"
-set_global_assignment -entity "Computer_System" -library "Computer_System" -name IP_COMPONENT_PARAMETER "QVVUT19HRU5FUkFUSU9OX0lE::MTc3Mjg1MDU2MA==::QXV0byBHRU5FUkFUSU9OX0lE"
+set_global_assignment -entity "Computer_System" -library "Computer_System" -name IP_COMPONENT_PARAMETER "QVVUT19HRU5FUkFUSU9OX0lE::MTc3Mjg1NTUxNg==::QXV0byBHRU5FUkFUSU9OX0lE"
 set_global_assignment -entity "Computer_System" -library "Computer_System" -name IP_COMPONENT_PARAMETER "QVVUT19ERVZJQ0VfRkFNSUxZ::Q3ljbG9uZSBW::QXV0byBERVZJQ0VfRkFNSUxZ"
 set_global_assignment -entity "Computer_System" -library "Computer_System" -name IP_COMPONENT_PARAMETER "QVVUT19ERVZJQ0U=::NUNTRUJBNlUyM0k3::QXV0byBERVZJQ0U="
 set_global_assignment -entity "Computer_System" -library "Computer_System" -name IP_COMPONENT_PARAMETER "QVVUT19ERVZJQ0VfU1BFRURHUkFERQ==::Nw==::QXV0byBERVZJQ0VfU1BFRURHUkFERQ=="
@@ -1087,7 +1087,7 @@ set_global_assignment -entity "TOP" -library "Computer_System" -name IP_COMPONEN
 set_global_assignment -entity "TOP" -library "Computer_System" -name IP_COMPONENT_DISPLAY_NAME "TlBVX1RPUA=="
 set_global_assignment -entity "TOP" -library "Computer_System" -name IP_COMPONENT_REPORT_HIERARCHY "Off"
 set_global_assignment -entity "TOP" -library "Computer_System" -name IP_COMPONENT_INTERNAL "Off"
-set_global_assignment -entity "TOP" -library "Computer_System" -name IP_COMPONENT_VERSION "Mi4w"
+set_global_assignment -entity "TOP" -library "Computer_System" -name IP_COMPONENT_VERSION "Mi4x"
 set_instance_assignment -name HPS_LOCATION PIN_P19A0T -entity Computer_System_ARM_A9_HPS -to hps_io|border|hps_io_emac1_inst_TX_CLK[0]
 set_instance_assignment -name HPS_LOCATION PIN_P19B0T -entity Computer_System_ARM_A9_HPS -to hps_io|border|hps_io_emac1_inst_TXD0[0]
 set_instance_assignment -name HPS_LOCATION PIN_P19A1T -entity Computer_System_ARM_A9_HPS -to hps_io|border|hps_io_emac1_inst_TXD1[0]
@@ -6902,6 +6902,8 @@ set_global_assignment -library "Computer_System" -name VERILOG_FILE [file join $
 set_global_assignment -library "Computer_System" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/WRITE_BUFF.v"]
 set_global_assignment -library "Computer_System" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/adder_32bit.v"]
 set_global_assignment -library "Computer_System" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/multiplier_32bit.v"]
+set_global_assignment -library "Computer_System" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/MEM_LOCAL.v"]
+set_global_assignment -library "Computer_System" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/Normalization32Bit.v"]
 set_global_assignment -library "Computer_System" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/Computer_System_ARM_A9_HPS.v"]
 set_global_assignment -library "Computer_System" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/Computer_System_ARM_A9_HPS_hps_io.v"]
 set_global_assignment -library "Computer_System" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/hps_sdram.v"]

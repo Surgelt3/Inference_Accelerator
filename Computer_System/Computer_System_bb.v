@@ -64,7 +64,6 @@ module Computer_System (
 	memory_mem_odt,
 	memory_mem_dm,
 	memory_oct_rzqin,
-	npu_top_0_conduit_end_readdata,
 	system_pll_ref_clk_clk,
 	system_pll_ref_reset_reset);	
 
@@ -132,7 +131,6 @@ module Computer_System (
 	output		memory_mem_odt;
 	output	[3:0]	memory_mem_dm;
 	input		memory_oct_rzqin;
-	input	[63:0]	npu_top_0_conduit_end_readdata;
 	input		system_pll_ref_clk_clk;
 	input		system_pll_ref_reset_reset;
 endmodule

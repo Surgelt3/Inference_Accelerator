@@ -64,7 +64,6 @@
 			memory_mem_odt                  : out   std_logic;                                        -- mem_odt
 			memory_mem_dm                   : out   std_logic_vector(3 downto 0);                     -- mem_dm
 			memory_oct_rzqin                : in    std_logic                     := 'X';             -- oct_rzqin
-			npu_top_0_conduit_end_readdata  : out   std_logic_vector(63 downto 0);                    -- readdata
 			system_pll_ref_clk_clk          : in    std_logic                     := 'X';             -- clk
 			system_pll_ref_reset_reset      : in    std_logic                     := 'X'              -- reset
 		);
