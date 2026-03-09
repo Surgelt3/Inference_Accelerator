@@ -18,11 +18,13 @@ module RELU6(
 		if (in_valid) begin
 			pc_out <= pc_in;
 			if (use_relu) begin
-				if (in_data > FP_SIX) begin
-					out_data <= FP_SIX;
-				end else if (in_data[31]) begin
+				if (in_data[31]) begin
 					out_data <= FP_ZERO;
-				end else begin
+				end 
+				else if (in_data > FP_SIX) begin
+					out_data <= FP_SIX;
+				end 
+				else begin
 					out_data <= in_data;
 				end
 			end

@@ -33,14 +33,6 @@
          type = "int";
       }
    }
-   element Computer_System_inst_npu_top_0_conduit_end_bfm
-   {
-      datum _sortIndex
-      {
-         value = "5";
-         type = "int";
-      }
-   }
    element Computer_System_inst_system_pll_ref_clk_bfm
    {
       datum _sortIndex
@@ -115,17 +107,6 @@
   <parameter name="SIGNAL_WIDTHS">15,3,1,1,1,1,1,4,32,4,4,1,1,1,1,1</parameter>
  </module>
  <module
-   name="Computer_System_inst_npu_top_0_conduit_end_bfm"
-   kind="altera_conduit_bfm"
-   version="18.1"
-   enabled="1">
-  <parameter name="CLOCKED_SIGNAL" value="false" />
-  <parameter name="ENABLE_RESET" value="false" />
-  <parameter name="SIGNAL_DIRECTIONS" value="input" />
-  <parameter name="SIGNAL_ROLES" value="readdata" />
-  <parameter name="SIGNAL_WIDTHS" value="64" />
- </module>
- <module
    name="Computer_System_inst_system_pll_ref_clk_bfm"
    kind="altera_avalon_clock_source"
    version="18.1"
@@ -167,17 +148,6 @@
    version="18.1"
    start="Computer_System_inst_memory_bfm.conduit"
    end="Computer_System_inst.memory">
-  <parameter name="endPort" value="" />
-  <parameter name="endPortLSB" value="0" />
-  <parameter name="startPort" value="" />
-  <parameter name="startPortLSB" value="0" />
-  <parameter name="width" value="0" />
- </connection>
- <connection
-   kind="conduit"
-   version="18.1"
-   start="Computer_System_inst_npu_top_0_conduit_end_bfm.conduit"
-   end="Computer_System_inst.npu_top_0_conduit_end">
   <parameter name="endPort" value="" />
   <parameter name="endPortLSB" value="0" />
   <parameter name="startPort" value="" />

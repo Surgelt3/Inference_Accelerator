@@ -1,6 +1,5 @@
 module PE_SWITCH(
 	input clk, rst, 
-	input out_taken,
 	input [1:0] relu_signal,
 	input [1:0] in_valid,
 	input [31:0] pc0, pc1,
@@ -19,20 +18,25 @@ module PE_SWITCH(
 	reg [31:0] out_next, pc_out_next;
 
 	always @(posedge clk) begin
-		out_valid <= out_valid_next;
-		relu_out <= relu_out_next;
-		out <= out_next;
-		pc_out <= pc_out_next;
-		
+		if (rst) begin
+			out_valid <= 1'b0;
+			relu_out <= 1'b0;
+			out <= 32'd0;
+			pc_out <= 32'd0;
+		end
+		else begin
+			out_valid <= out_valid_next;
+			relu_out <= relu_out_next;
+			out <= out_next;
+			pc_out <= pc_out_next;
+		end
 	end
 	
 	
 	always @(*) begin
-		
 		if (rst) begin
 			res_valid = 2'b00;
 		end
-		
 		case (in_valid)
 			2'b01: begin 
 						pe0_res = in0;
@@ -61,24 +65,20 @@ module PE_SWITCH(
 			pc_out_next = pe0_pc;
 			relu_out_next = relu_pe[0];
 			out_valid_next = 1'b1;
-			if (out_taken) begin
-				res_valid = res_valid & 2'b10;
-			end
+			res_valid = res_valid & 2'b10;
 		end
 		else if (res_valid[1]) begin
 			out_next = pe1_res;
 			pc_out_next = pe1_pc;
 			relu_out_next = relu_pe[1];
 			out_valid_next = 1'b1;
-			if (out_taken) begin
-				res_valid = res_valid & 2'b01;
-			end
+			res_valid = res_valid & 2'b01;
 		end
 		else begin
 			out_valid_next = 1'b0;
-			relu_out_next <= relu_out;
-			out_next <= out;
-			pc_out_next <= pc_out;
+			relu_out_next <= 1'b0;
+			out_next <= 32'd0;
+			pc_out_next <= 32'd0;
 		end
 		
 	

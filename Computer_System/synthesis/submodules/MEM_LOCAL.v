@@ -19,14 +19,14 @@ module MEM_LOCAL(
 );
 
 	
-	reg [31:0] mem0 [0:63];
-	reg [31:0] mem1 [0:63];
-	reg [31:0] mem2 [0:63];
-	reg [31:0] mem3 [0:63];
-	reg [31:0] mem4 [0:63];
-	reg [31:0] mem5 [0:63];
-	reg [31:0] mem6 [0:63];
-	reg [31:0] mem7 [0:63];
+	reg [31:0] mem0 [0:127];
+	reg [31:0] mem1 [0:127];
+	reg [31:0] mem2 [0:127];
+	reg [31:0] mem3 [0:127];
+	reg [31:0] mem4 [0:127];
+	reg [31:0] mem5 [0:127];
+	reg [31:0] mem6 [0:127];
+	reg [31:0] mem7 [0:127];
 	
 	//initial begin
 	//	#20 $readmemh("C:/Users/lucas/Desktop/ELEC_49X/Inference_Accelerator/rtl/memory.hex", mem1);
@@ -47,14 +47,14 @@ module MEM_LOCAL(
 			bias_add_out <= bias_add;
 			read_size_out <= read_size;
 			if (write_en) begin
-				  mem0[address[5:0]] <= write_data[31:0];
-				  mem1[address[5:0]] <= write_data[63:32];
-				  mem2[address[5:0]] <= write_data[95:64];
-				  mem3[address[5:0]] <= write_data[127:96];
-				  mem4[address[5:0]] <= write_data[159:128];
-				  mem5[address[5:0]] <= write_data[191:160];
-				  mem6[address[5:0]] <= write_data[223:192];
-				  mem7[address[5:0]] <= write_data[255:224];
+				  mem0[address[6:0]] <= write_data[31:0];
+				  mem1[address[6:0]] <= write_data[63:32];
+				  mem2[address[6:0]] <= write_data[95:64];
+				  mem3[address[6:0]] <= write_data[127:96];
+				  mem4[address[6:0]] <= write_data[159:128];
+				  mem5[address[6:0]] <= write_data[191:160];
+				  mem6[address[6:0]] <= write_data[223:192];
+				  mem7[address[6:0]] <= write_data[255:224];
 			end
 			else if (read_en) begin
 				
@@ -63,10 +63,10 @@ module MEM_LOCAL(
 				end
 				else begin
 					read_data <= {
-							mem7[param_loc[5:0]], mem7[address[5:0]], mem6[param_loc[5:0]], mem6[address[5:0]], 
-							mem5[param_loc[5:0]], mem5[address[5:0]], mem4[param_loc[5:0]], mem4[address[5:0]], 
-							mem3[param_loc[5:0]], mem3[address[5:0]], mem2[param_loc[5:0]], mem2[address[5:0]], 
-							mem1[param_loc[5:0]], mem1[address[5:0]], mem0[param_loc[5:0]], mem0[address[5:0]]
+							mem7[param_loc[6:0]], mem7[address[6:0]], mem6[param_loc[6:0]], mem6[address[6:0]], 
+							mem5[param_loc[6:0]], mem5[address[6:0]], mem4[param_loc[6:0]], mem4[address[6:0]], 
+							mem3[param_loc[6:0]], mem3[address[6:0]], mem2[param_loc[6:0]], mem2[address[6:0]], 
+							mem1[param_loc[6:0]], mem1[address[6:0]], mem0[param_loc[6:0]], mem0[address[6:0]]
 						};
 					read_valid_out <= 1'b1;
 					

@@ -13,17 +13,18 @@ module NPU(
 	output out_valid,
 	output [63:0] out_data
 );
-
+	
+	//Note: Each address stores 8 32 bit numbers so 7'd1 (stores 8 32 bit numbers) 7'd2 (stores 8 32 bit numbers)
 	// instr breakdown
 	// opcode (3 bits): 31-29
-	// start_loc (9 bits): 28-20
-	// length (10 bits): 19-10
-	// param_loc (9 bits): 9-1
+	// start_loc (9 bits) (only use bits 26-20): 28-20
+	// length (10 bits) (size of kernel): 19-10
+	// param_loc (9 bits) (location of kernel + bias) (only use bits 7-1): 9-1
 	// unused: 0
 	
 	// MAC opcode: 3'b000
-	// LOAD opcode: 3'b001
-	// START opcode: 3'b010
+	// RELU (must be called the instruction after the MAC to apply relu to the MAC instruction result) opcode: 3'b010
+	// LOAD (loads in 8 32 bit numbers at the start_loc address from the write data buffer) opcode: 3'b001
 	// END opcode: 3'b011
 	
 	
@@ -324,11 +325,9 @@ module NPU(
 		.out_node(pe1_out)
 	);
 	
-	assign pe_switch_out_taken = relu_valid;
 	
 	PE_SWITCH pe_switch(
 		.clk(clk), .rst(rst), 
-		.out_taken(pe_switch_out_taken),
 		.relu_signal({relu_signal_pe1, relu_signal_pe0}),
 		.in_valid({pe1_out_valid, pe0_out_valid}),
 		.pc0(pc_pe0), .pc1(pc_pe1),

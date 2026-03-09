@@ -1,12 +1,12 @@
-# system info Computer_System on 2026.03.06.22:51:28
+# system info Computer_System on 2026.03.09.04:27:09
 system_info:
 name,value
 DEVICE,5CSEBA6U23I7
 DEVICE_FAMILY,Cyclone V
-GENERATION_ID,1772855455
+GENERATION_ID,1773044792
 #
 #
-# Files generated for Computer_System on 2026.03.06.22:51:28
+# Files generated for Computer_System on 2026.03.09.04:27:09
 files:
 filepath,kind,attributes,module,is_top
 simulation/Computer_System.v,VERILOG,,Computer_System,true
@@ -29,6 +29,8 @@ simulation/submodules/adder_32bit.v,VERILOG,,TOP,false
 simulation/submodules/multiplier_32bit.v,VERILOG,,TOP,false
 simulation/submodules/MEM_LOCAL.v,VERILOG,,TOP,false
 simulation/submodules/Normalization32Bit.v,VERILOG,,TOP,false
+simulation/submodules/custom_ip_add.qip,OTHER,,TOP,false
+simulation/submodules/custom_ip_mult.qip,OTHER,,TOP,false
 simulation/submodules/Computer_System_System_PLL.v,VERILOG,,Computer_System_System_PLL,false
 simulation/submodules/Computer_System_mm_interconnect_0.v,VERILOG,,Computer_System_mm_interconnect_0,false
 simulation/submodules/Computer_System_irq_mapper.sv,SYSTEM_VERILOG,,Computer_System_irq_mapper,false

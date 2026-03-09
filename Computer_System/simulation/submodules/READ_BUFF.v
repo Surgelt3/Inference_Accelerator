@@ -26,6 +26,7 @@ module READ_BUFF(
 			data <= 256'd0;
 			ptr <= 4'd0;
 			out_valid <= 1'b0;
+			out_data <= 256'd0;
 		end else begin
 		
 			if (allow_out) begin

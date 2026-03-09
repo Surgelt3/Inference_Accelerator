@@ -45,7 +45,6 @@ DEFINE NPU_TOP_0                                                             ./l
 DEFINE ARM_A9_HPS                                                            ./libraries/ARM_A9_HPS/                                                           
 DEFINE Computer_System_inst_system_pll_ref_reset_bfm                         ./libraries/Computer_System_inst_system_pll_ref_reset_bfm/                        
 DEFINE Computer_System_inst_system_pll_ref_clk_bfm                           ./libraries/Computer_System_inst_system_pll_ref_clk_bfm/                          
-DEFINE Computer_System_inst_npu_top_0_conduit_end_bfm                        ./libraries/Computer_System_inst_npu_top_0_conduit_end_bfm/                       
 DEFINE Computer_System_inst_memory_bfm                                       ./libraries/Computer_System_inst_memory_bfm/                                      
 DEFINE Computer_System_inst_hps_io_bfm                                       ./libraries/Computer_System_inst_hps_io_bfm/                                      
 DEFINE Computer_System_inst                                                  ./libraries/Computer_System_inst/                                                 

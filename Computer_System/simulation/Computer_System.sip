@@ -66,6 +66,8 @@ set_global_assignment -library "lib_Computer_System" -name MISC_FILE [file join 
 set_global_assignment -library "lib_Computer_System" -name MISC_FILE [file join $::quartus(sip_path) "submodules/multiplier_32bit.v"]
 set_global_assignment -library "lib_Computer_System" -name MISC_FILE [file join $::quartus(sip_path) "submodules/MEM_LOCAL.v"]
 set_global_assignment -library "lib_Computer_System" -name MISC_FILE [file join $::quartus(sip_path) "submodules/Normalization32Bit.v"]
+set_global_assignment -library "lib_Computer_System" -name MISC_FILE [file join $::quartus(sip_path) "submodules/custom_ip_add.qip"]
+set_global_assignment -library "lib_Computer_System" -name MISC_FILE [file join $::quartus(sip_path) "submodules/custom_ip_mult.qip"]
 set_global_assignment -library "lib_Computer_System" -name MISC_FILE [file join $::quartus(sip_path) "submodules/Computer_System_ARM_A9_HPS.v"]
 set_global_assignment -library "lib_Computer_System" -name MISC_FILE [file join $::quartus(sip_path) "submodules/Computer_System_ARM_A9_HPS_hps_io.v"]
 set_global_assignment -library "lib_Computer_System" -name MISC_FILE [file join $::quartus(sip_path) "submodules/verbosity_pkg.sv"]

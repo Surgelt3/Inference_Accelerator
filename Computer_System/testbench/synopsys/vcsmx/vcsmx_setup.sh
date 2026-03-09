@@ -12,7 +12,7 @@
 # or its authorized distributors. Please refer to the applicable 
 # agreement for further details.
 
-# ACDS 18.1 625 win32 2026.03.06.21:42:41
+# ACDS 18.1 625 win32 2026.03.07.02:08:29
 
 # ----------------------------------------
 # vcsmx - auto-generated simulation script
@@ -107,7 +107,7 @@
 # within the Quartus project, and generate a unified
 # script which supports all the Altera IP within the design.
 # ----------------------------------------
-# ACDS 18.1 625 win32 2026.03.06.21:42:41
+# ACDS 18.1 625 win32 2026.03.07.02:08:29
 # ----------------------------------------
 # initialize variables
 TOP_LEVEL_NAME="Computer_System_tb"
@@ -183,7 +183,6 @@ mkdir -p ./libraries/NPU_TOP_0/
 mkdir -p ./libraries/ARM_A9_HPS/
 mkdir -p ./libraries/Computer_System_inst_system_pll_ref_reset_bfm/
 mkdir -p ./libraries/Computer_System_inst_system_pll_ref_clk_bfm/
-mkdir -p ./libraries/Computer_System_inst_npu_top_0_conduit_end_bfm/
 mkdir -p ./libraries/Computer_System_inst_memory_bfm/
 mkdir -p ./libraries/Computer_System_inst_hps_io_bfm/
 mkdir -p ./libraries/Computer_System_inst/
@@ -306,10 +305,11 @@ if [ $SKIP_COM -eq 0 ]; then
   vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/WRITE_BUFF.v"                                                               -work NPU_TOP_0                                                            
   vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/adder_32bit.v"                                                              -work NPU_TOP_0                                                            
   vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/multiplier_32bit.v"                                                         -work NPU_TOP_0                                                            
+  vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/MEM_LOCAL.v"                                                                -work NPU_TOP_0                                                            
+  vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/Normalization32Bit.v"                                                       -work NPU_TOP_0                                                            
   vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/Computer_System_ARM_A9_HPS.v"                                               -work ARM_A9_HPS                                                           
   vlogan +v2k -sverilog $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/altera_avalon_reset_source.sv"                                              -work Computer_System_inst_system_pll_ref_reset_bfm                        
   vlogan +v2k -sverilog $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/altera_avalon_clock_source.sv"                                              -work Computer_System_inst_system_pll_ref_clk_bfm                          
-  vlogan +v2k -sverilog $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/altera_conduit_bfm_0003.sv"                                                 -work Computer_System_inst_npu_top_0_conduit_end_bfm                       
   vlogan +v2k -sverilog $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/altera_conduit_bfm_0002.sv"                                                 -work Computer_System_inst_memory_bfm                                      
   vlogan +v2k -sverilog $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/altera_conduit_bfm.sv"                                                      -work Computer_System_inst_hps_io_bfm                                      
   vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/Computer_System_tb/simulation/submodules/Computer_System.v"                                                          -work Computer_System_inst                                                 

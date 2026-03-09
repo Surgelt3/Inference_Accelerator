@@ -12,7 +12,7 @@
 # or its authorized distributors. Please refer to the applicable 
 # agreement for further details.
 
-# ACDS 18.1 625 win32 2026.03.06.21:42:41
+# ACDS 18.1 625 win32 2026.03.07.02:08:29
 
 # ----------------------------------------
 # vcs - auto-generated simulation script
@@ -94,7 +94,7 @@
 # within the Quartus project, and generate a unified
 # script which supports all the Altera IP within the design.
 # ----------------------------------------
-# ACDS 18.1 625 win32 2026.03.06.21:42:41
+# ACDS 18.1 625 win32 2026.03.07.02:08:29
 # ----------------------------------------
 # initialize variables
 TOP_LEVEL_NAME="Computer_System_tb"
@@ -218,8 +218,9 @@ vcs -lca -timescale=1ps/1ps -sverilog +verilog2001ext+.v -ntb_opts dtm $ELAB_OPT
   $QSYS_SIMDIR/Computer_System_tb/simulation/submodules/WRITE_BUFF.v \
   $QSYS_SIMDIR/Computer_System_tb/simulation/submodules/adder_32bit.v \
   $QSYS_SIMDIR/Computer_System_tb/simulation/submodules/multiplier_32bit.v \
+  $QSYS_SIMDIR/Computer_System_tb/simulation/submodules/MEM_LOCAL.v \
+  $QSYS_SIMDIR/Computer_System_tb/simulation/submodules/Normalization32Bit.v \
   $QSYS_SIMDIR/Computer_System_tb/simulation/submodules/Computer_System_ARM_A9_HPS.v \
-  $QSYS_SIMDIR/Computer_System_tb/simulation/submodules/altera_conduit_bfm_0003.sv \
   $QSYS_SIMDIR/Computer_System_tb/simulation/submodules/altera_conduit_bfm_0002.sv \
   $QSYS_SIMDIR/Computer_System_tb/simulation/submodules/altera_conduit_bfm.sv \
   $QSYS_SIMDIR/Computer_System_tb/simulation/submodules/Computer_System.v \

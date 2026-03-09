@@ -71,77 +71,75 @@ module Computer_System_tb (
 	wire         computer_system_inst_memory_mem_ras_n;                            // Computer_System_inst:memory_mem_ras_n -> Computer_System_inst_memory_bfm:sig_mem_ras_n
 	wire         computer_system_inst_memory_mem_ck_n;                             // Computer_System_inst:memory_mem_ck_n -> Computer_System_inst_memory_bfm:sig_mem_ck_n
 	wire         computer_system_inst_memory_mem_cke;                              // Computer_System_inst:memory_mem_cke -> Computer_System_inst_memory_bfm:sig_mem_cke
-	wire  [63:0] computer_system_inst_npu_top_0_conduit_end_readdata;              // Computer_System_inst:npu_top_0_conduit_end_readdata -> Computer_System_inst_npu_top_0_conduit_end_bfm:sig_readdata
 	wire         computer_system_inst_system_pll_ref_reset_bfm_reset_reset;        // Computer_System_inst_system_pll_ref_reset_bfm:reset -> Computer_System_inst:system_pll_ref_reset_reset
 
 	Computer_System computer_system_inst (
-		.hps_io_hps_io_emac1_inst_TX_CLK (computer_system_inst_hps_io_hps_io_emac1_inst_tx_clk),             //                hps_io.hps_io_emac1_inst_TX_CLK
-		.hps_io_hps_io_emac1_inst_TXD0   (computer_system_inst_hps_io_hps_io_emac1_inst_txd0),               //                      .hps_io_emac1_inst_TXD0
-		.hps_io_hps_io_emac1_inst_TXD1   (computer_system_inst_hps_io_hps_io_emac1_inst_txd1),               //                      .hps_io_emac1_inst_TXD1
-		.hps_io_hps_io_emac1_inst_TXD2   (computer_system_inst_hps_io_hps_io_emac1_inst_txd2),               //                      .hps_io_emac1_inst_TXD2
-		.hps_io_hps_io_emac1_inst_TXD3   (computer_system_inst_hps_io_hps_io_emac1_inst_txd3),               //                      .hps_io_emac1_inst_TXD3
-		.hps_io_hps_io_emac1_inst_RXD0   (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rxd0),   //                      .hps_io_emac1_inst_RXD0
-		.hps_io_hps_io_emac1_inst_MDIO   (computer_system_inst_hps_io_hps_io_emac1_inst_mdio),               //                      .hps_io_emac1_inst_MDIO
-		.hps_io_hps_io_emac1_inst_MDC    (computer_system_inst_hps_io_hps_io_emac1_inst_mdc),                //                      .hps_io_emac1_inst_MDC
-		.hps_io_hps_io_emac1_inst_RX_CTL (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rx_ctl), //                      .hps_io_emac1_inst_RX_CTL
-		.hps_io_hps_io_emac1_inst_TX_CTL (computer_system_inst_hps_io_hps_io_emac1_inst_tx_ctl),             //                      .hps_io_emac1_inst_TX_CTL
-		.hps_io_hps_io_emac1_inst_RX_CLK (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rx_clk), //                      .hps_io_emac1_inst_RX_CLK
-		.hps_io_hps_io_emac1_inst_RXD1   (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rxd1),   //                      .hps_io_emac1_inst_RXD1
-		.hps_io_hps_io_emac1_inst_RXD2   (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rxd2),   //                      .hps_io_emac1_inst_RXD2
-		.hps_io_hps_io_emac1_inst_RXD3   (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rxd3),   //                      .hps_io_emac1_inst_RXD3
-		.hps_io_hps_io_sdio_inst_CMD     (computer_system_inst_hps_io_hps_io_sdio_inst_cmd),                 //                      .hps_io_sdio_inst_CMD
-		.hps_io_hps_io_sdio_inst_D0      (computer_system_inst_hps_io_hps_io_sdio_inst_d0),                  //                      .hps_io_sdio_inst_D0
-		.hps_io_hps_io_sdio_inst_D1      (computer_system_inst_hps_io_hps_io_sdio_inst_d1),                  //                      .hps_io_sdio_inst_D1
-		.hps_io_hps_io_sdio_inst_CLK     (computer_system_inst_hps_io_hps_io_sdio_inst_clk),                 //                      .hps_io_sdio_inst_CLK
-		.hps_io_hps_io_sdio_inst_D2      (computer_system_inst_hps_io_hps_io_sdio_inst_d2),                  //                      .hps_io_sdio_inst_D2
-		.hps_io_hps_io_sdio_inst_D3      (computer_system_inst_hps_io_hps_io_sdio_inst_d3),                  //                      .hps_io_sdio_inst_D3
-		.hps_io_hps_io_usb1_inst_D0      (computer_system_inst_hps_io_hps_io_usb1_inst_d0),                  //                      .hps_io_usb1_inst_D0
-		.hps_io_hps_io_usb1_inst_D1      (computer_system_inst_hps_io_hps_io_usb1_inst_d1),                  //                      .hps_io_usb1_inst_D1
-		.hps_io_hps_io_usb1_inst_D2      (computer_system_inst_hps_io_hps_io_usb1_inst_d2),                  //                      .hps_io_usb1_inst_D2
-		.hps_io_hps_io_usb1_inst_D3      (computer_system_inst_hps_io_hps_io_usb1_inst_d3),                  //                      .hps_io_usb1_inst_D3
-		.hps_io_hps_io_usb1_inst_D4      (computer_system_inst_hps_io_hps_io_usb1_inst_d4),                  //                      .hps_io_usb1_inst_D4
-		.hps_io_hps_io_usb1_inst_D5      (computer_system_inst_hps_io_hps_io_usb1_inst_d5),                  //                      .hps_io_usb1_inst_D5
-		.hps_io_hps_io_usb1_inst_D6      (computer_system_inst_hps_io_hps_io_usb1_inst_d6),                  //                      .hps_io_usb1_inst_D6
-		.hps_io_hps_io_usb1_inst_D7      (computer_system_inst_hps_io_hps_io_usb1_inst_d7),                  //                      .hps_io_usb1_inst_D7
-		.hps_io_hps_io_usb1_inst_CLK     (computer_system_inst_hps_io_bfm_conduit_hps_io_usb1_inst_clk),     //                      .hps_io_usb1_inst_CLK
-		.hps_io_hps_io_usb1_inst_STP     (computer_system_inst_hps_io_hps_io_usb1_inst_stp),                 //                      .hps_io_usb1_inst_STP
-		.hps_io_hps_io_usb1_inst_DIR     (computer_system_inst_hps_io_bfm_conduit_hps_io_usb1_inst_dir),     //                      .hps_io_usb1_inst_DIR
-		.hps_io_hps_io_usb1_inst_NXT     (computer_system_inst_hps_io_bfm_conduit_hps_io_usb1_inst_nxt),     //                      .hps_io_usb1_inst_NXT
-		.hps_io_hps_io_spim1_inst_CLK    (computer_system_inst_hps_io_hps_io_spim1_inst_clk),                //                      .hps_io_spim1_inst_CLK
-		.hps_io_hps_io_spim1_inst_MOSI   (computer_system_inst_hps_io_hps_io_spim1_inst_mosi),               //                      .hps_io_spim1_inst_MOSI
-		.hps_io_hps_io_spim1_inst_MISO   (computer_system_inst_hps_io_bfm_conduit_hps_io_spim1_inst_miso),   //                      .hps_io_spim1_inst_MISO
-		.hps_io_hps_io_spim1_inst_SS0    (computer_system_inst_hps_io_hps_io_spim1_inst_ss0),                //                      .hps_io_spim1_inst_SS0
-		.hps_io_hps_io_uart0_inst_RX     (computer_system_inst_hps_io_bfm_conduit_hps_io_uart0_inst_rx),     //                      .hps_io_uart0_inst_RX
-		.hps_io_hps_io_uart0_inst_TX     (computer_system_inst_hps_io_hps_io_uart0_inst_tx),                 //                      .hps_io_uart0_inst_TX
-		.hps_io_hps_io_i2c0_inst_SDA     (computer_system_inst_hps_io_hps_io_i2c0_inst_sda),                 //                      .hps_io_i2c0_inst_SDA
-		.hps_io_hps_io_i2c0_inst_SCL     (computer_system_inst_hps_io_hps_io_i2c0_inst_scl),                 //                      .hps_io_i2c0_inst_SCL
-		.hps_io_hps_io_i2c1_inst_SDA     (computer_system_inst_hps_io_hps_io_i2c1_inst_sda),                 //                      .hps_io_i2c1_inst_SDA
-		.hps_io_hps_io_i2c1_inst_SCL     (computer_system_inst_hps_io_hps_io_i2c1_inst_scl),                 //                      .hps_io_i2c1_inst_SCL
-		.hps_io_hps_io_gpio_inst_GPIO09  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio09),              //                      .hps_io_gpio_inst_GPIO09
-		.hps_io_hps_io_gpio_inst_GPIO35  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio35),              //                      .hps_io_gpio_inst_GPIO35
-		.hps_io_hps_io_gpio_inst_GPIO40  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio40),              //                      .hps_io_gpio_inst_GPIO40
-		.hps_io_hps_io_gpio_inst_GPIO53  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio53),              //                      .hps_io_gpio_inst_GPIO53
-		.hps_io_hps_io_gpio_inst_GPIO54  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio54),              //                      .hps_io_gpio_inst_GPIO54
-		.hps_io_hps_io_gpio_inst_GPIO61  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio61),              //                      .hps_io_gpio_inst_GPIO61
-		.memory_mem_a                    (computer_system_inst_memory_mem_a),                                //                memory.mem_a
-		.memory_mem_ba                   (computer_system_inst_memory_mem_ba),                               //                      .mem_ba
-		.memory_mem_ck                   (computer_system_inst_memory_mem_ck),                               //                      .mem_ck
-		.memory_mem_ck_n                 (computer_system_inst_memory_mem_ck_n),                             //                      .mem_ck_n
-		.memory_mem_cke                  (computer_system_inst_memory_mem_cke),                              //                      .mem_cke
-		.memory_mem_cs_n                 (computer_system_inst_memory_mem_cs_n),                             //                      .mem_cs_n
-		.memory_mem_ras_n                (computer_system_inst_memory_mem_ras_n),                            //                      .mem_ras_n
-		.memory_mem_cas_n                (computer_system_inst_memory_mem_cas_n),                            //                      .mem_cas_n
-		.memory_mem_we_n                 (computer_system_inst_memory_mem_we_n),                             //                      .mem_we_n
-		.memory_mem_reset_n              (computer_system_inst_memory_mem_reset_n),                          //                      .mem_reset_n
-		.memory_mem_dq                   (computer_system_inst_memory_mem_dq),                               //                      .mem_dq
-		.memory_mem_dqs                  (computer_system_inst_memory_mem_dqs),                              //                      .mem_dqs
-		.memory_mem_dqs_n                (computer_system_inst_memory_mem_dqs_n),                            //                      .mem_dqs_n
-		.memory_mem_odt                  (computer_system_inst_memory_mem_odt),                              //                      .mem_odt
-		.memory_mem_dm                   (computer_system_inst_memory_mem_dm),                               //                      .mem_dm
-		.memory_oct_rzqin                (computer_system_inst_memory_bfm_conduit_oct_rzqin),                //                      .oct_rzqin
-		.npu_top_0_conduit_end_readdata  (computer_system_inst_npu_top_0_conduit_end_readdata),              // npu_top_0_conduit_end.readdata
-		.system_pll_ref_clk_clk          (computer_system_inst_system_pll_ref_clk_bfm_clk_clk),              //    system_pll_ref_clk.clk
-		.system_pll_ref_reset_reset      (computer_system_inst_system_pll_ref_reset_bfm_reset_reset)         //  system_pll_ref_reset.reset
+		.hps_io_hps_io_emac1_inst_TX_CLK (computer_system_inst_hps_io_hps_io_emac1_inst_tx_clk),             //               hps_io.hps_io_emac1_inst_TX_CLK
+		.hps_io_hps_io_emac1_inst_TXD0   (computer_system_inst_hps_io_hps_io_emac1_inst_txd0),               //                     .hps_io_emac1_inst_TXD0
+		.hps_io_hps_io_emac1_inst_TXD1   (computer_system_inst_hps_io_hps_io_emac1_inst_txd1),               //                     .hps_io_emac1_inst_TXD1
+		.hps_io_hps_io_emac1_inst_TXD2   (computer_system_inst_hps_io_hps_io_emac1_inst_txd2),               //                     .hps_io_emac1_inst_TXD2
+		.hps_io_hps_io_emac1_inst_TXD3   (computer_system_inst_hps_io_hps_io_emac1_inst_txd3),               //                     .hps_io_emac1_inst_TXD3
+		.hps_io_hps_io_emac1_inst_RXD0   (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rxd0),   //                     .hps_io_emac1_inst_RXD0
+		.hps_io_hps_io_emac1_inst_MDIO   (computer_system_inst_hps_io_hps_io_emac1_inst_mdio),               //                     .hps_io_emac1_inst_MDIO
+		.hps_io_hps_io_emac1_inst_MDC    (computer_system_inst_hps_io_hps_io_emac1_inst_mdc),                //                     .hps_io_emac1_inst_MDC
+		.hps_io_hps_io_emac1_inst_RX_CTL (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rx_ctl), //                     .hps_io_emac1_inst_RX_CTL
+		.hps_io_hps_io_emac1_inst_TX_CTL (computer_system_inst_hps_io_hps_io_emac1_inst_tx_ctl),             //                     .hps_io_emac1_inst_TX_CTL
+		.hps_io_hps_io_emac1_inst_RX_CLK (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rx_clk), //                     .hps_io_emac1_inst_RX_CLK
+		.hps_io_hps_io_emac1_inst_RXD1   (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rxd1),   //                     .hps_io_emac1_inst_RXD1
+		.hps_io_hps_io_emac1_inst_RXD2   (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rxd2),   //                     .hps_io_emac1_inst_RXD2
+		.hps_io_hps_io_emac1_inst_RXD3   (computer_system_inst_hps_io_bfm_conduit_hps_io_emac1_inst_rxd3),   //                     .hps_io_emac1_inst_RXD3
+		.hps_io_hps_io_sdio_inst_CMD     (computer_system_inst_hps_io_hps_io_sdio_inst_cmd),                 //                     .hps_io_sdio_inst_CMD
+		.hps_io_hps_io_sdio_inst_D0      (computer_system_inst_hps_io_hps_io_sdio_inst_d0),                  //                     .hps_io_sdio_inst_D0
+		.hps_io_hps_io_sdio_inst_D1      (computer_system_inst_hps_io_hps_io_sdio_inst_d1),                  //                     .hps_io_sdio_inst_D1
+		.hps_io_hps_io_sdio_inst_CLK     (computer_system_inst_hps_io_hps_io_sdio_inst_clk),                 //                     .hps_io_sdio_inst_CLK
+		.hps_io_hps_io_sdio_inst_D2      (computer_system_inst_hps_io_hps_io_sdio_inst_d2),                  //                     .hps_io_sdio_inst_D2
+		.hps_io_hps_io_sdio_inst_D3      (computer_system_inst_hps_io_hps_io_sdio_inst_d3),                  //                     .hps_io_sdio_inst_D3
+		.hps_io_hps_io_usb1_inst_D0      (computer_system_inst_hps_io_hps_io_usb1_inst_d0),                  //                     .hps_io_usb1_inst_D0
+		.hps_io_hps_io_usb1_inst_D1      (computer_system_inst_hps_io_hps_io_usb1_inst_d1),                  //                     .hps_io_usb1_inst_D1
+		.hps_io_hps_io_usb1_inst_D2      (computer_system_inst_hps_io_hps_io_usb1_inst_d2),                  //                     .hps_io_usb1_inst_D2
+		.hps_io_hps_io_usb1_inst_D3      (computer_system_inst_hps_io_hps_io_usb1_inst_d3),                  //                     .hps_io_usb1_inst_D3
+		.hps_io_hps_io_usb1_inst_D4      (computer_system_inst_hps_io_hps_io_usb1_inst_d4),                  //                     .hps_io_usb1_inst_D4
+		.hps_io_hps_io_usb1_inst_D5      (computer_system_inst_hps_io_hps_io_usb1_inst_d5),                  //                     .hps_io_usb1_inst_D5
+		.hps_io_hps_io_usb1_inst_D6      (computer_system_inst_hps_io_hps_io_usb1_inst_d6),                  //                     .hps_io_usb1_inst_D6
+		.hps_io_hps_io_usb1_inst_D7      (computer_system_inst_hps_io_hps_io_usb1_inst_d7),                  //                     .hps_io_usb1_inst_D7
+		.hps_io_hps_io_usb1_inst_CLK     (computer_system_inst_hps_io_bfm_conduit_hps_io_usb1_inst_clk),     //                     .hps_io_usb1_inst_CLK
+		.hps_io_hps_io_usb1_inst_STP     (computer_system_inst_hps_io_hps_io_usb1_inst_stp),                 //                     .hps_io_usb1_inst_STP
+		.hps_io_hps_io_usb1_inst_DIR     (computer_system_inst_hps_io_bfm_conduit_hps_io_usb1_inst_dir),     //                     .hps_io_usb1_inst_DIR
+		.hps_io_hps_io_usb1_inst_NXT     (computer_system_inst_hps_io_bfm_conduit_hps_io_usb1_inst_nxt),     //                     .hps_io_usb1_inst_NXT
+		.hps_io_hps_io_spim1_inst_CLK    (computer_system_inst_hps_io_hps_io_spim1_inst_clk),                //                     .hps_io_spim1_inst_CLK
+		.hps_io_hps_io_spim1_inst_MOSI   (computer_system_inst_hps_io_hps_io_spim1_inst_mosi),               //                     .hps_io_spim1_inst_MOSI
+		.hps_io_hps_io_spim1_inst_MISO   (computer_system_inst_hps_io_bfm_conduit_hps_io_spim1_inst_miso),   //                     .hps_io_spim1_inst_MISO
+		.hps_io_hps_io_spim1_inst_SS0    (computer_system_inst_hps_io_hps_io_spim1_inst_ss0),                //                     .hps_io_spim1_inst_SS0
+		.hps_io_hps_io_uart0_inst_RX     (computer_system_inst_hps_io_bfm_conduit_hps_io_uart0_inst_rx),     //                     .hps_io_uart0_inst_RX
+		.hps_io_hps_io_uart0_inst_TX     (computer_system_inst_hps_io_hps_io_uart0_inst_tx),                 //                     .hps_io_uart0_inst_TX
+		.hps_io_hps_io_i2c0_inst_SDA     (computer_system_inst_hps_io_hps_io_i2c0_inst_sda),                 //                     .hps_io_i2c0_inst_SDA
+		.hps_io_hps_io_i2c0_inst_SCL     (computer_system_inst_hps_io_hps_io_i2c0_inst_scl),                 //                     .hps_io_i2c0_inst_SCL
+		.hps_io_hps_io_i2c1_inst_SDA     (computer_system_inst_hps_io_hps_io_i2c1_inst_sda),                 //                     .hps_io_i2c1_inst_SDA
+		.hps_io_hps_io_i2c1_inst_SCL     (computer_system_inst_hps_io_hps_io_i2c1_inst_scl),                 //                     .hps_io_i2c1_inst_SCL
+		.hps_io_hps_io_gpio_inst_GPIO09  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio09),              //                     .hps_io_gpio_inst_GPIO09
+		.hps_io_hps_io_gpio_inst_GPIO35  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio35),              //                     .hps_io_gpio_inst_GPIO35
+		.hps_io_hps_io_gpio_inst_GPIO40  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio40),              //                     .hps_io_gpio_inst_GPIO40
+		.hps_io_hps_io_gpio_inst_GPIO53  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio53),              //                     .hps_io_gpio_inst_GPIO53
+		.hps_io_hps_io_gpio_inst_GPIO54  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio54),              //                     .hps_io_gpio_inst_GPIO54
+		.hps_io_hps_io_gpio_inst_GPIO61  (computer_system_inst_hps_io_hps_io_gpio_inst_gpio61),              //                     .hps_io_gpio_inst_GPIO61
+		.memory_mem_a                    (computer_system_inst_memory_mem_a),                                //               memory.mem_a
+		.memory_mem_ba                   (computer_system_inst_memory_mem_ba),                               //                     .mem_ba
+		.memory_mem_ck                   (computer_system_inst_memory_mem_ck),                               //                     .mem_ck
+		.memory_mem_ck_n                 (computer_system_inst_memory_mem_ck_n),                             //                     .mem_ck_n
+		.memory_mem_cke                  (computer_system_inst_memory_mem_cke),                              //                     .mem_cke
+		.memory_mem_cs_n                 (computer_system_inst_memory_mem_cs_n),                             //                     .mem_cs_n
+		.memory_mem_ras_n                (computer_system_inst_memory_mem_ras_n),                            //                     .mem_ras_n
+		.memory_mem_cas_n                (computer_system_inst_memory_mem_cas_n),                            //                     .mem_cas_n
+		.memory_mem_we_n                 (computer_system_inst_memory_mem_we_n),                             //                     .mem_we_n
+		.memory_mem_reset_n              (computer_system_inst_memory_mem_reset_n),                          //                     .mem_reset_n
+		.memory_mem_dq                   (computer_system_inst_memory_mem_dq),                               //                     .mem_dq
+		.memory_mem_dqs                  (computer_system_inst_memory_mem_dqs),                              //                     .mem_dqs
+		.memory_mem_dqs_n                (computer_system_inst_memory_mem_dqs_n),                            //                     .mem_dqs_n
+		.memory_mem_odt                  (computer_system_inst_memory_mem_odt),                              //                     .mem_odt
+		.memory_mem_dm                   (computer_system_inst_memory_mem_dm),                               //                     .mem_dm
+		.memory_oct_rzqin                (computer_system_inst_memory_bfm_conduit_oct_rzqin),                //                     .oct_rzqin
+		.system_pll_ref_clk_clk          (computer_system_inst_system_pll_ref_clk_bfm_clk_clk),              //   system_pll_ref_clk.clk
+		.system_pll_ref_reset_reset      (computer_system_inst_system_pll_ref_reset_bfm_reset_reset)         // system_pll_ref_reset.reset
 	);
 
 	altera_conduit_bfm computer_system_inst_hps_io_bfm (
@@ -212,10 +210,6 @@ module Computer_System_tb (
 		.sig_mem_reset_n (computer_system_inst_memory_mem_reset_n),           //        .mem_reset_n
 		.sig_mem_we_n    (computer_system_inst_memory_mem_we_n),              //        .mem_we_n
 		.sig_oct_rzqin   (computer_system_inst_memory_bfm_conduit_oct_rzqin)  //        .oct_rzqin
-	);
-
-	altera_conduit_bfm_0003 computer_system_inst_npu_top_0_conduit_end_bfm (
-		.sig_readdata (computer_system_inst_npu_top_0_conduit_end_readdata)  // conduit.readdata
 	);
 
 	altera_avalon_clock_source #(

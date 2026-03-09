@@ -556,7 +556,7 @@ refer to the applicable agreement for further details.
 		(text "clk" (rect 197 859 412 1728)(font "Arial" (color 0 0 0)))
 		(text "system_pll_ref_reset" (rect 67 875 254 1763)(font "Arial" (color 128 0 0)(font_size 9)))
 		(text "reset" (rect 197 899 424 1808)(font "Arial" (color 0 0 0)))
-		(text " system " (rect 557 920 1162 1850)(font "Arial" ))
+		(text " Computer_System " (rect 508 920 1118 1850)(font "Arial" ))
 		(line (pt 192 32)(pt 400 32)(line_width 1))
 		(line (pt 400 32)(pt 400 920)(line_width 1))
 		(line (pt 192 920)(pt 400 920)(line_width 1))
