@@ -25,8 +25,8 @@ module FIFO #(
 	assign pop = out_valid && out_ready; 
 	
 	assign out_valid = count > 0;
-	assign out_data = fifo[rptr];
-	assign extra_out = extra_fifo[rptr];
+	assign out_data = out_valid ? fifo[rptr] : 'd0;
+	assign extra_out = out_valid ? extra_fifo[rptr] : 37'd0;
 	
 	always @(*) begin
 		if (count+3 < length)

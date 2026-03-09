@@ -12,21 +12,22 @@ module WRITE_BUFF(
 	localparam [31:0] offset = 32'd120;
 		
 
-	reg [4:0] rptr, wptr, counter;
+	reg [3:0] rptr, wptr;
+	reg [4:0] counter;
 	reg [63:0] fifo [0:15];
 	
 	wire in_ready;
 	
-	assign in_ready_pre = (counter > 'd7);
+	assign in_ready_pre = (counter < 'd7);
 	assign out_valid = (counter > 0);
-	assign in_ready = (counter != 5'b11111);
+	assign in_ready = (counter != 5'b10000);
 	
 	
 	assign pop = out_valid && out_ready;
 	assign push = in_valid && in_ready;
 	
 	
-	assign out_data = fifo[rptr];
+	assign out_data = out_valid ? fifo[rptr]: 64'd0;
 
 	always @(posedge clk) begin
 		if (rst) begin

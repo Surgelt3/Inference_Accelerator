@@ -1,8 +1,101 @@
-20000000
-20100000
-00000000
-00000000
-40000000
-00000000
-00000000
-FFFFFFFF
+20000000    // LOAD kernel 0 chunk 0 -> addr 0
+20100000    // LOAD kernel 0 chunk 1 -> addr 1
+20200000    // LOAD kernel 1 chunk 0 -> addr 2
+20300000    // LOAD kernel 1 chunk 1 -> addr 3
+20400000    // LOAD window 0 chunk 0 -> addr 4 (out=0,0)
+20500000    // LOAD window 0 chunk 1 -> addr 5 (out=0,0)
+00402400    // MAC window 0 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 0 kernel 0
+00402404    // MAC window 0 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 0 kernel 1
+20400000    // LOAD window 1 chunk 0 -> addr 4 (out=0,1)
+20500000    // LOAD window 1 chunk 1 -> addr 5 (out=0,1)
+00402400    // MAC window 1 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 1 kernel 0
+00402404    // MAC window 1 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 1 kernel 1
+20400000    // LOAD window 2 chunk 0 -> addr 4 (out=0,2)
+20500000    // LOAD window 2 chunk 1 -> addr 5 (out=0,2)
+00402400    // MAC window 2 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 2 kernel 0
+00402404    // MAC window 2 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 2 kernel 1
+20400000    // LOAD window 3 chunk 0 -> addr 4 (out=0,3)
+20500000    // LOAD window 3 chunk 1 -> addr 5 (out=0,3)
+00402400    // MAC window 3 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 3 kernel 0
+00402404    // MAC window 3 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 3 kernel 1
+20400000    // LOAD window 4 chunk 0 -> addr 4 (out=0,4)
+20500000    // LOAD window 4 chunk 1 -> addr 5 (out=0,4)
+00402400    // MAC window 4 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 4 kernel 0
+00402404    // MAC window 4 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 4 kernel 1
+20400000    // LOAD window 5 chunk 0 -> addr 4 (out=0,5)
+20500000    // LOAD window 5 chunk 1 -> addr 5 (out=0,5)
+00402400    // MAC window 5 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 5 kernel 0
+00402404    // MAC window 5 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 5 kernel 1
+20400000    // LOAD window 6 chunk 0 -> addr 4 (out=0,6)
+20500000    // LOAD window 6 chunk 1 -> addr 5 (out=0,6)
+00402400    // MAC window 6 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 6 kernel 0
+00402404    // MAC window 6 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 6 kernel 1
+20400000    // LOAD window 7 chunk 0 -> addr 4 (out=0,7)
+20500000    // LOAD window 7 chunk 1 -> addr 5 (out=0,7)
+00402400    // MAC window 7 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 7 kernel 0
+00402404    // MAC window 7 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 7 kernel 1
+20400000    // LOAD window 8 chunk 0 -> addr 4 (out=0,8)
+20500000    // LOAD window 8 chunk 1 -> addr 5 (out=0,8)
+00402400    // MAC window 8 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 8 kernel 0
+00402404    // MAC window 8 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 8 kernel 1
+20400000    // LOAD window 9 chunk 0 -> addr 4 (out=0,9)
+20500000    // LOAD window 9 chunk 1 -> addr 5 (out=0,9)
+00402400    // MAC window 9 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 9 kernel 0
+00402404    // MAC window 9 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 9 kernel 1
+20400000    // LOAD window 10 chunk 0 -> addr 4 (out=0,10)
+20500000    // LOAD window 10 chunk 1 -> addr 5 (out=0,10)
+00402400    // MAC window 10 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 10 kernel 0
+00402404    // MAC window 10 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 10 kernel 1
+20400000    // LOAD window 11 chunk 0 -> addr 4 (out=0,11)
+20500000    // LOAD window 11 chunk 1 -> addr 5 (out=0,11)
+00402400    // MAC window 11 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 11 kernel 0
+00402404    // MAC window 11 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 11 kernel 1
+20400000    // LOAD window 12 chunk 0 -> addr 4 (out=0,12)
+20500000    // LOAD window 12 chunk 1 -> addr 5 (out=0,12)
+00402400    // MAC window 12 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 12 kernel 0
+00402404    // MAC window 12 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 12 kernel 1
+20400000    // LOAD window 13 chunk 0 -> addr 4 (out=0,13)
+20500000    // LOAD window 13 chunk 1 -> addr 5 (out=0,13)
+00402400    // MAC window 13 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 13 kernel 0
+00402404    // MAC window 13 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 13 kernel 1
+20400000    // LOAD window 14 chunk 0 -> addr 4 (out=0,14)
+20500000    // LOAD window 14 chunk 1 -> addr 5 (out=0,14)
+00402400    // MAC window 14 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 14 kernel 0
+00402404    // MAC window 14 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 14 kernel 1
+20400000    // LOAD window 15 chunk 0 -> addr 4 (out=0,15)
+20500000    // LOAD window 15 chunk 1 -> addr 5 (out=0,15)
+00402400    // MAC window 15 kernel 0 start_loc=4 len=9 param_loc=0
+40000000    // RELU after MAC window 15 kernel 0
+00402404    // MAC window 15 kernel 1 start_loc=4 len=9 param_loc=2
+40000000    // RELU after MAC window 15 kernel 1
+60000000    // END

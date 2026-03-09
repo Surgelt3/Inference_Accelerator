@@ -37,6 +37,8 @@ module CONTROL_UNIT(
 	wire [8:0] curr_adress, curr_param_loc;
 	reg mem_calc_ready; 
 	
+	reg mac_signal_next;
+	
 
 	always @(posedge clk) begin
 		
@@ -44,7 +46,7 @@ module CONTROL_UNIT(
 		write_data <= load_data;
 		load_signal <= 1'b0;
 		pool_signal <= 1'b0;
-		mac_signal <= 1'b0;
+		mac_signal <= mac_signal_next;
 		
 		mem_local_address <= mem_local_address_next;
 		mem_local_param_loc <= mem_local_param_loc_next;
@@ -69,7 +71,7 @@ module CONTROL_UNIT(
 		else if (instr_valid) begin
 			if (opcode == 3'b000) begin
 				// MAC Operation
-				mac_signal <= 1'b1;
+				mac_signal <= mac_signal_next;
 				mem_local_address <= mem_local_address_next;
 				mem_local_param_loc <= mem_local_param_loc_next;
 				read_size <= read_size_next;
@@ -104,7 +106,9 @@ module CONTROL_UNIT(
 	end
 	
 	always @(*) begin
-		
+		mac_signal_next = 1'b0;
+		bias_add_next = 1'b0;
+		pe_fifo_bias_loc_next = 2'b00;
 		if (pe_busy[classifier_bit] == 0 && instr_valid && opcode == 3'b000) begin
 			curr_length_next = length;
 			curr_address_next = address;
@@ -113,12 +117,7 @@ module CONTROL_UNIT(
 			pe_busy_next = pe_busy | (2'b01 << classifier_bit); 
 		end
 		else if (|pe_busy) begin
-			if (instr_valid) begin
-				curr_classifier_bit_next = !curr_classifier_bit;
-			end 
-			else begin
-				curr_classifier_bit_next = pe_busy[curr_classifier_bit] ? curr_classifier_bit : !curr_classifier_bit;
-			end
+			curr_classifier_bit_next = pe_busy[curr_classifier_bit] ? curr_classifier_bit : !curr_classifier_bit;
 			
 			if (curr_classifier_bit_next) begin
 				curr_length_next = pe1_length;
@@ -130,12 +129,12 @@ module CONTROL_UNIT(
 				curr_address_next = pe0_address;
 				curr_param_loc_next = pe0_param_loc;
 			end
+			pe_busy_next = pe_busy;
 		end
 		else begin
 			mem_local_address_next = address;
 			mem_local_param_loc_next = param_loc;
 			read_size_next = read_size;
-			bias_add_next = 1'b0;
 			pe_fifo_bias_loc_next = pe_fifo_bias_loc;
 			pe_busy_next = pe_busy;
 			curr_classifier_bit_next = curr_classifier_bit;
@@ -151,6 +150,7 @@ module CONTROL_UNIT(
 			read_size_next = 2'b00;
 		end
 		else begin
+			mac_signal_next = 1'b1;
 			if (curr_length_next > 10'd4) begin
 				read_size_next = 2'b10;
 			end 

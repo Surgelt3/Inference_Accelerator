@@ -26,7 +26,6 @@ module TOP (
 	assign in_valid = write;
 	assign waitrequest_write = !in_ready;
 
-	assign Q_export = readdata;
 
 	wire [31:0] pc;
 	wire instr_valid;
