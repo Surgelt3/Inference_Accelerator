@@ -639,9 +639,10 @@ sub emit_tb {
     print $fh "\t\treset_reset = 1'b1;\n";
     print $fh "\t\t#" . (20 * $rst_cycles) . ";\n";
     print $fh "\t\trst = 1'b0;\n";
-    print $fh "\t\treset_write = 1'b0;\n";
+    print $fh "\t\treset_write = 1'b1;\n";
     print $fh "\t\treset_reset = 1'b0;\n";
     print $fh "\t\t#20;\n\n";
+    print $fh "\t\treset_write = 1'b0;\n";
 
     print $fh "\t\t// --------------------------------------------------\n";
     print $fh "\t\t// Load kernels + bias + zero pad data stream\n";
