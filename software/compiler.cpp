@@ -88,7 +88,7 @@ void Compiler::compileModel(Net &net)
   int count = 0;
   for (const NetCommand &comm : net.commands)
   {
-    chprintln("command: ", count++);
+    // chprintln("command: ", count++);
     switch (comm.type)
     {
     case NetCommandType::MAC:
@@ -96,6 +96,7 @@ void Compiler::compileModel(Net &net)
       float *addrA = comm.mac.addrA;
       float *addrB = comm.mac.addrB;
       ch_array toWrite = ch_arrcreate(float, 16);
+      
       for (int c = 0; c < comm.mac.repeat; c++)
       {
         for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
@@ -235,7 +236,7 @@ int main()
   Net model = importModel("../mobilenet-v2-pytorch/mobilenet_v2.onnx");
   chprintln("done");
   int w,h,comp;
-  unsigned char *image = stbi_load("/home/chevan/Documents/school/2025-2026/fall term/elec 490/Inference_Accelerator/software/images/DogResize.jpg",
+  unsigned char *image = stbi_load("/home/chevan/Documents/school/2025-2026/fall term/elec 490/Inference_Accelerator/software/images/apple.jpg",
      &w, &h, &comp, STBI_rgb);
 
   assert(w == h && w == 224 && comp == 3);
