@@ -486,6 +486,8 @@ Net importModel(std::string path)
       const Tensor &tensorA = *layer.layer_input[0];
       const Tensor &tensorB = *layer.layer_input[1];
       const Tensor &tensorC = *layer.layer_input[2];
+      tensorC.batch()=1000;
+      tensorC.channel()=1;// yse
       layer.layer_output.dim = ch_arrcopy(tensorC.dim);
 
       const int M = !attributes.transA ? tensorA.batch() : tensorA.channel();
