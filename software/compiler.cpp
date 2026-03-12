@@ -3,6 +3,7 @@
 
 static uint32_t currentPC = 0;
 static size_t maxDataAddr=(1<<20)*5;
+static const int LOAD_SIZE=8;
 void Compiler::writeInstructions(const Net &net)
 {
   for (const NetCommand &comm : net.commands)
@@ -11,28 +12,26 @@ void Compiler::writeInstructions(const Net &net)
     {
     case NetCommandType::MAC:
     {
-      float *addrA = comm.mac.addrA;
-      float *addrB = comm.mac.addrB;
       for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
       {
+        int l = comm.mac.repeat * comm.mac.N;
         if (shift == 0)
         {
-          manager.writeInstruction(LOAD_Instruction(0x0));
+          for (int i = 0; i < l / LOAD_SIZE; i++)
+          {
+            manager.writeInstruction(LOAD_Instruction(0x0 + i * LOAD_SIZE * 0x4));
+          }
         }
         float *dataAddr;
         dataAddr = (float *)((manager.PC * 4 * 16) % (maxDataAddr - 4 * 16) + (4 * 16));
-        manager.writeInstruction(LOAD_Instruction((size_t)dataAddr));
+        for (int i = 0; i < l / LOAD_SIZE; i++)
+        {
+          manager.writeInstruction(LOAD_Instruction((size_t)dataAddr + i * LOAD_SIZE * 0x4));
+        }
         manager.writeInstruction(MAC_Instruction(dataAddr, comm.mac.N, 0x0));
       }
       break;
     }
-    case NetCommandType::CLIP:
-      break;
-    case NetCommandType::GAP:
-    {
-      break;
-    }
-
     default:
       break;
     }
@@ -41,7 +40,6 @@ void Compiler::writeInstructions(const Net &net)
 
 void Compiler::compileModel(Net &net)
 {
-  float *loadedKernel = 0;
   int count = 0;
   for (const NetCommand &comm : net.commands)
   {
@@ -50,11 +48,10 @@ void Compiler::compileModel(Net &net)
     {
     case MAC:
     {
-
       float *addrA = comm.mac.addrA;
       float *addrB = comm.mac.addrB;
-      ch_array toWrite = ch_arrstack(float, comm.mac.N *comm.mac.repeat + 4);
-      ch_array kernelToWrite = ch_arrstack(float, comm.mac.N *comm.mac.repeat + 1 + 4);
+      ch_array toWrite = ch_arrstack(float, comm.mac.N *comm.mac.repeat + LOAD_SIZE);
+      ch_array kernelToWrite = ch_arrstack(float, comm.mac.N *comm.mac.repeat + 1 + LOAD_SIZE);
       for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
       {
         toWrite._end = toWrite._start;
@@ -85,7 +82,8 @@ void Compiler::compileModel(Net &net)
             }
           }
         }
-        for (int j = 0; j < (4 - comm.mac.N * comm.mac.repeat % 4); j++)
+
+        for (int j = 0; j < LOAD_SIZE - ch_arrlength(float, toWrite) % LOAD_SIZE; j++)
         {
           ch_arrpush(float, toWrite, 0);
         }
@@ -99,7 +97,7 @@ void Compiler::compileModel(Net &net)
           {
             ch_arrpush(float, kernelToWrite, 0);
           }
-          for (int j = 0; j < (4 - comm.mac.N * comm.mac.repeat % 4); j++)
+          for (int j = 0; j < LOAD_SIZE - ch_arrlength(float, kernelToWrite) % LOAD_SIZE; j++)
           {
             ch_arrpush(float, kernelToWrite, 0);
           }
@@ -107,7 +105,7 @@ void Compiler::compileModel(Net &net)
           manager.writeData((float *)kernelToWrite._start, sizeof(float) * ch_arrlength(float, kernelToWrite));
         }
         ++currentPC;
-        manager.writeData((float *)toWrite._start, (sizeof(float) * (comm.mac.N + (4 - comm.mac.N % 4))));
+        manager.writeData((float *)toWrite._start, sizeof(float) * ch_arrlength(float,toWrite));
 
 #if ONDEVICE
         *(comm.mac.out + shift) = manager.getResult(currentPC);
@@ -134,16 +132,9 @@ void Compiler::compileModel(Net &net)
       break;
     }
     case NetCommandType::ADD:
-    {
-      net.useCommand(comm);
-      break;
-    }
     case NetCommandType::GAP:
-    {
-      net.useCommand(comm);
-      break;
-    }
     case NetCommandType::GEMM:
+    case NetCommandType::COPY:
     {
       net.useCommand(comm);
       break;
@@ -246,7 +237,7 @@ int main()
 
 
   // chprintln(ch_arrget(float,model.output->data,263));
-  // model.free();
+  model.free();
 
   for(int i=0;i<100;i++)
   {

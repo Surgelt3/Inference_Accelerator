@@ -115,6 +115,13 @@ void Net::useCommand(const NetCommand&comm)
     }
     break;
   }
+  case COPY:
+  {
+    float *addrA = comm.copy.addrA;
+    float *addrB = comm.copy.addrB;
+    memcpy(addrB, addrA, sizeof(float) * comm.copy.length);
+    break;
+  }
   default:
     break;
   }
