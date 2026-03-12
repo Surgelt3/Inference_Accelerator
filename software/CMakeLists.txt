@@ -66,6 +66,7 @@ target_link_libraries(proto PUBLIC libprotobuf)
 target_sources(compiler PRIVATE ${compiler_sources})
 TARGET_LINK_LIBRARIES(compiler PRIVATE proto ${Protobuf_LIBRARIES})
 target_include_directories(compiler PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(compiler PRIVATE ${CMAKE_SOURCE_DIR})
 target_include_directories(compiler PRIVATE ${PROTOBUF_INCLUDE_DIR})
 target_include_directories(compiler PRIVATE "include/")
 

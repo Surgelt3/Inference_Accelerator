@@ -4,12 +4,13 @@
 #include <chevan_utils_print.hpp>
 #include <thread>
 #include <mutex>
+#include <iostream>
+#include <fstream>
 
 #define MAC_OP 0b000
-#define RELU_OP 0b000
+#define RELU_OP 0b010
 #define GAP_OP 0b000
 #define LOAD_OP 0b001
-#define START_OP 0b010
 #define END_OP 0b011
 static uint32_t MAC_Instruction(float *start_loc, size_t size, float *param_loc)
 {
@@ -28,7 +29,6 @@ static uint32_t RELU_Instruction()
 }
 static uint32_t GAP_Instruction()
 {
-  // waiting on lucas
   uint32_t i = 0;
   i |= GAP_OP << 29;
   return i;
@@ -40,13 +40,6 @@ static uint32_t LOAD_Instruction(size_t targetAddress)
   i |= (targetAddress & 0x1F) << 20;
   return i;
 }
-static uint32_t START_Instruction()
-{
-  // waiting on lucas
-  uint32_t i = 0;
-  i |= START_OP << 29;
-  return i;
-}
 static uint32_t END_Instruction()
 {
   // waiting on lucas
@@ -54,15 +47,16 @@ static uint32_t END_Instruction()
   i |= END_OP << 29;
   return i;
 }
-#define DATA_OUT_LENGTH 16
 
+#define ONDEVICE 0
 class MemManager
 {
+private:
+  std::ofstream instructionsFile;
 public:
   const uchar *base;
   void *shared_addr;
-  float *outPtr;
-  size_t maxSize;
+  uint32_t *outPtr;
   uint PC;
   float *temporaryLoadAddress = (float *)0x40;
   MemManager();
@@ -80,9 +74,15 @@ class Compiler
   MemManager manager;
 
 public:
+#if ONDEVICE
+  Compiler() : manager(MemManager())
+  {
+  }
+#else
   Compiler() : manager(MemManager((uchar *)malloc(0x5000)))
   {
   }
+#endif
   void writeInstructions(const Net &net);
   void compileModel(Net &net);
 };

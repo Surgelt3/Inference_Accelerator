@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include "../address_map_arm.h"
+#include <ARM_A9_HPS_arm_a9_0.h>
 
 #include <thread>
 
@@ -87,48 +88,56 @@ static int fd = -1;
 static volatile int writeReady = 1;
 MemManager::MemManager()
 {
-  this->base = (uchar *)LW_BRIDGE_BASE;
+  this->base = (uchar *)NPU_TOP_0_AVS_WRITE_BASE;
   open_physical(fd);
-  this->shared_addr = map_physical(fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN);
-  // waiting on lucas
-  // this->outPtr = (float *)((uchar *)shared_addr + DATA_OFFSET);
-  this->maxSize = LW_BRIDGE_SPAN;
+  this->shared_addr = map_physical(fd, NPU_TOP_0_AVS_WRITE_BASE, NPU_TOP_0_AVS_WRITE_SPAN);
+  this->outPtr = (uint32_t*) map_physical(fd, NPU_TOP_0_AVS_READ_BASE, NPU_TOP_0_AVS_READ_SPAN);
   this->PC = 0;
+
+  this->instructionsFile.open("instr.txt", std::ifstream::out | std::ifstream::trunc);
+  this->instructionsFile.close();
+  this->instructionsFile.open("instr.txt", std::ios_base::app | std::ios::binary);
 }
 MemManager::MemManager(uchar* virt)
 {
   this->base = NULL;
   this->shared_addr = virt;
-  // waiting on lucas
-  // this->outPtr = (float *)((uchar *)shared_addr + DATA_OFFSET);
-  this->maxSize = LW_BRIDGE_SPAN;
   this->PC = 0;
+
+  this->instructionsFile.open("instr.txt", std::ifstream::out | std::ifstream::trunc);
+  this->instructionsFile.close();
+  this->instructionsFile.open("instr.txt", std::ios_base::app | std::ios::binary);
 }
 
 MemManager::~MemManager()
 {
-  if (this->base)
-  {
-    unmap_physical(shared_addr, LW_BRIDGE_SPAN);
-    close_physical(fd);
-  }
+  // if (this->base)
+  // {
+  //   unmap_physical(shared_addr, LW_BRIDGE_SPAN);
+  //   close_physical(fd);
+  // }
 }
 
 void MemManager::writeInstruction(uint32_t i)
 {
   ++PC;
-  while(!writeReady);
-  // write instr
+
+  instructionsFile.write(reinterpret_cast<char *>(&i), sizeof(i));
   // waiting on lucas
 }
 void MemManager::writeData(float *ptr, size_t size)
 {
-  while (!writeReady);
-  memcpy(shared_addr, ptr, size);
+  for (int i = 0; i < size / sizeof(float);i++)
+  {
+    while (!writeReady)
+      ;
+    // assume NPU_TOP_0_AVS_WRITE_SPAN==sizeof(float)
+    memcpy(shared_addr, ptr + i, sizeof(float));
+  }
 }
 float MemManager::getResult(uint32_t PC)
 {
-  // waiting on lucas
-  return 0;
+  // while(outPtr[1]==PC);
+  return *((float*)outPtr[0]);
 }
 

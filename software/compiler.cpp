@@ -3,14 +3,8 @@
 
 static uint32_t currentPC = 0;
 static size_t maxDataAddr=(1<<20)*5;
-#define writeData(ptr, size)                   \
-  {                                            \
-    ++currentPC;                               \
-    manager.writeData((float *)(ptr), (size)); \
-  }
 void Compiler::writeInstructions(const Net &net)
 {
-  float *loadedKernel = 0;
   for (const NetCommand &comm : net.commands)
   {
     switch (comm.type)
@@ -19,60 +13,23 @@ void Compiler::writeInstructions(const Net &net)
     {
       float *addrA = comm.mac.addrA;
       float *addrB = comm.mac.addrB;
-      for (int c = 0; c < comm.mac.repeat; c++)
+      for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
       {
-        for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
+        if (shift == 0)
         {
-          float *kernel = addrB + (comm.mac.indexes[1] + (c % comm.mac.repeatB) * comm.mac.repeatShiftB);
-          if (loadedKernel != kernel || c != 0)
-          {
-            if (comm.mac.N == 9)
-            {
-              manager.writeInstruction(LOAD_Instruction(0x0));
-              manager.writeInstruction(LOAD_Instruction(0x8 * sizeof(float)));
-              // wInstr("LOAD", 0x0);
-              // wInstr("LOAD", 0x8 * sizeof(float));
-            }
-            else if (comm.mac.N == 1)
-            {
-              manager.writeInstruction(LOAD_Instruction(0x0));
-              // wInstr("LOAD", 0x0);
-            }
-            else
-            {
-              chprinterr("no");
-            }
-            loadedKernel = kernel;
-          }
-
-          float *dataAddr;
-          dataAddr = (float *)((manager.PC * 4 * 16) % (maxDataAddr - 4 * 16) + (4 * 16));
-          // dataAddr = addrA + (comm.mac.indexes[0] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize);
-          // if (comm.mac.indexes[0] <= 0)
-          // {
-          //   dataAddr = manager.temporaryLoadAddress;
-          // }
-          manager.writeInstruction(LOAD_Instruction((size_t)dataAddr));
-          // wInstr("LOAD", dataAddr);
-          if (comm.mac.N == 9)
-            manager.writeInstruction(LOAD_Instruction((size_t)(dataAddr + 8)));
-            // wInstr("LOAD", dataAddr + 8);
-          manager.writeInstruction(MAC_Instruction(dataAddr, comm.mac.N, loadedKernel));
-          // wInstr("MAC", dataAddr, comm.mac.N, loadedKernel);
+          manager.writeInstruction(LOAD_Instruction(0x0));
         }
-
-        if (c == comm.mac.repeat - 1)
-          manager.writeInstruction(RELU_Instruction());
-          // wInstr("RELU");
+        float *dataAddr;
+        dataAddr = (float *)((manager.PC * 4 * 16) % (maxDataAddr - 4 * 16) + (4 * 16));
+        manager.writeInstruction(LOAD_Instruction((size_t)dataAddr));
+        manager.writeInstruction(MAC_Instruction(dataAddr, comm.mac.N, 0x0));
       }
       break;
     }
     case NetCommandType::CLIP:
-      // do nothing
       break;
     case NetCommandType::GAP:
     {
-      // waiting on lucas
       break;
     }
 
@@ -88,96 +45,101 @@ void Compiler::compileModel(Net &net)
   int count = 0;
   for (const NetCommand &comm : net.commands)
   {
-    // chprintln("command: ", count++);
+    chprintln("command: ", count++);
     switch (comm.type)
     {
-    case NetCommandType::MAC:
+    case MAC:
     {
+
       float *addrA = comm.mac.addrA;
       float *addrB = comm.mac.addrB;
-      ch_array toWrite = ch_arrcreate(float, 16);
-      
-      for (int c = 0; c < comm.mac.repeat; c++)
+      ch_array toWrite = ch_arrstack(float, comm.mac.N *comm.mac.repeat + 4);
+      ch_array kernelToWrite = ch_arrstack(float, comm.mac.N *comm.mac.repeat + 1 + 4);
+      for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
       {
-        for (int shift = 0; shift < comm.mac.horShifts + 1; shift++)
+        toWrite._end = toWrite._start;
+        if (shift == 0)
+          kernelToWrite._end = kernelToWrite._start;
+        for (int c = 0; c < comm.mac.repeat; c++)
         {
-          float *kernel = addrB + (comm.mac.indexes[1] + (c % comm.mac.repeatB) * comm.mac.repeatShiftB);
-          if (loadedKernel != kernel || c != 0)
-          {
-            loadedKernel = kernel;
-            if (comm.mac.N == 1)
-            {
-              struct
-              {
-                float kernel;
-                float bias;
-                float _zeroPad[2];
-              } params;
-              memset(&params, 0, sizeof(params));
-              params.kernel = addrB[comm.mac.indexes[1]];
-              if (c == 0)
-                params.bias = comm.mac.addrC ? *comm.mac.addrC : 0;
-              else
-                params.bias = *(comm.mac.out + shift);
-              writeData(loadedKernel, sizeof(params));
-            }
-            else if (comm.mac.N == 9)
-            {
-              struct
-              {
-                float kernel[9];
-                float bias;
-                float _zeroPad[2];
-              } params;
-              memset(&params, 0, sizeof(params));
-              for (int i = 0; i < 9; i++)
-              {
-                params.kernel[i] = addrB[comm.mac.indexes[1 + 2 * i]];
-              }
-              if (c == 0)
-                params.bias = comm.mac.addrC ? *comm.mac.addrC : 0;
-              else
-                params.bias = *(comm.mac.out + shift);
-              writeData(loadedKernel, sizeof(params));
-            }
-            else
-            {
-              chprinterr("unrecognized kernel size");
-            }
-          }
-
-          memset(toWrite._start, 0, sizeof(float) * 16);
           for (int i = 0; i < comm.mac.N; i++)
           {
+            float valA;
             if (comm.mac.indexes[2 * i] == -1)
-              ch_arrget(float, toWrite, i) = 0;
+              valA = 0;
             else if (comm.mac.indexes[2 * i] == -2)
-              ch_arrget(float, toWrite, i) = 1;
+              valA = 1;
             else
-              ch_arrget(float, toWrite, i) = addrA[comm.mac.indexes[2 * i] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize];
-          }
-          writeData(toWrite._start, sizeof(float) * (comm.mac.N + (4 - comm.mac.N % 4)));
-          // mac
-          ++currentPC;
-          *(comm.mac.out + shift) = manager.getResult(currentPC);
-
-          if (c == comm.mac.repeat - 1)
-          {
-            //  relu
-            ++currentPC;
-            *(comm.mac.out + shift) = manager.getResult(currentPC);
+              valA = addrA[comm.mac.indexes[2 * i] + c * comm.mac.repeatShiftA + shift * comm.mac.horShiftSize];
+            ch_arrpush(float, toWrite, valA);
+            if (shift == 0)
+            {
+              float valB;
+              if (comm.mac.indexes[2 * i + 1] == -1)
+                valB = 0;
+              else if (comm.mac.indexes[2 * i + 1] == -2)
+                valB = 1;
+              else
+                valB = addrB[comm.mac.indexes[2 * i + 1] + (c % comm.mac.repeatB) * comm.mac.repeatShiftB];
+              ch_arrpush(float, kernelToWrite, valB);
+            }
           }
         }
+        for (int j = 0; j < (4 - comm.mac.N * comm.mac.repeat % 4); j++)
+        {
+          ch_arrpush(float, toWrite, 0);
+        }
+        if (shift == 0)
+        {
+          if (comm.mac.addrC)
+          {
+            ch_arrpush(float, kernelToWrite, *comm.mac.addrC);
+          }
+          else
+          {
+            ch_arrpush(float, kernelToWrite, 0);
+          }
+          for (int j = 0; j < (4 - comm.mac.N * comm.mac.repeat % 4); j++)
+          {
+            ch_arrpush(float, kernelToWrite, 0);
+          }
+          ++currentPC;
+          manager.writeData((float *)kernelToWrite._start, sizeof(float) * ch_arrlength(float, kernelToWrite));
+        }
+        ++currentPC;
+        manager.writeData((float *)toWrite._start, (sizeof(float) * (comm.mac.N + (4 - comm.mac.N % 4))));
+
+#if ONDEVICE
+        *(comm.mac.out + shift) = manager.getResult(currentPC);
+#else
+        float sum = 0;
+        for (int i = 0; i < comm.mac.N * comm.mac.repeat; i++)
+        {
+          sum += ch_arrget(float, kernelToWrite, i) * ch_arrget(float, toWrite, i);
+        }
+        float bias = ch_arrget(float, kernelToWrite, comm.mac.N *comm.mac.repeat);
+        *(comm.mac.out + shift) = sum + bias;
+#endif
       }
+      ch_arrfree(kernelToWrite);
       ch_arrfree(toWrite);
       break;
     }
+
     case NetCommandType::CLIP:
-      // do nothing as this is done in mac
+    {
+      assert(*comm.clip.addrMax == 6);
+      assert(*comm.clip.addrMin == 0);
+      net.useCommand(comm);
       break;
+    }
+    case NetCommandType::ADD:
+    {
+      net.useCommand(comm);
+      break;
+    }
     case NetCommandType::GAP:
     {
-      // waiting on lucas
       net.useCommand(comm);
       break;
     }
@@ -236,7 +198,7 @@ int main()
   Net model = importModel("../mobilenet-v2-pytorch/mobilenet_v2.onnx");
   chprintln("done");
   int w,h,comp;
-  unsigned char *image = stbi_load("/home/chevan/Documents/school/2025-2026/fall term/elec 490/Inference_Accelerator/software/images/apple.jpg",
+  unsigned char *image = stbi_load("./apple.jpg",
      &w, &h, &comp, STBI_rgb);
 
   assert(w == h && w == 224 && comp == 3);
@@ -250,70 +212,20 @@ int main()
       {
         int arrIndex = input->getIndex(0, c, x, y);
         int imIndex = (c * -1 + 2) + 3 * (y * 224 + x);
-        // int imIndex=
-        // if(x==0&&y==0)
-        //   chprintln(image[imIndex]);
         ch_arrget(float, input->data, arrIndex) = (float)image[imIndex] / 255.0;
-        // ch_arrget(float, input->data, arrIndex) = ((float)c+x+y)/(224*224*3);
         // ch_arrget(float, input->data, arrIndex) = 0;
       }
     }
   }
-  // ch_arrget(float, input->data, 0) = 1;
-  // ch_arrget(float, input->data, 224) = 1;
-  // ch_arrget(float, input->data, 224*224) = 1;
-  // ch_arrget(float, input->data, 1) = 1;
-  // ch_arrget(float, input->data, 2) = 1;
 
-  // for (int i = 0; i < ch_arrlength(float, model.input->data); i++)
-  // {
-  //   ch_arrget(float, model.input->data, i) = (float)i / ch_arrlength(float, model.input->data);
-  // }
-  Compiler compiler=Compiler();
+  Compiler compiler = Compiler();
   compiler.writeInstructions(model);
   compiler.compileModel(model);
 
-  // return 0;
   // model.calculate();
-  
+
   chprintln("calculated");
 
-  // for(int i=2;i<3;i++)
-  // {
-  //   const int h=7;
-  //   const int w=7;
-  //   for(int y=0;y<h;y++)
-  //   {
-  //     for(int x=0;x<w;x++)
-  //     {
-  //       float &prob = ch_arrget(float, model.output->data, i*h*w+y*w+x);
-  //       chprint(prob,", ");
-  //     }
-  //     chprintln();
-  //   }
-  //   chprintln();
-  // }
-  // for (int i = 0; i < ch_arrlength(float, model.output->data); i++)
-  // {
-  //   float prob = ch_arrget(float, model.output->data, i);
-  //   // if(prob>0.1){
-  //     chprintln(i,": ",prob);
-  //   // }
-  //     // if (i >= 111)
-  //     //   break;
-  // }
-  return 0;
-
-
-
-
-
-  chprintln(0,": ",ch_arrget(float, model.output->data, 0));
-  chprintln(1,": ",ch_arrget(float, model.output->data, 1));
-  chprintln(2,": ",ch_arrget(float, model.output->data, 2));
-  chprintln(3,": ",ch_arrget(float, model.output->data, 3));
-  chprintln(4,": ",ch_arrget(float, model.output->data, 4));
-  chprintln(999,": ",ch_arrget(float, model.output->data, 999));
   int maxIndex=0;
   for (int i = 0; i < ch_arrlength(float, model.output->data); i++)
   {
@@ -321,11 +233,24 @@ int main()
     if (prob >= ch_arrget(float, model.output->data, maxIndex))
       maxIndex=i;
   }
-  chprintln(maxIndex, ": ", ch_arrget(float, model.output->data, maxIndex));
+  // chprintln(maxIndex, ": ", ch_arrget(float, model.output->data, maxIndex));
+
+  if(maxIndex==948)
+  {
+    chprintln("Apple");
+  }
+  else
+  {
+    chprintln("maxIndex: ", maxIndex);
+  }
+
 
   // chprintln(ch_arrget(float,model.output->data,263));
   // model.free();
 
+  for(int i=0;i<100;i++)
+  {
+  }
   return 0;
 }
 
