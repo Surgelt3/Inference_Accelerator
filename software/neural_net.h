@@ -76,7 +76,8 @@ enum NetCommandType
   CLIP,
   ADD,
   GAP,  // just mac
-  GEMM
+  GEMM,
+  COPY
 };
 struct NetCommand
 {
@@ -123,6 +124,10 @@ struct NetCommand
       float*addrA,*addrB,*addrC,*out;
       int *dimsA,*dimsB,*dimsC;
     }gemm;
+    struct{
+      float *addrA, *addrB;
+      size_t length;
+    }copy;
   };
 
   std::string toString()

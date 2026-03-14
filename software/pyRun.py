@@ -1012,7 +1012,7 @@ labels={
 }
 
 # Load the image
-image = cv2.imread("/home/chevan/Documents/school/2025-2026/fall term/elec 490/Inference_Accelerator/software/images/DogResize.jpg")
+image = cv2.imread("/home/chevan/Documents/school/2025-2026/fall term/elec 490/Inference_Accelerator/software/images/apple.jpg")
 print(image[0,0])
 # image = cv2.imread("images/glasses.jpg")
 # url="https://organicfeeds.com/wp-content/uploads/2022/09/01-Most-Popular-Breeds-of-Chickens-2.jpg"

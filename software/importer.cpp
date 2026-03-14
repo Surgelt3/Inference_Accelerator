@@ -479,13 +479,21 @@ Net importModel(std::string path)
       layer.layer_output.channel() = base.batch() * base.channel() * base.width() * base.height();
       layer.layer_output.width() = 1;
       layer.layer_output.height() = 1;
-      layer.layer_output.data = base.data;
+      layer.layer_output.data = ch_arrcopy(base.data);
+      NetCommand comm;
+      comm.type = COPY;
+      comm.copy.addrA=(float*)base.data._start;
+      comm.copy.addrB=(float*)layer.layer_output.data._start;
+      comm.copy.length = base.batch() * base.channel() * base.width() * base.height();
+      aModel.commands.push_back(comm);
     }
     else if (node.op_type() == "Gemm")
     {
       const Tensor &tensorA = *layer.layer_input[0];
       const Tensor &tensorB = *layer.layer_input[1];
       const Tensor &tensorC = *layer.layer_input[2];
+      tensorC.batch()=1000;
+      tensorC.channel()=1;// yse
       layer.layer_output.dim = ch_arrcopy(tensorC.dim);
 
       const int M = !attributes.transA ? tensorA.batch() : tensorA.channel();

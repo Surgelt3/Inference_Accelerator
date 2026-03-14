@@ -36,32 +36,37 @@ endif(APPLE)
 # --------------------------------
 
 
-INCLUDE(FindProtobuf)
-find_package(Protobuf REQUIRED)
-include_directories(${ProtobufIncludePath})
-
-# add_executable(importer)
-# set_property(TARGET importer PROPERTY CXX_STANDARD 11)
-# set(importer_sources importer.cpp neural_net.cpp)
+# INCLUDE(FindProtobuf)
+# find_package(Protobuf REQUIRED)
+# include_directories(${ProtobufIncludePath})
 
 add_executable(compiler)
-set_property(TARGET compiler PROPERTY CXX_STANDARD 11)
 set(compiler_sources importer.cpp neural_net.cpp compiler.cpp compiler_de.cpp)
 
+include(FetchContent)
+FetchContent_Declare(
+  protobuf
+  GIT_REPOSITORY	https://github.com/protocolbuffers/protobuf.git
+  GIT_TAG 	v34.0
+)
+FetchContent_MakeAvailable(protobuf)
+
+execute_process (
+    COMMAND cp ${CMAKE_SOURCE_DIR}/onnx.pb.h ${CMAKE_CURRENT_BINARY_DIR}/
+    OUTPUT_VARIABLE outVar
+)
 
 INCLUDE_DIRECTORIES(${PROTOBUF_INCLUDE_DIR})
-PROTOBUF_GENERATE_CPP(PROTO_SRC PROTO_HEADER onnx.proto)
+# PROTOBUF_GENERATE_CPP(PROTO_SRC PROTO_HEADER onnx.proto)
+set(PROTO_SRC onnx.pb.cc)
+set(PROTO_HEADER onnx.pb.h)
 ADD_LIBRARY(proto ${PROTO_HEADER} ${PROTO_SRC})
-
-# target_sources(importer PRIVATE ${importer_sources})
-# TARGET_LINK_LIBRARIES(importer PRIVATE proto ${Protobuf_LIBRARIES})
-# target_include_directories(importer PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-# target_include_directories(importer PRIVATE ${PROTOBUF_INCLUDE_DIR})
-# target_include_directories(importer PRIVATE "include/")
+target_link_libraries(proto PUBLIC libprotobuf)
 
 target_sources(compiler PRIVATE ${compiler_sources})
 TARGET_LINK_LIBRARIES(compiler PRIVATE proto ${Protobuf_LIBRARIES})
 target_include_directories(compiler PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(compiler PRIVATE ${CMAKE_SOURCE_DIR})
 target_include_directories(compiler PRIVATE ${PROTOBUF_INCLUDE_DIR})
 target_include_directories(compiler PRIVATE "include/")
 
