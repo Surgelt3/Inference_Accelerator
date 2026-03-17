@@ -245,6 +245,14 @@ int main()
     {
       chprintln("Apple");
     }
+    else if(maxIndex == 793)
+    {
+      chprintln("Strawberry");
+    }
+    else if (maxIndex == 574)
+    {
+      chprintln("Orange");
+    }
     else
     {
       chprintln("maxIndex: ", maxIndex);
