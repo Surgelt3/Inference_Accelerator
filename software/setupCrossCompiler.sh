@@ -10,7 +10,6 @@ cat > ds5-toolchain.cmake <<EOF
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
-set(CMAKE_SYSROOT /opt/de10-nano/)
 set(CMAKE_FIND_ROOT_PATH  /opt/de10-nano)
 
 set(tools $HOME/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf)

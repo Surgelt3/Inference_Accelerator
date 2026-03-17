@@ -84,7 +84,6 @@ int unmap_physical(void *virtual_base, unsigned int span)
 
 #define OUT_ADDRESS 
 static int fd = -1;
-// waiting on lucas
 static volatile int writeReady = 1;
 MemManager::MemManager()
 {
@@ -137,7 +136,8 @@ void MemManager::writeData(float *ptr, size_t size)
 }
 float MemManager::getResult(uint32_t PC)
 {
-  // while(outPtr[1]==PC);
+  while (outPtr[1] != PC)
+    ;
   return *((float*)outPtr[0]);
 }
 
