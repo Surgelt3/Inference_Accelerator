@@ -43,7 +43,7 @@ void Compiler::compileModel(Net &net)
   int count = 0;
   for (const NetCommand &comm : net.commands)
   {
-    chprintln("command: ", count++);
+    // chprintln("command: ", count++);
     switch (comm.type)
     {
     case MAC:
@@ -106,7 +106,9 @@ void Compiler::compileModel(Net &net)
         }
         ++currentPC;
         manager.writeData((float *)toWrite._start, sizeof(float) * ch_arrlength(float,toWrite));
-
+        
+        // mac operation        
+        ++currentPC;
 #if ONDEVICE
         *(comm.mac.out + shift) = manager.getResult(currentPC);
 #else
@@ -150,6 +152,7 @@ void Compiler::compileModel(Net &net)
 int main()
 {
 
+  chprintln("Start!");
 #if 0
   Net aModel;
   float a[]={1,2,3,4};
@@ -187,61 +190,76 @@ int main()
   return 0;
 #endif
   Net model = importModel("../mobilenet-v2-pytorch/mobilenet_v2.onnx");
-  chprintln("done");
-  int w,h,comp;
-  unsigned char *image = stbi_load("./apple.jpg",
-     &w, &h, &comp, STBI_rgb);
+  chprintln("done import");
 
-  assert(w == h && w == 224 && comp == 3);
 
-  Tensor*input=model.input;
-  for (int x = 0; x < 224; x++)
+  while(true)
   {
-    for (int y = 0; y < 224; y++)
+    std::string imageIndex = "";
+    do
     {
-      for (int c = 0; c < 3; c++)
+      chprintln("Enter image (1: apple, 2:strawberry, 3: orange)");
+      std::cin >> imageIndex;
+    } while (imageIndex != "1" && imageIndex != "2" && imageIndex != "3");
+
+    std::string paths[] = {"./apple.jpg", "./strawberry.jpg", "./orange.jpg"};
+
+    int w, h, comp;
+    unsigned char *image = stbi_load(paths[stoi(imageIndex)-1].c_str(),
+                                     &w, &h, &comp, STBI_rgb);
+
+    assert(w == h && w == 224 && comp == 3);
+
+    Tensor *input = model.input;
+    for (int x = 0; x < 224; x++)
+    {
+      for (int y = 0; y < 224; y++)
       {
-        int arrIndex = input->getIndex(0, c, x, y);
-        int imIndex = (c * -1 + 2) + 3 * (y * 224 + x);
-        ch_arrget(float, input->data, arrIndex) = (float)image[imIndex] / 255.0;
-        // ch_arrget(float, input->data, arrIndex) = 0;
+        for (int c = 0; c < 3; c++)
+        {
+          int arrIndex = input->getIndex(0, c, x, y);
+          int imIndex = (c * -1 + 2) + 3 * (y * 224 + x);
+          ch_arrget(float, input->data, arrIndex) = (float)image[imIndex] / 255.0;
+          // ch_arrget(float, input->data, arrIndex) = 0;
+        }
       }
+    }
+
+    Compiler compiler = Compiler();
+    // compiler.writeInstructions(model);
+    // compiler.compileModel(model);
+
+    model.calculate();
+
+    chprintln("calculated");
+    int maxIndex = 0;
+    for (int i = 0; i < ch_arrlength(float, model.output->data); i++)
+    {
+      float prob = ch_arrget(float, model.output->data, i);
+      if (prob >= ch_arrget(float, model.output->data, maxIndex))
+        maxIndex = i;
+    }
+    // chprintln(maxIndex, ": ", ch_arrget(float, model.output->data, maxIndex));
+
+    if (maxIndex == 948)
+    {
+      chprintln("Apple");
+    }
+    else if(maxIndex == 793)
+    {
+      chprintln("Strawberry");
+    }
+    else if (maxIndex == 574)
+    {
+      chprintln("Orange");
+    }
+    else
+    {
+      chprintln("maxIndex: ", maxIndex);
     }
   }
 
-  Compiler compiler = Compiler();
-  compiler.writeInstructions(model);
-  compiler.compileModel(model);
-
-  // model.calculate();
-
-  chprintln("calculated");
-
-  int maxIndex=0;
-  for (int i = 0; i < ch_arrlength(float, model.output->data); i++)
-  {
-    float prob = ch_arrget(float, model.output->data, i);
-    if (prob >= ch_arrget(float, model.output->data, maxIndex))
-      maxIndex=i;
-  }
-  // chprintln(maxIndex, ": ", ch_arrget(float, model.output->data, maxIndex));
-
-  if(maxIndex==948)
-  {
-    chprintln("Apple");
-  }
-  else
-  {
-    chprintln("maxIndex: ", maxIndex);
-  }
-
-
-  // chprintln(ch_arrget(float,model.output->data,263));
   model.free();
-
-  for(int i=0;i<100;i++)
-  {
-  }
   return 0;
 }
 
