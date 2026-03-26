@@ -67,7 +67,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
   </table>
   <table class="blueBar">
    <tr>
-    <td class="l">2026.03.09.04:27:38</td>
+    <td class="l">2026.03.26.14:01:12</td>
     <td class="r">Datasheet</td>
    </tr>
   </table>
@@ -85,7 +85,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
      <br/>All Components
      <br/>&#160;&#160;
      <a href="#module_NPU_TOP_0"><b>NPU_TOP_0</b>
-     </a> NPU_TOP 2.2</span>
+     </a> NPU_TOP 2.99</span>
    </div>
   </div>
   <div style="width:100% ;  height:10px"> </div>
@@ -838,6 +838,13 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
     <td class="addr"><span style="color:#989898">0x</span>ff200004</td>
    </tr>
    <tr>
+    <td class="slavem">avs_reset&#160;</td>
+    <td class="addr"><span style="color:#989898">0x</span>00000000</td>
+    <td class="addr"><span style="color:#989898">0x</span>00000000</td>
+    <td class="addr"><span style="color:#989898">0x</span>ff200000</td>
+    <td class="addr"><span style="color:#989898">0x</span>ff200000</td>
+   </tr>
+   <tr>
     <td class="slavem">avs_read&#160;</td>
     <td class="addr"><span style="color:#989898">0x</span>00000008</td>
     <td class="addr"><span style="color:#989898">0x</span>00000008</td>
@@ -845,11 +852,11 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
     <td class="addr"><span style="color:#989898">0x</span>ff200008</td>
    </tr>
    <tr>
-    <td class="slavem">avs_reset&#160;</td>
-    <td class="addr"><span style="color:#989898">0x</span>00000000</td>
-    <td class="addr"><span style="color:#989898">0x</span>00000000</td>
-    <td class="addr"><span style="color:#989898">0x</span>ff200000</td>
-    <td class="addr"><span style="color:#989898">0x</span>ff200000</td>
+    <td class="slavem">avs_write_instr&#160;</td>
+    <td class="addr"><span style="color:#989898">0x</span>00000010</td>
+    <td class="empty"></td>
+    <td class="addr"><span style="color:#989898">0x</span>c0000010</td>
+    <td class="addr"><span style="color:#989898">0x</span>c0000010</td>
    </tr>
   </table>
   <a name="module_ARM_A9_HPS"> </a>
@@ -19928,7 +19935,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
        <a href="#module_ARM_A9_HPS_clk_0">ARM_A9_HPS_clk_0</a>
       </td>
       <td class="from">clk_reset&#160;&#160;</td>
-      <td class="main" rowspan="149">ARM_A9_HPS_bridges</td>
+      <td class="main" rowspan="151">ARM_A9_HPS_bridges</td>
      </tr>
      <tr>
       <td class="to">&#160;&#160;reset_sink</td>
@@ -20619,7 +20626,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
       <td></td>
       <td></td>
       <td class="from">h2f&#160;&#160;</td>
-      <td class="neighbor" rowspan="12">
+      <td class="neighbor" rowspan="14">
        <a href="#module_NPU_TOP_0">NPU_TOP_0</a>
       </td>
      </tr>
@@ -20647,6 +20654,16 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
       <td></td>
       <td></td>
       <td class="to">&#160;&#160;avs_write</td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="from">h2f&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td></td>
+      <td></td>
+      <td class="to">&#160;&#160;avs_write_instr</td>
      </tr>
      <tr>
       <td></td>
@@ -28332,16 +28349,16 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
   <a name="module_NPU_TOP_0"> </a>
   <div>
    <hr/>
-   <h2>NPU_TOP_0</h2>NPU_TOP v2.2
+   <h2>NPU_TOP_0</h2>NPU_TOP v2.99
    <br/>
    <div class="greydiv">
     <table class="connectionboxes">
      <tr>
-      <td class="neighbor" rowspan="12">
+      <td class="neighbor" rowspan="14">
        <a href="#module_ARM_A9_HPS_bridges">ARM_A9_HPS_bridges</a>
       </td>
       <td class="from">h2f&#160;&#160;</td>
-      <td class="main" rowspan="17">NPU_TOP_0</td>
+      <td class="main" rowspan="19">NPU_TOP_0</td>
      </tr>
      <tr>
       <td class="to">&#160;&#160;avs_read</td>
@@ -28357,6 +28374,12 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
      </tr>
      <tr>
       <td class="to">&#160;&#160;avs_write</td>
+     </tr>
+     <tr>
+      <td class="from">h2f&#160;&#160;</td>
+     </tr>
+     <tr>
+      <td class="to">&#160;&#160;avs_write_instr</td>
      </tr>
      <tr>
       <td class="from">h2f_lw&#160;&#160;</td>
@@ -28508,7 +28531,7 @@ div.greydiv { vertical-align:top ; text-align:center ; background:#eeeeee ; bord
   <table class="blueBar">
    <tr>
     <td class="l">generation took 0.00 seconds</td>
-    <td class="r">rendering took 0.16 seconds</td>
+    <td class="r">rendering took 1.22 seconds</td>
    </tr>
   </table>
  </body>

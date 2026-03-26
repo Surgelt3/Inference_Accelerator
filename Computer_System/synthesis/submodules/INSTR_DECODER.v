@@ -28,7 +28,7 @@ module INSTR_DECODER(
 		start_loc_out <= start_loc;
 		param_loc_out <= param_loc;
 		length_out <= length;
-		counter = counter + 1;
+		counter <= counter + 1;
 
 		if (rst) begin
 			pc_out <= 32'd0;

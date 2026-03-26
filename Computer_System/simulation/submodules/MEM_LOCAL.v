@@ -36,7 +36,7 @@ module MEM_LOCAL(
 	
 	always @(posedge clk) begin
 		read_valid_out <= 1'b0;
-		pc_clock <= pc_in;
+		//pc_clock <= pc_in;
 		control_signals_clock <= control_signals;
 		if (rst) begin
 		
@@ -57,7 +57,7 @@ module MEM_LOCAL(
 				  mem7[address[6:0]] <= write_data[255:224];
 			end
 			else if (read_en) begin
-				
+				pc_clock <= pc_in;
 				if (read_size == 2'b00) begin
 					read_valid_out <= 1'b0;
 				end

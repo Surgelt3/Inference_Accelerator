@@ -1,16 +1,22 @@
 module TOP (
 	input clk,
+	
 	input [31:0] reset,
 	input reset_write, 
 	input reset_reset,
+	
 	input [4:0] burstcount, 
 	output waitrequest_write,
 	input write,
 	input [31:0] writedata, 
-
+	
 	output [63:0] readdata,
 	input read,
-	output waitrequest_read
+	
+	input instr_in_valid,
+	input [31:0] in_instr,
+	output in_instr_ready
+	
 );	
 
 	wire in_valid, in_ready;
@@ -19,7 +25,12 @@ module TOP (
 	wire [63:0] out_data;
 	
 	assign readdata = out_data;
-	assign waitrequest_read = !out_valid;
+	//assign readdatavalid = out_valid;
+	//assign waitrequest_read = !out_valid;
+	
+	
+	//assign waitrequest_read = 1'b0;
+		
 	assign out_ready = read;
 	
 	assign in_data = writedata;
@@ -31,7 +42,25 @@ module TOP (
 	wire instr_valid;
 	wire [31:0] instr;
 	
-	wire rst = reset_reset | (reset_write ? |reset : rst);
+	wire rst = reset_reset | (reset_write ? |reset : 1'b0);
+	
+	reg [31:0] tmp;
+	
+	/*
+	
+	always @(posedge clk) begin
+		//waitrequest_read <= 1'b0;
+		if (rst) begin
+			waitrequest_read <= 1'b0;
+			tmp <= 32'd0;
+			readdata <= 64'd0;
+		end else begin
+			waitrequest_read <= 1'b1;
+			readdata <= out_data;
+		end
+	end
+	*/
+
 
 
 	NPU npu(
@@ -49,12 +78,19 @@ module TOP (
 		out_data
 	);
 	
-	
 	INSTR_MEM instr_mem(
-		 pc,
-		 instr_valid,
-		 instr
+		.clk(clk), .rst(rst),
+		.instr_in_valid(instr_in_valid),
+		.in_ready(in_instr_ready),
+		.in_instr(in_instr),
+
+		.pc(pc),
+		.instr_valid(instr_valid),
+		.instr(instr)
 	);
+
+	
+
 
 
 

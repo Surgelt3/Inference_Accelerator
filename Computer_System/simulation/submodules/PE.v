@@ -44,7 +44,7 @@ module PE(
 			in_valid_clk <= 12'd0;
 		end 
 		else begin
-			if (bias_add_clk[3]) begin
+			if (bias_add_clk[3] == 1'b1) begin
 				out_reg <= 32'd0;
 			end else begin
 				out_reg <= in_valid_clk[0] ? out_reg_out : out_reg;

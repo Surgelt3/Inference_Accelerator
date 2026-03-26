@@ -8,6 +8,7 @@
 40000000    // RELU after MAC window 0 kernel 0
 00402404    // MAC window 0 kernel 1 start_loc=4 len=9 param_loc=2
 40000000    // RELU after MAC window 0 kernel 1
+60000000
 20400000    // LOAD window 1 chunk 0 -> addr 4 (out=0,1)
 20500000    // LOAD window 1 chunk 1 -> addr 5 (out=0,1)
 00402400    // MAC window 1 kernel 0 start_loc=4 len=9 param_loc=0

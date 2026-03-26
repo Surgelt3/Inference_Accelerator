@@ -14,7 +14,6 @@ module RELU6(
 
 	
 	always @(posedge clk) begin
-		out_valid <= 1'b0;
 		if (in_valid) begin
 			pc_out <= pc_in;
 			if (use_relu) begin
@@ -32,6 +31,9 @@ module RELU6(
 				out_data <= in_data;
 			end
 			out_valid <= 1'b1;
+		end
+		else begin
+			out_valid <= 1'b0;
 		end
 		
 	end

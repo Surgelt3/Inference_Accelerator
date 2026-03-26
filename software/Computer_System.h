@@ -47,8 +47,20 @@
 #define ARM_A9_HPS_NPU_TOP_0_AVS_READ_COMPONENT_TYPE NPU_TOP
 #define ARM_A9_HPS_NPU_TOP_0_AVS_READ_COMPONENT_NAME NPU_TOP_0
 #define ARM_A9_HPS_NPU_TOP_0_AVS_READ_BASE 0x8
-#define ARM_A9_HPS_NPU_TOP_0_AVS_READ_SPAN 8
-#define ARM_A9_HPS_NPU_TOP_0_AVS_READ_END 0xf
+#define ARM_A9_HPS_NPU_TOP_0_AVS_READ_SPAN 1
+#define ARM_A9_HPS_NPU_TOP_0_AVS_READ_END 0x8
+
+/*
+ * Macros for device 'NPU_TOP_0_avs_write_instr', class 'NPU_TOP'
+ * Path to the device is from the master group 'ARM_A9_HPS'.
+ * The macros are prefixed with 'ARM_A9_HPS_NPU_TOP_0_AVS_WRITE_INSTR_'.
+ * The prefix is the master group descriptor and the slave descriptor.
+ */
+#define ARM_A9_HPS_NPU_TOP_0_AVS_WRITE_INSTR_COMPONENT_TYPE NPU_TOP
+#define ARM_A9_HPS_NPU_TOP_0_AVS_WRITE_INSTR_COMPONENT_NAME NPU_TOP_0
+#define ARM_A9_HPS_NPU_TOP_0_AVS_WRITE_INSTR_BASE 0x10
+#define ARM_A9_HPS_NPU_TOP_0_AVS_WRITE_INSTR_SPAN 4
+#define ARM_A9_HPS_NPU_TOP_0_AVS_WRITE_INSTR_END 0x13
 
 /*
  * Macros for device 'ARM_A9_HPS_axi_sdram', class 'axi_sdram'
@@ -101,8 +113,20 @@
 #define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_READ_COMPONENT_TYPE NPU_TOP
 #define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_READ_COMPONENT_NAME NPU_TOP_0
 #define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_READ_BASE 0x8
-#define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_READ_SPAN 8
-#define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_READ_END 0xf
+#define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_READ_SPAN 1
+#define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_READ_END 0x8
+
+/*
+ * Macros for device 'NPU_TOP_0_avs_write_instr', class 'NPU_TOP'
+ * Path to the device is from the master group 'ARM_A9_HPS_bridges'.
+ * The macros are prefixed with 'ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_WRITE_INSTR_'.
+ * The prefix is the master group descriptor and the slave descriptor.
+ */
+#define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_WRITE_INSTR_COMPONENT_TYPE NPU_TOP
+#define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_WRITE_INSTR_COMPONENT_NAME NPU_TOP_0
+#define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_WRITE_INSTR_BASE 0x10
+#define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_WRITE_INSTR_SPAN 4
+#define ARM_A9_HPS_BRIDGES_NPU_TOP_0_AVS_WRITE_INSTR_END 0x13
 
 /*
  * Macros for device 'ARM_A9_HPS_gmac0', class 'stmmac'
@@ -591,8 +615,20 @@
 #define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_READ_COMPONENT_TYPE NPU_TOP
 #define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_READ_COMPONENT_NAME NPU_TOP_0
 #define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_READ_BASE 0xc0000008
-#define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_READ_SPAN 8
-#define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_READ_END 0xc000000f
+#define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_READ_SPAN 1
+#define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_READ_END 0xc0000008
+
+/*
+ * Macros for device 'NPU_TOP_0_avs_write_instr', class 'NPU_TOP'
+ * Path to the device is from the master group 'ARM_A9_HPS_arm_a9_0'.
+ * The macros are prefixed with 'ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_WRITE_INSTR_'.
+ * The prefix is the master group descriptor and the slave descriptor.
+ */
+#define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_WRITE_INSTR_COMPONENT_TYPE NPU_TOP
+#define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_WRITE_INSTR_COMPONENT_NAME NPU_TOP_0
+#define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_WRITE_INSTR_BASE 0xc0000010
+#define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_WRITE_INSTR_SPAN 4
+#define ARM_A9_HPS_ARM_A9_0_NPU_TOP_0_AVS_WRITE_INSTR_END 0xc0000013
 
 /*
  * Macros for device 'ARM_A9_HPS_gmac0', class 'stmmac'
@@ -1117,8 +1153,20 @@
 #define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_READ_COMPONENT_TYPE NPU_TOP
 #define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_READ_COMPONENT_NAME NPU_TOP_0
 #define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_READ_BASE 0xc0000008
-#define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_READ_SPAN 8
-#define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_READ_END 0xc000000f
+#define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_READ_SPAN 1
+#define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_READ_END 0xc0000008
+
+/*
+ * Macros for device 'NPU_TOP_0_avs_write_instr', class 'NPU_TOP'
+ * Path to the device is from the master group 'ARM_A9_HPS_arm_a9_1'.
+ * The macros are prefixed with 'ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_WRITE_INSTR_'.
+ * The prefix is the master group descriptor and the slave descriptor.
+ */
+#define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_WRITE_INSTR_COMPONENT_TYPE NPU_TOP
+#define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_WRITE_INSTR_COMPONENT_NAME NPU_TOP_0
+#define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_WRITE_INSTR_BASE 0xc0000010
+#define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_WRITE_INSTR_SPAN 4
+#define ARM_A9_HPS_ARM_A9_1_NPU_TOP_0_AVS_WRITE_INSTR_END 0xc0000013
 
 /*
  * Macros for device 'ARM_A9_HPS_gmac0', class 'stmmac'

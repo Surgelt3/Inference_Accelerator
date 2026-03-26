@@ -26,8 +26,7 @@ module TOP_TB ();
 		.write(write),
 		.writedata(writedata),
 		.readdata(readdata),
-		.read(read),
-		.waitrequest_read(waitrequest_read)
+		.read(read)
 	);
 
 	initial begin

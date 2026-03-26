@@ -72,94 +72,96 @@ module Computer_System (
 		input  wire        system_pll_ref_reset_reset       // system_pll_ref_reset.reset
 	);
 
-	wire         system_pll_sys_clk_clk;                            // System_PLL:sys_clk_clk -> [ARM_A9_HPS:f2h_axi_clk, ARM_A9_HPS:h2f_axi_clk, ARM_A9_HPS:h2f_lw_axi_clk, NPU_TOP_0:clk, mm_interconnect_0:System_PLL_sys_clk_clk, rst_controller:clk, rst_controller_001:clk]
-	wire   [1:0] arm_a9_hps_h2f_axi_master_awburst;                 // ARM_A9_HPS:h2f_AWBURST -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awburst
-	wire   [3:0] arm_a9_hps_h2f_axi_master_arlen;                   // ARM_A9_HPS:h2f_ARLEN -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arlen
-	wire   [7:0] arm_a9_hps_h2f_axi_master_wstrb;                   // ARM_A9_HPS:h2f_WSTRB -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wstrb
-	wire         arm_a9_hps_h2f_axi_master_wready;                  // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wready -> ARM_A9_HPS:h2f_WREADY
-	wire  [11:0] arm_a9_hps_h2f_axi_master_rid;                     // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rid -> ARM_A9_HPS:h2f_RID
-	wire         arm_a9_hps_h2f_axi_master_rready;                  // ARM_A9_HPS:h2f_RREADY -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rready
-	wire   [3:0] arm_a9_hps_h2f_axi_master_awlen;                   // ARM_A9_HPS:h2f_AWLEN -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awlen
-	wire  [11:0] arm_a9_hps_h2f_axi_master_wid;                     // ARM_A9_HPS:h2f_WID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wid
-	wire   [3:0] arm_a9_hps_h2f_axi_master_arcache;                 // ARM_A9_HPS:h2f_ARCACHE -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arcache
-	wire         arm_a9_hps_h2f_axi_master_wvalid;                  // ARM_A9_HPS:h2f_WVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wvalid
-	wire  [29:0] arm_a9_hps_h2f_axi_master_araddr;                  // ARM_A9_HPS:h2f_ARADDR -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_araddr
-	wire   [2:0] arm_a9_hps_h2f_axi_master_arprot;                  // ARM_A9_HPS:h2f_ARPROT -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arprot
-	wire   [2:0] arm_a9_hps_h2f_axi_master_awprot;                  // ARM_A9_HPS:h2f_AWPROT -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awprot
-	wire  [63:0] arm_a9_hps_h2f_axi_master_wdata;                   // ARM_A9_HPS:h2f_WDATA -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wdata
-	wire         arm_a9_hps_h2f_axi_master_arvalid;                 // ARM_A9_HPS:h2f_ARVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arvalid
-	wire   [3:0] arm_a9_hps_h2f_axi_master_awcache;                 // ARM_A9_HPS:h2f_AWCACHE -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awcache
-	wire  [11:0] arm_a9_hps_h2f_axi_master_arid;                    // ARM_A9_HPS:h2f_ARID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arid
-	wire   [1:0] arm_a9_hps_h2f_axi_master_arlock;                  // ARM_A9_HPS:h2f_ARLOCK -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arlock
-	wire   [1:0] arm_a9_hps_h2f_axi_master_awlock;                  // ARM_A9_HPS:h2f_AWLOCK -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awlock
-	wire  [29:0] arm_a9_hps_h2f_axi_master_awaddr;                  // ARM_A9_HPS:h2f_AWADDR -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awaddr
-	wire   [1:0] arm_a9_hps_h2f_axi_master_bresp;                   // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_bresp -> ARM_A9_HPS:h2f_BRESP
-	wire         arm_a9_hps_h2f_axi_master_arready;                 // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arready -> ARM_A9_HPS:h2f_ARREADY
-	wire  [63:0] arm_a9_hps_h2f_axi_master_rdata;                   // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rdata -> ARM_A9_HPS:h2f_RDATA
-	wire         arm_a9_hps_h2f_axi_master_awready;                 // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awready -> ARM_A9_HPS:h2f_AWREADY
-	wire   [1:0] arm_a9_hps_h2f_axi_master_arburst;                 // ARM_A9_HPS:h2f_ARBURST -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arburst
-	wire   [2:0] arm_a9_hps_h2f_axi_master_arsize;                  // ARM_A9_HPS:h2f_ARSIZE -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arsize
-	wire         arm_a9_hps_h2f_axi_master_bready;                  // ARM_A9_HPS:h2f_BREADY -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_bready
-	wire         arm_a9_hps_h2f_axi_master_rlast;                   // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rlast -> ARM_A9_HPS:h2f_RLAST
-	wire         arm_a9_hps_h2f_axi_master_wlast;                   // ARM_A9_HPS:h2f_WLAST -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wlast
-	wire   [1:0] arm_a9_hps_h2f_axi_master_rresp;                   // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rresp -> ARM_A9_HPS:h2f_RRESP
-	wire  [11:0] arm_a9_hps_h2f_axi_master_awid;                    // ARM_A9_HPS:h2f_AWID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awid
-	wire  [11:0] arm_a9_hps_h2f_axi_master_bid;                     // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_bid -> ARM_A9_HPS:h2f_BID
-	wire         arm_a9_hps_h2f_axi_master_bvalid;                  // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_bvalid -> ARM_A9_HPS:h2f_BVALID
-	wire   [2:0] arm_a9_hps_h2f_axi_master_awsize;                  // ARM_A9_HPS:h2f_AWSIZE -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awsize
-	wire         arm_a9_hps_h2f_axi_master_awvalid;                 // ARM_A9_HPS:h2f_AWVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awvalid
-	wire         arm_a9_hps_h2f_axi_master_rvalid;                  // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rvalid -> ARM_A9_HPS:h2f_RVALID
-	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_awburst;              // ARM_A9_HPS:h2f_lw_AWBURST -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awburst
-	wire   [3:0] arm_a9_hps_h2f_lw_axi_master_arlen;                // ARM_A9_HPS:h2f_lw_ARLEN -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arlen
-	wire   [3:0] arm_a9_hps_h2f_lw_axi_master_wstrb;                // ARM_A9_HPS:h2f_lw_WSTRB -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wstrb
-	wire         arm_a9_hps_h2f_lw_axi_master_wready;               // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wready -> ARM_A9_HPS:h2f_lw_WREADY
-	wire  [11:0] arm_a9_hps_h2f_lw_axi_master_rid;                  // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rid -> ARM_A9_HPS:h2f_lw_RID
-	wire         arm_a9_hps_h2f_lw_axi_master_rready;               // ARM_A9_HPS:h2f_lw_RREADY -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rready
-	wire   [3:0] arm_a9_hps_h2f_lw_axi_master_awlen;                // ARM_A9_HPS:h2f_lw_AWLEN -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awlen
-	wire  [11:0] arm_a9_hps_h2f_lw_axi_master_wid;                  // ARM_A9_HPS:h2f_lw_WID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wid
-	wire   [3:0] arm_a9_hps_h2f_lw_axi_master_arcache;              // ARM_A9_HPS:h2f_lw_ARCACHE -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arcache
-	wire         arm_a9_hps_h2f_lw_axi_master_wvalid;               // ARM_A9_HPS:h2f_lw_WVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wvalid
-	wire  [20:0] arm_a9_hps_h2f_lw_axi_master_araddr;               // ARM_A9_HPS:h2f_lw_ARADDR -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_araddr
-	wire   [2:0] arm_a9_hps_h2f_lw_axi_master_arprot;               // ARM_A9_HPS:h2f_lw_ARPROT -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arprot
-	wire   [2:0] arm_a9_hps_h2f_lw_axi_master_awprot;               // ARM_A9_HPS:h2f_lw_AWPROT -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awprot
-	wire  [31:0] arm_a9_hps_h2f_lw_axi_master_wdata;                // ARM_A9_HPS:h2f_lw_WDATA -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wdata
-	wire         arm_a9_hps_h2f_lw_axi_master_arvalid;              // ARM_A9_HPS:h2f_lw_ARVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arvalid
-	wire   [3:0] arm_a9_hps_h2f_lw_axi_master_awcache;              // ARM_A9_HPS:h2f_lw_AWCACHE -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awcache
-	wire  [11:0] arm_a9_hps_h2f_lw_axi_master_arid;                 // ARM_A9_HPS:h2f_lw_ARID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arid
-	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_arlock;               // ARM_A9_HPS:h2f_lw_ARLOCK -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arlock
-	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_awlock;               // ARM_A9_HPS:h2f_lw_AWLOCK -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awlock
-	wire  [20:0] arm_a9_hps_h2f_lw_axi_master_awaddr;               // ARM_A9_HPS:h2f_lw_AWADDR -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awaddr
-	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_bresp;                // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_bresp -> ARM_A9_HPS:h2f_lw_BRESP
-	wire         arm_a9_hps_h2f_lw_axi_master_arready;              // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arready -> ARM_A9_HPS:h2f_lw_ARREADY
-	wire  [31:0] arm_a9_hps_h2f_lw_axi_master_rdata;                // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rdata -> ARM_A9_HPS:h2f_lw_RDATA
-	wire         arm_a9_hps_h2f_lw_axi_master_awready;              // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awready -> ARM_A9_HPS:h2f_lw_AWREADY
-	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_arburst;              // ARM_A9_HPS:h2f_lw_ARBURST -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arburst
-	wire   [2:0] arm_a9_hps_h2f_lw_axi_master_arsize;               // ARM_A9_HPS:h2f_lw_ARSIZE -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arsize
-	wire         arm_a9_hps_h2f_lw_axi_master_bready;               // ARM_A9_HPS:h2f_lw_BREADY -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_bready
-	wire         arm_a9_hps_h2f_lw_axi_master_rlast;                // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rlast -> ARM_A9_HPS:h2f_lw_RLAST
-	wire         arm_a9_hps_h2f_lw_axi_master_wlast;                // ARM_A9_HPS:h2f_lw_WLAST -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wlast
-	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_rresp;                // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rresp -> ARM_A9_HPS:h2f_lw_RRESP
-	wire  [11:0] arm_a9_hps_h2f_lw_axi_master_awid;                 // ARM_A9_HPS:h2f_lw_AWID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awid
-	wire  [11:0] arm_a9_hps_h2f_lw_axi_master_bid;                  // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_bid -> ARM_A9_HPS:h2f_lw_BID
-	wire         arm_a9_hps_h2f_lw_axi_master_bvalid;               // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_bvalid -> ARM_A9_HPS:h2f_lw_BVALID
-	wire   [2:0] arm_a9_hps_h2f_lw_axi_master_awsize;               // ARM_A9_HPS:h2f_lw_AWSIZE -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awsize
-	wire         arm_a9_hps_h2f_lw_axi_master_awvalid;              // ARM_A9_HPS:h2f_lw_AWVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awvalid
-	wire         arm_a9_hps_h2f_lw_axi_master_rvalid;               // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rvalid -> ARM_A9_HPS:h2f_lw_RVALID
-	wire  [63:0] mm_interconnect_0_npu_top_0_avs_read_readdata;     // NPU_TOP_0:readdata -> mm_interconnect_0:NPU_TOP_0_avs_read_readdata
-	wire         mm_interconnect_0_npu_top_0_avs_read_waitrequest;  // NPU_TOP_0:waitrequest_read -> mm_interconnect_0:NPU_TOP_0_avs_read_waitrequest
-	wire         mm_interconnect_0_npu_top_0_avs_read_read;         // mm_interconnect_0:NPU_TOP_0_avs_read_read -> NPU_TOP_0:read
-	wire         mm_interconnect_0_npu_top_0_avs_reset_write;       // mm_interconnect_0:NPU_TOP_0_avs_reset_write -> NPU_TOP_0:reset_write
-	wire  [31:0] mm_interconnect_0_npu_top_0_avs_reset_writedata;   // mm_interconnect_0:NPU_TOP_0_avs_reset_writedata -> NPU_TOP_0:reset
-	wire         mm_interconnect_0_npu_top_0_avs_write_waitrequest; // NPU_TOP_0:waitrequest_write -> mm_interconnect_0:NPU_TOP_0_avs_write_waitrequest
-	wire         mm_interconnect_0_npu_top_0_avs_write_write;       // mm_interconnect_0:NPU_TOP_0_avs_write_write -> NPU_TOP_0:write
-	wire  [31:0] mm_interconnect_0_npu_top_0_avs_write_writedata;   // mm_interconnect_0:NPU_TOP_0_avs_write_writedata -> NPU_TOP_0:writedata
-	wire   [4:0] mm_interconnect_0_npu_top_0_avs_write_burstcount;  // mm_interconnect_0:NPU_TOP_0_avs_write_burstcount -> NPU_TOP_0:burstcount
-	wire  [31:0] arm_a9_hps_f2h_irq0_irq;                           // irq_mapper:sender_irq -> ARM_A9_HPS:f2h_irq_p0
-	wire  [31:0] arm_a9_hps_f2h_irq1_irq;                           // irq_mapper_001:sender_irq -> ARM_A9_HPS:f2h_irq_p1
-	wire         rst_controller_reset_out_reset;                    // rst_controller:reset_out -> [NPU_TOP_0:reset_reset, mm_interconnect_0:NPU_TOP_0_reset_reset_bridge_in_reset_reset]
-	wire         system_pll_reset_source_reset;                     // System_PLL:reset_source_reset -> rst_controller:reset_in0
-	wire         rst_controller_001_reset_out_reset;                // rst_controller_001:reset_out -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_agent_clk_reset_reset_bridge_in_reset_reset
-	wire         arm_a9_hps_h2f_reset_reset;                        // ARM_A9_HPS:h2f_rst_n -> rst_controller_001:reset_in0
+	wire         system_pll_sys_clk_clk;                                  // System_PLL:sys_clk_clk -> [ARM_A9_HPS:f2h_axi_clk, ARM_A9_HPS:h2f_axi_clk, ARM_A9_HPS:h2f_lw_axi_clk, NPU_TOP_0:clk, mm_interconnect_0:System_PLL_sys_clk_clk, rst_controller:clk, rst_controller_001:clk]
+	wire   [1:0] arm_a9_hps_h2f_axi_master_awburst;                       // ARM_A9_HPS:h2f_AWBURST -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awburst
+	wire   [3:0] arm_a9_hps_h2f_axi_master_arlen;                         // ARM_A9_HPS:h2f_ARLEN -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arlen
+	wire   [7:0] arm_a9_hps_h2f_axi_master_wstrb;                         // ARM_A9_HPS:h2f_WSTRB -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wstrb
+	wire         arm_a9_hps_h2f_axi_master_wready;                        // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wready -> ARM_A9_HPS:h2f_WREADY
+	wire  [11:0] arm_a9_hps_h2f_axi_master_rid;                           // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rid -> ARM_A9_HPS:h2f_RID
+	wire         arm_a9_hps_h2f_axi_master_rready;                        // ARM_A9_HPS:h2f_RREADY -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rready
+	wire   [3:0] arm_a9_hps_h2f_axi_master_awlen;                         // ARM_A9_HPS:h2f_AWLEN -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awlen
+	wire  [11:0] arm_a9_hps_h2f_axi_master_wid;                           // ARM_A9_HPS:h2f_WID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wid
+	wire   [3:0] arm_a9_hps_h2f_axi_master_arcache;                       // ARM_A9_HPS:h2f_ARCACHE -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arcache
+	wire         arm_a9_hps_h2f_axi_master_wvalid;                        // ARM_A9_HPS:h2f_WVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wvalid
+	wire  [29:0] arm_a9_hps_h2f_axi_master_araddr;                        // ARM_A9_HPS:h2f_ARADDR -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_araddr
+	wire   [2:0] arm_a9_hps_h2f_axi_master_arprot;                        // ARM_A9_HPS:h2f_ARPROT -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arprot
+	wire   [2:0] arm_a9_hps_h2f_axi_master_awprot;                        // ARM_A9_HPS:h2f_AWPROT -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awprot
+	wire  [63:0] arm_a9_hps_h2f_axi_master_wdata;                         // ARM_A9_HPS:h2f_WDATA -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wdata
+	wire         arm_a9_hps_h2f_axi_master_arvalid;                       // ARM_A9_HPS:h2f_ARVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arvalid
+	wire   [3:0] arm_a9_hps_h2f_axi_master_awcache;                       // ARM_A9_HPS:h2f_AWCACHE -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awcache
+	wire  [11:0] arm_a9_hps_h2f_axi_master_arid;                          // ARM_A9_HPS:h2f_ARID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arid
+	wire   [1:0] arm_a9_hps_h2f_axi_master_arlock;                        // ARM_A9_HPS:h2f_ARLOCK -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arlock
+	wire   [1:0] arm_a9_hps_h2f_axi_master_awlock;                        // ARM_A9_HPS:h2f_AWLOCK -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awlock
+	wire  [29:0] arm_a9_hps_h2f_axi_master_awaddr;                        // ARM_A9_HPS:h2f_AWADDR -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awaddr
+	wire   [1:0] arm_a9_hps_h2f_axi_master_bresp;                         // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_bresp -> ARM_A9_HPS:h2f_BRESP
+	wire         arm_a9_hps_h2f_axi_master_arready;                       // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arready -> ARM_A9_HPS:h2f_ARREADY
+	wire  [63:0] arm_a9_hps_h2f_axi_master_rdata;                         // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rdata -> ARM_A9_HPS:h2f_RDATA
+	wire         arm_a9_hps_h2f_axi_master_awready;                       // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awready -> ARM_A9_HPS:h2f_AWREADY
+	wire   [1:0] arm_a9_hps_h2f_axi_master_arburst;                       // ARM_A9_HPS:h2f_ARBURST -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arburst
+	wire   [2:0] arm_a9_hps_h2f_axi_master_arsize;                        // ARM_A9_HPS:h2f_ARSIZE -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_arsize
+	wire         arm_a9_hps_h2f_axi_master_bready;                        // ARM_A9_HPS:h2f_BREADY -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_bready
+	wire         arm_a9_hps_h2f_axi_master_rlast;                         // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rlast -> ARM_A9_HPS:h2f_RLAST
+	wire         arm_a9_hps_h2f_axi_master_wlast;                         // ARM_A9_HPS:h2f_WLAST -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_wlast
+	wire   [1:0] arm_a9_hps_h2f_axi_master_rresp;                         // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rresp -> ARM_A9_HPS:h2f_RRESP
+	wire  [11:0] arm_a9_hps_h2f_axi_master_awid;                          // ARM_A9_HPS:h2f_AWID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awid
+	wire  [11:0] arm_a9_hps_h2f_axi_master_bid;                           // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_bid -> ARM_A9_HPS:h2f_BID
+	wire         arm_a9_hps_h2f_axi_master_bvalid;                        // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_bvalid -> ARM_A9_HPS:h2f_BVALID
+	wire   [2:0] arm_a9_hps_h2f_axi_master_awsize;                        // ARM_A9_HPS:h2f_AWSIZE -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awsize
+	wire         arm_a9_hps_h2f_axi_master_awvalid;                       // ARM_A9_HPS:h2f_AWVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_awvalid
+	wire         arm_a9_hps_h2f_axi_master_rvalid;                        // mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_rvalid -> ARM_A9_HPS:h2f_RVALID
+	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_awburst;                    // ARM_A9_HPS:h2f_lw_AWBURST -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awburst
+	wire   [3:0] arm_a9_hps_h2f_lw_axi_master_arlen;                      // ARM_A9_HPS:h2f_lw_ARLEN -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arlen
+	wire   [3:0] arm_a9_hps_h2f_lw_axi_master_wstrb;                      // ARM_A9_HPS:h2f_lw_WSTRB -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wstrb
+	wire         arm_a9_hps_h2f_lw_axi_master_wready;                     // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wready -> ARM_A9_HPS:h2f_lw_WREADY
+	wire  [11:0] arm_a9_hps_h2f_lw_axi_master_rid;                        // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rid -> ARM_A9_HPS:h2f_lw_RID
+	wire         arm_a9_hps_h2f_lw_axi_master_rready;                     // ARM_A9_HPS:h2f_lw_RREADY -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rready
+	wire   [3:0] arm_a9_hps_h2f_lw_axi_master_awlen;                      // ARM_A9_HPS:h2f_lw_AWLEN -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awlen
+	wire  [11:0] arm_a9_hps_h2f_lw_axi_master_wid;                        // ARM_A9_HPS:h2f_lw_WID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wid
+	wire   [3:0] arm_a9_hps_h2f_lw_axi_master_arcache;                    // ARM_A9_HPS:h2f_lw_ARCACHE -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arcache
+	wire         arm_a9_hps_h2f_lw_axi_master_wvalid;                     // ARM_A9_HPS:h2f_lw_WVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wvalid
+	wire  [20:0] arm_a9_hps_h2f_lw_axi_master_araddr;                     // ARM_A9_HPS:h2f_lw_ARADDR -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_araddr
+	wire   [2:0] arm_a9_hps_h2f_lw_axi_master_arprot;                     // ARM_A9_HPS:h2f_lw_ARPROT -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arprot
+	wire   [2:0] arm_a9_hps_h2f_lw_axi_master_awprot;                     // ARM_A9_HPS:h2f_lw_AWPROT -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awprot
+	wire  [31:0] arm_a9_hps_h2f_lw_axi_master_wdata;                      // ARM_A9_HPS:h2f_lw_WDATA -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wdata
+	wire         arm_a9_hps_h2f_lw_axi_master_arvalid;                    // ARM_A9_HPS:h2f_lw_ARVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arvalid
+	wire   [3:0] arm_a9_hps_h2f_lw_axi_master_awcache;                    // ARM_A9_HPS:h2f_lw_AWCACHE -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awcache
+	wire  [11:0] arm_a9_hps_h2f_lw_axi_master_arid;                       // ARM_A9_HPS:h2f_lw_ARID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arid
+	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_arlock;                     // ARM_A9_HPS:h2f_lw_ARLOCK -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arlock
+	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_awlock;                     // ARM_A9_HPS:h2f_lw_AWLOCK -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awlock
+	wire  [20:0] arm_a9_hps_h2f_lw_axi_master_awaddr;                     // ARM_A9_HPS:h2f_lw_AWADDR -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awaddr
+	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_bresp;                      // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_bresp -> ARM_A9_HPS:h2f_lw_BRESP
+	wire         arm_a9_hps_h2f_lw_axi_master_arready;                    // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arready -> ARM_A9_HPS:h2f_lw_ARREADY
+	wire  [31:0] arm_a9_hps_h2f_lw_axi_master_rdata;                      // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rdata -> ARM_A9_HPS:h2f_lw_RDATA
+	wire         arm_a9_hps_h2f_lw_axi_master_awready;                    // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awready -> ARM_A9_HPS:h2f_lw_AWREADY
+	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_arburst;                    // ARM_A9_HPS:h2f_lw_ARBURST -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arburst
+	wire   [2:0] arm_a9_hps_h2f_lw_axi_master_arsize;                     // ARM_A9_HPS:h2f_lw_ARSIZE -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_arsize
+	wire         arm_a9_hps_h2f_lw_axi_master_bready;                     // ARM_A9_HPS:h2f_lw_BREADY -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_bready
+	wire         arm_a9_hps_h2f_lw_axi_master_rlast;                      // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rlast -> ARM_A9_HPS:h2f_lw_RLAST
+	wire         arm_a9_hps_h2f_lw_axi_master_wlast;                      // ARM_A9_HPS:h2f_lw_WLAST -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_wlast
+	wire   [1:0] arm_a9_hps_h2f_lw_axi_master_rresp;                      // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rresp -> ARM_A9_HPS:h2f_lw_RRESP
+	wire  [11:0] arm_a9_hps_h2f_lw_axi_master_awid;                       // ARM_A9_HPS:h2f_lw_AWID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awid
+	wire  [11:0] arm_a9_hps_h2f_lw_axi_master_bid;                        // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_bid -> ARM_A9_HPS:h2f_lw_BID
+	wire         arm_a9_hps_h2f_lw_axi_master_bvalid;                     // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_bvalid -> ARM_A9_HPS:h2f_lw_BVALID
+	wire   [2:0] arm_a9_hps_h2f_lw_axi_master_awsize;                     // ARM_A9_HPS:h2f_lw_AWSIZE -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awsize
+	wire         arm_a9_hps_h2f_lw_axi_master_awvalid;                    // ARM_A9_HPS:h2f_lw_AWVALID -> mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_awvalid
+	wire         arm_a9_hps_h2f_lw_axi_master_rvalid;                     // mm_interconnect_0:ARM_A9_HPS_h2f_lw_axi_master_rvalid -> ARM_A9_HPS:h2f_lw_RVALID
+	wire  [63:0] mm_interconnect_0_npu_top_0_avs_read_readdata;           // NPU_TOP_0:readdata -> mm_interconnect_0:NPU_TOP_0_avs_read_readdata
+	wire         mm_interconnect_0_npu_top_0_avs_read_read;               // mm_interconnect_0:NPU_TOP_0_avs_read_read -> NPU_TOP_0:read
+	wire         mm_interconnect_0_npu_top_0_avs_reset_write;             // mm_interconnect_0:NPU_TOP_0_avs_reset_write -> NPU_TOP_0:reset_write
+	wire  [31:0] mm_interconnect_0_npu_top_0_avs_reset_writedata;         // mm_interconnect_0:NPU_TOP_0_avs_reset_writedata -> NPU_TOP_0:reset
+	wire         mm_interconnect_0_npu_top_0_avs_write_waitrequest;       // NPU_TOP_0:waitrequest_write -> mm_interconnect_0:NPU_TOP_0_avs_write_waitrequest
+	wire         mm_interconnect_0_npu_top_0_avs_write_write;             // mm_interconnect_0:NPU_TOP_0_avs_write_write -> NPU_TOP_0:write
+	wire  [31:0] mm_interconnect_0_npu_top_0_avs_write_writedata;         // mm_interconnect_0:NPU_TOP_0_avs_write_writedata -> NPU_TOP_0:writedata
+	wire   [4:0] mm_interconnect_0_npu_top_0_avs_write_burstcount;        // mm_interconnect_0:NPU_TOP_0_avs_write_burstcount -> NPU_TOP_0:burstcount
+	wire         mm_interconnect_0_npu_top_0_avs_write_instr_waitrequest; // NPU_TOP_0:in_instr_ready -> mm_interconnect_0:NPU_TOP_0_avs_write_instr_waitrequest
+	wire         mm_interconnect_0_npu_top_0_avs_write_instr_write;       // mm_interconnect_0:NPU_TOP_0_avs_write_instr_write -> NPU_TOP_0:instr_in_valid
+	wire  [31:0] mm_interconnect_0_npu_top_0_avs_write_instr_writedata;   // mm_interconnect_0:NPU_TOP_0_avs_write_instr_writedata -> NPU_TOP_0:in_instr
+	wire  [31:0] arm_a9_hps_f2h_irq0_irq;                                 // irq_mapper:sender_irq -> ARM_A9_HPS:f2h_irq_p0
+	wire  [31:0] arm_a9_hps_f2h_irq1_irq;                                 // irq_mapper_001:sender_irq -> ARM_A9_HPS:f2h_irq_p1
+	wire         rst_controller_reset_out_reset;                          // rst_controller:reset_out -> [NPU_TOP_0:reset_reset, mm_interconnect_0:NPU_TOP_0_reset_reset_bridge_in_reset_reset]
+	wire         system_pll_reset_source_reset;                           // System_PLL:reset_source_reset -> rst_controller:reset_in0
+	wire         rst_controller_001_reset_out_reset;                      // rst_controller_001:reset_out -> mm_interconnect_0:ARM_A9_HPS_h2f_axi_master_agent_clk_reset_reset_bridge_in_reset_reset
+	wire         arm_a9_hps_h2f_reset_reset;                              // ARM_A9_HPS:h2f_rst_n -> rst_controller_001:reset_in0
 
 	Computer_System_ARM_A9_HPS #(
 		.F2S_Width (2),
@@ -349,17 +351,19 @@ module Computer_System (
 	);
 
 	TOP npu_top_0 (
-		.clk               (system_pll_sys_clk_clk),                            //     clock.clk
-		.waitrequest_write (mm_interconnect_0_npu_top_0_avs_write_waitrequest), // avs_write.waitrequest
-		.write             (mm_interconnect_0_npu_top_0_avs_write_write),       //          .write
-		.writedata         (mm_interconnect_0_npu_top_0_avs_write_writedata),   //          .writedata
-		.burstcount        (mm_interconnect_0_npu_top_0_avs_write_burstcount),  //          .burstcount
-		.readdata          (mm_interconnect_0_npu_top_0_avs_read_readdata),     //  avs_read.readdata
-		.read              (mm_interconnect_0_npu_top_0_avs_read_read),         //          .read
-		.waitrequest_read  (mm_interconnect_0_npu_top_0_avs_read_waitrequest),  //          .waitrequest
-		.reset             (mm_interconnect_0_npu_top_0_avs_reset_writedata),   // avs_reset.writedata
-		.reset_write       (mm_interconnect_0_npu_top_0_avs_reset_write),       //          .write
-		.reset_reset       (rst_controller_reset_out_reset)                     //     reset.reset
+		.clk               (system_pll_sys_clk_clk),                                  //           clock.clk
+		.waitrequest_write (mm_interconnect_0_npu_top_0_avs_write_waitrequest),       //       avs_write.waitrequest
+		.write             (mm_interconnect_0_npu_top_0_avs_write_write),             //                .write
+		.writedata         (mm_interconnect_0_npu_top_0_avs_write_writedata),         //                .writedata
+		.burstcount        (mm_interconnect_0_npu_top_0_avs_write_burstcount),        //                .burstcount
+		.reset             (mm_interconnect_0_npu_top_0_avs_reset_writedata),         //       avs_reset.writedata
+		.reset_write       (mm_interconnect_0_npu_top_0_avs_reset_write),             //                .write
+		.reset_reset       (rst_controller_reset_out_reset),                          //           reset.reset
+		.readdata          (mm_interconnect_0_npu_top_0_avs_read_readdata),           //        avs_read.readdata
+		.read              (mm_interconnect_0_npu_top_0_avs_read_read),               //                .read
+		.instr_in_valid    (mm_interconnect_0_npu_top_0_avs_write_instr_write),       // avs_write_instr.write
+		.in_instr          (mm_interconnect_0_npu_top_0_avs_write_instr_writedata),   //                .writedata
+		.in_instr_ready    (mm_interconnect_0_npu_top_0_avs_write_instr_waitrequest)  //                .waitrequest_n
 	);
 
 	Computer_System_System_PLL system_pll (
@@ -370,90 +374,92 @@ module Computer_System (
 	);
 
 	Computer_System_mm_interconnect_0 mm_interconnect_0 (
-		.ARM_A9_HPS_h2f_axi_master_awid                                        (arm_a9_hps_h2f_axi_master_awid),                    //                                       ARM_A9_HPS_h2f_axi_master.awid
-		.ARM_A9_HPS_h2f_axi_master_awaddr                                      (arm_a9_hps_h2f_axi_master_awaddr),                  //                                                                .awaddr
-		.ARM_A9_HPS_h2f_axi_master_awlen                                       (arm_a9_hps_h2f_axi_master_awlen),                   //                                                                .awlen
-		.ARM_A9_HPS_h2f_axi_master_awsize                                      (arm_a9_hps_h2f_axi_master_awsize),                  //                                                                .awsize
-		.ARM_A9_HPS_h2f_axi_master_awburst                                     (arm_a9_hps_h2f_axi_master_awburst),                 //                                                                .awburst
-		.ARM_A9_HPS_h2f_axi_master_awlock                                      (arm_a9_hps_h2f_axi_master_awlock),                  //                                                                .awlock
-		.ARM_A9_HPS_h2f_axi_master_awcache                                     (arm_a9_hps_h2f_axi_master_awcache),                 //                                                                .awcache
-		.ARM_A9_HPS_h2f_axi_master_awprot                                      (arm_a9_hps_h2f_axi_master_awprot),                  //                                                                .awprot
-		.ARM_A9_HPS_h2f_axi_master_awvalid                                     (arm_a9_hps_h2f_axi_master_awvalid),                 //                                                                .awvalid
-		.ARM_A9_HPS_h2f_axi_master_awready                                     (arm_a9_hps_h2f_axi_master_awready),                 //                                                                .awready
-		.ARM_A9_HPS_h2f_axi_master_wid                                         (arm_a9_hps_h2f_axi_master_wid),                     //                                                                .wid
-		.ARM_A9_HPS_h2f_axi_master_wdata                                       (arm_a9_hps_h2f_axi_master_wdata),                   //                                                                .wdata
-		.ARM_A9_HPS_h2f_axi_master_wstrb                                       (arm_a9_hps_h2f_axi_master_wstrb),                   //                                                                .wstrb
-		.ARM_A9_HPS_h2f_axi_master_wlast                                       (arm_a9_hps_h2f_axi_master_wlast),                   //                                                                .wlast
-		.ARM_A9_HPS_h2f_axi_master_wvalid                                      (arm_a9_hps_h2f_axi_master_wvalid),                  //                                                                .wvalid
-		.ARM_A9_HPS_h2f_axi_master_wready                                      (arm_a9_hps_h2f_axi_master_wready),                  //                                                                .wready
-		.ARM_A9_HPS_h2f_axi_master_bid                                         (arm_a9_hps_h2f_axi_master_bid),                     //                                                                .bid
-		.ARM_A9_HPS_h2f_axi_master_bresp                                       (arm_a9_hps_h2f_axi_master_bresp),                   //                                                                .bresp
-		.ARM_A9_HPS_h2f_axi_master_bvalid                                      (arm_a9_hps_h2f_axi_master_bvalid),                  //                                                                .bvalid
-		.ARM_A9_HPS_h2f_axi_master_bready                                      (arm_a9_hps_h2f_axi_master_bready),                  //                                                                .bready
-		.ARM_A9_HPS_h2f_axi_master_arid                                        (arm_a9_hps_h2f_axi_master_arid),                    //                                                                .arid
-		.ARM_A9_HPS_h2f_axi_master_araddr                                      (arm_a9_hps_h2f_axi_master_araddr),                  //                                                                .araddr
-		.ARM_A9_HPS_h2f_axi_master_arlen                                       (arm_a9_hps_h2f_axi_master_arlen),                   //                                                                .arlen
-		.ARM_A9_HPS_h2f_axi_master_arsize                                      (arm_a9_hps_h2f_axi_master_arsize),                  //                                                                .arsize
-		.ARM_A9_HPS_h2f_axi_master_arburst                                     (arm_a9_hps_h2f_axi_master_arburst),                 //                                                                .arburst
-		.ARM_A9_HPS_h2f_axi_master_arlock                                      (arm_a9_hps_h2f_axi_master_arlock),                  //                                                                .arlock
-		.ARM_A9_HPS_h2f_axi_master_arcache                                     (arm_a9_hps_h2f_axi_master_arcache),                 //                                                                .arcache
-		.ARM_A9_HPS_h2f_axi_master_arprot                                      (arm_a9_hps_h2f_axi_master_arprot),                  //                                                                .arprot
-		.ARM_A9_HPS_h2f_axi_master_arvalid                                     (arm_a9_hps_h2f_axi_master_arvalid),                 //                                                                .arvalid
-		.ARM_A9_HPS_h2f_axi_master_arready                                     (arm_a9_hps_h2f_axi_master_arready),                 //                                                                .arready
-		.ARM_A9_HPS_h2f_axi_master_rid                                         (arm_a9_hps_h2f_axi_master_rid),                     //                                                                .rid
-		.ARM_A9_HPS_h2f_axi_master_rdata                                       (arm_a9_hps_h2f_axi_master_rdata),                   //                                                                .rdata
-		.ARM_A9_HPS_h2f_axi_master_rresp                                       (arm_a9_hps_h2f_axi_master_rresp),                   //                                                                .rresp
-		.ARM_A9_HPS_h2f_axi_master_rlast                                       (arm_a9_hps_h2f_axi_master_rlast),                   //                                                                .rlast
-		.ARM_A9_HPS_h2f_axi_master_rvalid                                      (arm_a9_hps_h2f_axi_master_rvalid),                  //                                                                .rvalid
-		.ARM_A9_HPS_h2f_axi_master_rready                                      (arm_a9_hps_h2f_axi_master_rready),                  //                                                                .rready
-		.ARM_A9_HPS_h2f_lw_axi_master_awid                                     (arm_a9_hps_h2f_lw_axi_master_awid),                 //                                    ARM_A9_HPS_h2f_lw_axi_master.awid
-		.ARM_A9_HPS_h2f_lw_axi_master_awaddr                                   (arm_a9_hps_h2f_lw_axi_master_awaddr),               //                                                                .awaddr
-		.ARM_A9_HPS_h2f_lw_axi_master_awlen                                    (arm_a9_hps_h2f_lw_axi_master_awlen),                //                                                                .awlen
-		.ARM_A9_HPS_h2f_lw_axi_master_awsize                                   (arm_a9_hps_h2f_lw_axi_master_awsize),               //                                                                .awsize
-		.ARM_A9_HPS_h2f_lw_axi_master_awburst                                  (arm_a9_hps_h2f_lw_axi_master_awburst),              //                                                                .awburst
-		.ARM_A9_HPS_h2f_lw_axi_master_awlock                                   (arm_a9_hps_h2f_lw_axi_master_awlock),               //                                                                .awlock
-		.ARM_A9_HPS_h2f_lw_axi_master_awcache                                  (arm_a9_hps_h2f_lw_axi_master_awcache),              //                                                                .awcache
-		.ARM_A9_HPS_h2f_lw_axi_master_awprot                                   (arm_a9_hps_h2f_lw_axi_master_awprot),               //                                                                .awprot
-		.ARM_A9_HPS_h2f_lw_axi_master_awvalid                                  (arm_a9_hps_h2f_lw_axi_master_awvalid),              //                                                                .awvalid
-		.ARM_A9_HPS_h2f_lw_axi_master_awready                                  (arm_a9_hps_h2f_lw_axi_master_awready),              //                                                                .awready
-		.ARM_A9_HPS_h2f_lw_axi_master_wid                                      (arm_a9_hps_h2f_lw_axi_master_wid),                  //                                                                .wid
-		.ARM_A9_HPS_h2f_lw_axi_master_wdata                                    (arm_a9_hps_h2f_lw_axi_master_wdata),                //                                                                .wdata
-		.ARM_A9_HPS_h2f_lw_axi_master_wstrb                                    (arm_a9_hps_h2f_lw_axi_master_wstrb),                //                                                                .wstrb
-		.ARM_A9_HPS_h2f_lw_axi_master_wlast                                    (arm_a9_hps_h2f_lw_axi_master_wlast),                //                                                                .wlast
-		.ARM_A9_HPS_h2f_lw_axi_master_wvalid                                   (arm_a9_hps_h2f_lw_axi_master_wvalid),               //                                                                .wvalid
-		.ARM_A9_HPS_h2f_lw_axi_master_wready                                   (arm_a9_hps_h2f_lw_axi_master_wready),               //                                                                .wready
-		.ARM_A9_HPS_h2f_lw_axi_master_bid                                      (arm_a9_hps_h2f_lw_axi_master_bid),                  //                                                                .bid
-		.ARM_A9_HPS_h2f_lw_axi_master_bresp                                    (arm_a9_hps_h2f_lw_axi_master_bresp),                //                                                                .bresp
-		.ARM_A9_HPS_h2f_lw_axi_master_bvalid                                   (arm_a9_hps_h2f_lw_axi_master_bvalid),               //                                                                .bvalid
-		.ARM_A9_HPS_h2f_lw_axi_master_bready                                   (arm_a9_hps_h2f_lw_axi_master_bready),               //                                                                .bready
-		.ARM_A9_HPS_h2f_lw_axi_master_arid                                     (arm_a9_hps_h2f_lw_axi_master_arid),                 //                                                                .arid
-		.ARM_A9_HPS_h2f_lw_axi_master_araddr                                   (arm_a9_hps_h2f_lw_axi_master_araddr),               //                                                                .araddr
-		.ARM_A9_HPS_h2f_lw_axi_master_arlen                                    (arm_a9_hps_h2f_lw_axi_master_arlen),                //                                                                .arlen
-		.ARM_A9_HPS_h2f_lw_axi_master_arsize                                   (arm_a9_hps_h2f_lw_axi_master_arsize),               //                                                                .arsize
-		.ARM_A9_HPS_h2f_lw_axi_master_arburst                                  (arm_a9_hps_h2f_lw_axi_master_arburst),              //                                                                .arburst
-		.ARM_A9_HPS_h2f_lw_axi_master_arlock                                   (arm_a9_hps_h2f_lw_axi_master_arlock),               //                                                                .arlock
-		.ARM_A9_HPS_h2f_lw_axi_master_arcache                                  (arm_a9_hps_h2f_lw_axi_master_arcache),              //                                                                .arcache
-		.ARM_A9_HPS_h2f_lw_axi_master_arprot                                   (arm_a9_hps_h2f_lw_axi_master_arprot),               //                                                                .arprot
-		.ARM_A9_HPS_h2f_lw_axi_master_arvalid                                  (arm_a9_hps_h2f_lw_axi_master_arvalid),              //                                                                .arvalid
-		.ARM_A9_HPS_h2f_lw_axi_master_arready                                  (arm_a9_hps_h2f_lw_axi_master_arready),              //                                                                .arready
-		.ARM_A9_HPS_h2f_lw_axi_master_rid                                      (arm_a9_hps_h2f_lw_axi_master_rid),                  //                                                                .rid
-		.ARM_A9_HPS_h2f_lw_axi_master_rdata                                    (arm_a9_hps_h2f_lw_axi_master_rdata),                //                                                                .rdata
-		.ARM_A9_HPS_h2f_lw_axi_master_rresp                                    (arm_a9_hps_h2f_lw_axi_master_rresp),                //                                                                .rresp
-		.ARM_A9_HPS_h2f_lw_axi_master_rlast                                    (arm_a9_hps_h2f_lw_axi_master_rlast),                //                                                                .rlast
-		.ARM_A9_HPS_h2f_lw_axi_master_rvalid                                   (arm_a9_hps_h2f_lw_axi_master_rvalid),               //                                                                .rvalid
-		.ARM_A9_HPS_h2f_lw_axi_master_rready                                   (arm_a9_hps_h2f_lw_axi_master_rready),               //                                                                .rready
-		.System_PLL_sys_clk_clk                                                (system_pll_sys_clk_clk),                            //                                              System_PLL_sys_clk.clk
-		.ARM_A9_HPS_h2f_axi_master_agent_clk_reset_reset_bridge_in_reset_reset (rst_controller_001_reset_out_reset),                // ARM_A9_HPS_h2f_axi_master_agent_clk_reset_reset_bridge_in_reset.reset
-		.NPU_TOP_0_reset_reset_bridge_in_reset_reset                           (rst_controller_reset_out_reset),                    //                           NPU_TOP_0_reset_reset_bridge_in_reset.reset
-		.NPU_TOP_0_avs_read_read                                               (mm_interconnect_0_npu_top_0_avs_read_read),         //                                              NPU_TOP_0_avs_read.read
-		.NPU_TOP_0_avs_read_readdata                                           (mm_interconnect_0_npu_top_0_avs_read_readdata),     //                                                                .readdata
-		.NPU_TOP_0_avs_read_waitrequest                                        (mm_interconnect_0_npu_top_0_avs_read_waitrequest),  //                                                                .waitrequest
-		.NPU_TOP_0_avs_reset_write                                             (mm_interconnect_0_npu_top_0_avs_reset_write),       //                                             NPU_TOP_0_avs_reset.write
-		.NPU_TOP_0_avs_reset_writedata                                         (mm_interconnect_0_npu_top_0_avs_reset_writedata),   //                                                                .writedata
-		.NPU_TOP_0_avs_write_write                                             (mm_interconnect_0_npu_top_0_avs_write_write),       //                                             NPU_TOP_0_avs_write.write
-		.NPU_TOP_0_avs_write_writedata                                         (mm_interconnect_0_npu_top_0_avs_write_writedata),   //                                                                .writedata
-		.NPU_TOP_0_avs_write_burstcount                                        (mm_interconnect_0_npu_top_0_avs_write_burstcount),  //                                                                .burstcount
-		.NPU_TOP_0_avs_write_waitrequest                                       (mm_interconnect_0_npu_top_0_avs_write_waitrequest)  //                                                                .waitrequest
+		.ARM_A9_HPS_h2f_axi_master_awid                                        (arm_a9_hps_h2f_axi_master_awid),                           //                                       ARM_A9_HPS_h2f_axi_master.awid
+		.ARM_A9_HPS_h2f_axi_master_awaddr                                      (arm_a9_hps_h2f_axi_master_awaddr),                         //                                                                .awaddr
+		.ARM_A9_HPS_h2f_axi_master_awlen                                       (arm_a9_hps_h2f_axi_master_awlen),                          //                                                                .awlen
+		.ARM_A9_HPS_h2f_axi_master_awsize                                      (arm_a9_hps_h2f_axi_master_awsize),                         //                                                                .awsize
+		.ARM_A9_HPS_h2f_axi_master_awburst                                     (arm_a9_hps_h2f_axi_master_awburst),                        //                                                                .awburst
+		.ARM_A9_HPS_h2f_axi_master_awlock                                      (arm_a9_hps_h2f_axi_master_awlock),                         //                                                                .awlock
+		.ARM_A9_HPS_h2f_axi_master_awcache                                     (arm_a9_hps_h2f_axi_master_awcache),                        //                                                                .awcache
+		.ARM_A9_HPS_h2f_axi_master_awprot                                      (arm_a9_hps_h2f_axi_master_awprot),                         //                                                                .awprot
+		.ARM_A9_HPS_h2f_axi_master_awvalid                                     (arm_a9_hps_h2f_axi_master_awvalid),                        //                                                                .awvalid
+		.ARM_A9_HPS_h2f_axi_master_awready                                     (arm_a9_hps_h2f_axi_master_awready),                        //                                                                .awready
+		.ARM_A9_HPS_h2f_axi_master_wid                                         (arm_a9_hps_h2f_axi_master_wid),                            //                                                                .wid
+		.ARM_A9_HPS_h2f_axi_master_wdata                                       (arm_a9_hps_h2f_axi_master_wdata),                          //                                                                .wdata
+		.ARM_A9_HPS_h2f_axi_master_wstrb                                       (arm_a9_hps_h2f_axi_master_wstrb),                          //                                                                .wstrb
+		.ARM_A9_HPS_h2f_axi_master_wlast                                       (arm_a9_hps_h2f_axi_master_wlast),                          //                                                                .wlast
+		.ARM_A9_HPS_h2f_axi_master_wvalid                                      (arm_a9_hps_h2f_axi_master_wvalid),                         //                                                                .wvalid
+		.ARM_A9_HPS_h2f_axi_master_wready                                      (arm_a9_hps_h2f_axi_master_wready),                         //                                                                .wready
+		.ARM_A9_HPS_h2f_axi_master_bid                                         (arm_a9_hps_h2f_axi_master_bid),                            //                                                                .bid
+		.ARM_A9_HPS_h2f_axi_master_bresp                                       (arm_a9_hps_h2f_axi_master_bresp),                          //                                                                .bresp
+		.ARM_A9_HPS_h2f_axi_master_bvalid                                      (arm_a9_hps_h2f_axi_master_bvalid),                         //                                                                .bvalid
+		.ARM_A9_HPS_h2f_axi_master_bready                                      (arm_a9_hps_h2f_axi_master_bready),                         //                                                                .bready
+		.ARM_A9_HPS_h2f_axi_master_arid                                        (arm_a9_hps_h2f_axi_master_arid),                           //                                                                .arid
+		.ARM_A9_HPS_h2f_axi_master_araddr                                      (arm_a9_hps_h2f_axi_master_araddr),                         //                                                                .araddr
+		.ARM_A9_HPS_h2f_axi_master_arlen                                       (arm_a9_hps_h2f_axi_master_arlen),                          //                                                                .arlen
+		.ARM_A9_HPS_h2f_axi_master_arsize                                      (arm_a9_hps_h2f_axi_master_arsize),                         //                                                                .arsize
+		.ARM_A9_HPS_h2f_axi_master_arburst                                     (arm_a9_hps_h2f_axi_master_arburst),                        //                                                                .arburst
+		.ARM_A9_HPS_h2f_axi_master_arlock                                      (arm_a9_hps_h2f_axi_master_arlock),                         //                                                                .arlock
+		.ARM_A9_HPS_h2f_axi_master_arcache                                     (arm_a9_hps_h2f_axi_master_arcache),                        //                                                                .arcache
+		.ARM_A9_HPS_h2f_axi_master_arprot                                      (arm_a9_hps_h2f_axi_master_arprot),                         //                                                                .arprot
+		.ARM_A9_HPS_h2f_axi_master_arvalid                                     (arm_a9_hps_h2f_axi_master_arvalid),                        //                                                                .arvalid
+		.ARM_A9_HPS_h2f_axi_master_arready                                     (arm_a9_hps_h2f_axi_master_arready),                        //                                                                .arready
+		.ARM_A9_HPS_h2f_axi_master_rid                                         (arm_a9_hps_h2f_axi_master_rid),                            //                                                                .rid
+		.ARM_A9_HPS_h2f_axi_master_rdata                                       (arm_a9_hps_h2f_axi_master_rdata),                          //                                                                .rdata
+		.ARM_A9_HPS_h2f_axi_master_rresp                                       (arm_a9_hps_h2f_axi_master_rresp),                          //                                                                .rresp
+		.ARM_A9_HPS_h2f_axi_master_rlast                                       (arm_a9_hps_h2f_axi_master_rlast),                          //                                                                .rlast
+		.ARM_A9_HPS_h2f_axi_master_rvalid                                      (arm_a9_hps_h2f_axi_master_rvalid),                         //                                                                .rvalid
+		.ARM_A9_HPS_h2f_axi_master_rready                                      (arm_a9_hps_h2f_axi_master_rready),                         //                                                                .rready
+		.ARM_A9_HPS_h2f_lw_axi_master_awid                                     (arm_a9_hps_h2f_lw_axi_master_awid),                        //                                    ARM_A9_HPS_h2f_lw_axi_master.awid
+		.ARM_A9_HPS_h2f_lw_axi_master_awaddr                                   (arm_a9_hps_h2f_lw_axi_master_awaddr),                      //                                                                .awaddr
+		.ARM_A9_HPS_h2f_lw_axi_master_awlen                                    (arm_a9_hps_h2f_lw_axi_master_awlen),                       //                                                                .awlen
+		.ARM_A9_HPS_h2f_lw_axi_master_awsize                                   (arm_a9_hps_h2f_lw_axi_master_awsize),                      //                                                                .awsize
+		.ARM_A9_HPS_h2f_lw_axi_master_awburst                                  (arm_a9_hps_h2f_lw_axi_master_awburst),                     //                                                                .awburst
+		.ARM_A9_HPS_h2f_lw_axi_master_awlock                                   (arm_a9_hps_h2f_lw_axi_master_awlock),                      //                                                                .awlock
+		.ARM_A9_HPS_h2f_lw_axi_master_awcache                                  (arm_a9_hps_h2f_lw_axi_master_awcache),                     //                                                                .awcache
+		.ARM_A9_HPS_h2f_lw_axi_master_awprot                                   (arm_a9_hps_h2f_lw_axi_master_awprot),                      //                                                                .awprot
+		.ARM_A9_HPS_h2f_lw_axi_master_awvalid                                  (arm_a9_hps_h2f_lw_axi_master_awvalid),                     //                                                                .awvalid
+		.ARM_A9_HPS_h2f_lw_axi_master_awready                                  (arm_a9_hps_h2f_lw_axi_master_awready),                     //                                                                .awready
+		.ARM_A9_HPS_h2f_lw_axi_master_wid                                      (arm_a9_hps_h2f_lw_axi_master_wid),                         //                                                                .wid
+		.ARM_A9_HPS_h2f_lw_axi_master_wdata                                    (arm_a9_hps_h2f_lw_axi_master_wdata),                       //                                                                .wdata
+		.ARM_A9_HPS_h2f_lw_axi_master_wstrb                                    (arm_a9_hps_h2f_lw_axi_master_wstrb),                       //                                                                .wstrb
+		.ARM_A9_HPS_h2f_lw_axi_master_wlast                                    (arm_a9_hps_h2f_lw_axi_master_wlast),                       //                                                                .wlast
+		.ARM_A9_HPS_h2f_lw_axi_master_wvalid                                   (arm_a9_hps_h2f_lw_axi_master_wvalid),                      //                                                                .wvalid
+		.ARM_A9_HPS_h2f_lw_axi_master_wready                                   (arm_a9_hps_h2f_lw_axi_master_wready),                      //                                                                .wready
+		.ARM_A9_HPS_h2f_lw_axi_master_bid                                      (arm_a9_hps_h2f_lw_axi_master_bid),                         //                                                                .bid
+		.ARM_A9_HPS_h2f_lw_axi_master_bresp                                    (arm_a9_hps_h2f_lw_axi_master_bresp),                       //                                                                .bresp
+		.ARM_A9_HPS_h2f_lw_axi_master_bvalid                                   (arm_a9_hps_h2f_lw_axi_master_bvalid),                      //                                                                .bvalid
+		.ARM_A9_HPS_h2f_lw_axi_master_bready                                   (arm_a9_hps_h2f_lw_axi_master_bready),                      //                                                                .bready
+		.ARM_A9_HPS_h2f_lw_axi_master_arid                                     (arm_a9_hps_h2f_lw_axi_master_arid),                        //                                                                .arid
+		.ARM_A9_HPS_h2f_lw_axi_master_araddr                                   (arm_a9_hps_h2f_lw_axi_master_araddr),                      //                                                                .araddr
+		.ARM_A9_HPS_h2f_lw_axi_master_arlen                                    (arm_a9_hps_h2f_lw_axi_master_arlen),                       //                                                                .arlen
+		.ARM_A9_HPS_h2f_lw_axi_master_arsize                                   (arm_a9_hps_h2f_lw_axi_master_arsize),                      //                                                                .arsize
+		.ARM_A9_HPS_h2f_lw_axi_master_arburst                                  (arm_a9_hps_h2f_lw_axi_master_arburst),                     //                                                                .arburst
+		.ARM_A9_HPS_h2f_lw_axi_master_arlock                                   (arm_a9_hps_h2f_lw_axi_master_arlock),                      //                                                                .arlock
+		.ARM_A9_HPS_h2f_lw_axi_master_arcache                                  (arm_a9_hps_h2f_lw_axi_master_arcache),                     //                                                                .arcache
+		.ARM_A9_HPS_h2f_lw_axi_master_arprot                                   (arm_a9_hps_h2f_lw_axi_master_arprot),                      //                                                                .arprot
+		.ARM_A9_HPS_h2f_lw_axi_master_arvalid                                  (arm_a9_hps_h2f_lw_axi_master_arvalid),                     //                                                                .arvalid
+		.ARM_A9_HPS_h2f_lw_axi_master_arready                                  (arm_a9_hps_h2f_lw_axi_master_arready),                     //                                                                .arready
+		.ARM_A9_HPS_h2f_lw_axi_master_rid                                      (arm_a9_hps_h2f_lw_axi_master_rid),                         //                                                                .rid
+		.ARM_A9_HPS_h2f_lw_axi_master_rdata                                    (arm_a9_hps_h2f_lw_axi_master_rdata),                       //                                                                .rdata
+		.ARM_A9_HPS_h2f_lw_axi_master_rresp                                    (arm_a9_hps_h2f_lw_axi_master_rresp),                       //                                                                .rresp
+		.ARM_A9_HPS_h2f_lw_axi_master_rlast                                    (arm_a9_hps_h2f_lw_axi_master_rlast),                       //                                                                .rlast
+		.ARM_A9_HPS_h2f_lw_axi_master_rvalid                                   (arm_a9_hps_h2f_lw_axi_master_rvalid),                      //                                                                .rvalid
+		.ARM_A9_HPS_h2f_lw_axi_master_rready                                   (arm_a9_hps_h2f_lw_axi_master_rready),                      //                                                                .rready
+		.System_PLL_sys_clk_clk                                                (system_pll_sys_clk_clk),                                   //                                              System_PLL_sys_clk.clk
+		.ARM_A9_HPS_h2f_axi_master_agent_clk_reset_reset_bridge_in_reset_reset (rst_controller_001_reset_out_reset),                       // ARM_A9_HPS_h2f_axi_master_agent_clk_reset_reset_bridge_in_reset.reset
+		.NPU_TOP_0_reset_reset_bridge_in_reset_reset                           (rst_controller_reset_out_reset),                           //                           NPU_TOP_0_reset_reset_bridge_in_reset.reset
+		.NPU_TOP_0_avs_read_read                                               (mm_interconnect_0_npu_top_0_avs_read_read),                //                                              NPU_TOP_0_avs_read.read
+		.NPU_TOP_0_avs_read_readdata                                           (mm_interconnect_0_npu_top_0_avs_read_readdata),            //                                                                .readdata
+		.NPU_TOP_0_avs_reset_write                                             (mm_interconnect_0_npu_top_0_avs_reset_write),              //                                             NPU_TOP_0_avs_reset.write
+		.NPU_TOP_0_avs_reset_writedata                                         (mm_interconnect_0_npu_top_0_avs_reset_writedata),          //                                                                .writedata
+		.NPU_TOP_0_avs_write_write                                             (mm_interconnect_0_npu_top_0_avs_write_write),              //                                             NPU_TOP_0_avs_write.write
+		.NPU_TOP_0_avs_write_writedata                                         (mm_interconnect_0_npu_top_0_avs_write_writedata),          //                                                                .writedata
+		.NPU_TOP_0_avs_write_burstcount                                        (mm_interconnect_0_npu_top_0_avs_write_burstcount),         //                                                                .burstcount
+		.NPU_TOP_0_avs_write_waitrequest                                       (mm_interconnect_0_npu_top_0_avs_write_waitrequest),        //                                                                .waitrequest
+		.NPU_TOP_0_avs_write_instr_write                                       (mm_interconnect_0_npu_top_0_avs_write_instr_write),        //                                       NPU_TOP_0_avs_write_instr.write
+		.NPU_TOP_0_avs_write_instr_writedata                                   (mm_interconnect_0_npu_top_0_avs_write_instr_writedata),    //                                                                .writedata
+		.NPU_TOP_0_avs_write_instr_waitrequest                                 (~mm_interconnect_0_npu_top_0_avs_write_instr_waitrequest)  //                                                                .waitrequest
 	);
 
 	Computer_System_irq_mapper irq_mapper (

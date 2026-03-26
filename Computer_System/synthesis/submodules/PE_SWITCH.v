@@ -11,7 +11,7 @@ module PE_SWITCH(
 
 	reg [31:0] pe0_res, pe1_res;
 	reg [31:0] pe0_pc, pe1_pc;
-	reg [1:0] res_valid;
+	reg [1:0] res_valid, res_valid_next;
 	reg [1:0] relu_pe;
 	
 	reg out_valid_next, relu_out_next;
@@ -23,63 +23,73 @@ module PE_SWITCH(
 			relu_out <= 1'b0;
 			out <= 32'd0;
 			pc_out <= 32'd0;
+			res_valid <= 2'b00;
+			
+			pe0_res <= 32'd0;
+			pe0_pc <= 32'd0;
+			pe1_res <= 32'd0;
+			pe1_pc <= 32'd0;
+			relu_pe <= 2'b0;
+			
 		end
 		else begin
 			out_valid <= out_valid_next;
 			relu_out <= relu_out_next;
 			out <= out_next;
 			pc_out <= pc_out_next;
+			
+			case (in_valid)
+				2'b01: begin 
+							pe0_res <= in0;
+							pe0_pc <= pc0;
+							relu_pe[0] <= relu_signal[0];
+							res_valid <= res_valid_next | 2'b01;
+						end
+				2'b10: begin
+							pe1_res <= in1;
+							pe1_pc <= pc1;
+							relu_pe[1] <= relu_signal[1];
+							res_valid <= res_valid_next | 2'b10;
+						end
+				2'b11: begin 
+								pe0_res <= in0;
+								pe1_res <= in1;
+								pe0_pc <= pc0;
+								pe1_pc <= pc1;
+								relu_pe <= relu_signal;
+								res_valid <= 2'b11;
+						end
+				default: res_valid <= res_valid_next;
+			endcase
+
+			
+			
 		end
 	end
 	
 	
 	always @(*) begin
-		if (rst) begin
-			res_valid = 2'b00;
-		end
-		case (in_valid)
-			2'b01: begin 
-						pe0_res = in0;
-						pe0_pc = pc0;
-						relu_pe[0] = relu_signal[0];
-						res_valid = res_valid | 2'b01;
-					end
-			2'b10: begin
-						pe1_res = in1;
-						pe1_pc = pc1;
-						relu_pe[1] = relu_signal[1];
-						res_valid = res_valid | 2'b10;
-					end
-			2'b11: begin 
-							pe0_res = in0;
-							pe1_res = in1;
-							pe0_pc = pc0;
-							pe1_pc = pc1;
-							relu_pe = relu_signal;
-							res_valid = res_valid | 2'b11;
-					end
-		endcase
-		
+		out_valid_next = 1'b0;
+		relu_out_next = 1'b0;
+		out_next = 32'd0;
+		pc_out_next = 32'd0;
+		res_valid_next = res_valid;
+			
 		if (res_valid[0]) begin
 			out_next = pe0_res;
 			pc_out_next = pe0_pc;
 			relu_out_next = relu_pe[0];
 			out_valid_next = 1'b1;
-			res_valid = res_valid & 2'b10;
+			res_valid_next = res_valid & 2'b10;
 		end
 		else if (res_valid[1]) begin
 			out_next = pe1_res;
 			pc_out_next = pe1_pc;
 			relu_out_next = relu_pe[1];
 			out_valid_next = 1'b1;
-			res_valid = res_valid & 2'b01;
+			res_valid_next = res_valid & 2'b01;
 		end
-		else begin
-			out_valid_next = 1'b0;
-			relu_out_next <= 1'b0;
-			out_next <= 32'd0;
-			pc_out_next <= 32'd0;
-		end
+
 		
 	
 

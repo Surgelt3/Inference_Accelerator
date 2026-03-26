@@ -9,7 +9,7 @@ module NPU(
 	
 	output [31:0] pc_out,
 	
-	input write_buff_out_ready,
+	input out_ready,
 	output out_valid,
 	output [63:0] out_data
 );
@@ -228,10 +228,12 @@ module NPU(
 		.write_data(mem_local0_write_data)
 	);
 	
+	
 	assign mem_read_en = (classifier_bit_fifo == 1) ? pe1_fifo_in_ready : pe0_fifo_in_ready;
 	
 	wire read_en;
 	assign read_en = mac_signal | pool_signal;
+	
 	wire [1:0] control_signals_mem_local, control_signals_fifo0, control_signals_fifo1;
 	
 	wire pool_signal_pe0, pool_signal_pe1;
@@ -303,7 +305,7 @@ module NPU(
 		.clk(clk), .reset(rst),
 		.out_ready(pe1_fifo_out_ready), 
 		.in_valid(pe1_fifo_in_valid),
-		.extra_in0({pe1_fifo_bias_add0, pe1_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), .extra_in1({pe1_fifo_bias_add0, pe1_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), 
+		.extra_in0({pe1_fifo_bias_add0, pe1_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), .extra_in1({pe1_fifo_bias_add1, pe1_fifo_bias_loc, pc_mem_local, control_signals_mem_local}), 
 		.in_data0(pe1_fifo_in_data0), .in_data1(pe1_fifo_in_data1), 
 		.out_valid(pe1_in_valid),
 		.in_ready(pe1_fifo_in_ready),
@@ -350,6 +352,13 @@ module NPU(
 		.out_data(relu_out)
 	);
 	
+	wire [63:0] out_write_buff;
+	
+	reg [63:0] test;
+	reg [3:0] counter;
+	reg write_buff_out_ready;
+
+	
 	
 	WRITE_BUFF write_buff(
 		.clk(clk), .rst(rst),
@@ -359,10 +368,37 @@ module NPU(
 		.pc_in(pc_in_relu_out),
 		.out_valid(out_valid),
 		.in_ready_pre(write_buff_in_ready_pre),
-		.out_data(out_data)
+		.out_data(out_write_buff)
 	);
-
 	
+	
+	always @(posedge clk) begin
+		if (rst) begin
+			counter <= 'd0;
+			test <= 32'd0;
+			write_buff_out_ready <= 1'b0;
+		end
+		else if (out_valid && counter == 'd0 && out_ready) begin
+			write_buff_out_ready <= 1'b1;
+			test <= out_write_buff;
+			counter <= 'd1;
+		end 
+		else begin
+			write_buff_out_ready <= 1'b0;
+		end 
+		if (counter > 'd0) begin
+			counter <= counter + 'd1;
+		end
+		//else if (pe1_out_valid) begin
+		//	test = {pc_pe1, pe1_out};
+		//end
+	end
+	
+
+
+	assign out_data = test;
+	
+	//assign out_data = test;
 	
 
 endmodule

@@ -66,8 +66,19 @@
 #define NPU_TOP_0_AVS_READ_COMPONENT_TYPE NPU_TOP
 #define NPU_TOP_0_AVS_READ_COMPONENT_NAME NPU_TOP_0
 #define NPU_TOP_0_AVS_READ_BASE 0xc0000008
-#define NPU_TOP_0_AVS_READ_SPAN 8
-#define NPU_TOP_0_AVS_READ_END 0xc000000f
+#define NPU_TOP_0_AVS_READ_SPAN 1
+#define NPU_TOP_0_AVS_READ_END 0xc0000008
+
+/*
+ * Macros for device 'NPU_TOP_0_avs_write_instr', class 'NPU_TOP'
+ * The macros are prefixed with 'NPU_TOP_0_AVS_WRITE_INSTR_'.
+ * The prefix is the slave descriptor.
+ */
+#define NPU_TOP_0_AVS_WRITE_INSTR_COMPONENT_TYPE NPU_TOP
+#define NPU_TOP_0_AVS_WRITE_INSTR_COMPONENT_NAME NPU_TOP_0
+#define NPU_TOP_0_AVS_WRITE_INSTR_BASE 0xc0000010
+#define NPU_TOP_0_AVS_WRITE_INSTR_SPAN 4
+#define NPU_TOP_0_AVS_WRITE_INSTR_END 0xc0000013
 
 /*
  * Macros for device 'ARM_A9_HPS_gmac0', class 'stmmac'

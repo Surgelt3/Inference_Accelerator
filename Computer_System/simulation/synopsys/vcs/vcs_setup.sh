@@ -12,7 +12,7 @@
 # or its authorized distributors. Please refer to the applicable 
 # agreement for further details.
 
-# ACDS 18.1 625 win32 2026.03.09.04:27:09
+# ACDS 18.1 625 win32 2026.03.26.14:00:00
 
 # ----------------------------------------
 # vcs - auto-generated simulation script
@@ -94,7 +94,7 @@
 # within the Quartus project, and generate a unified
 # script which supports all the Altera IP within the design.
 # ----------------------------------------
-# ACDS 18.1 625 win32 2026.03.09.04:27:09
+# ACDS 18.1 625 win32 2026.03.26.14:00:00
 # ----------------------------------------
 # initialize variables
 TOP_LEVEL_NAME="Computer_System"
@@ -148,6 +148,14 @@ vcs -lca -timescale=1ps/1ps -sverilog +verilog2001ext+.v -ntb_opts dtm $ELAB_OPT
   $QSYS_SIMDIR/submodules/avalon_mm_pkg.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_avalon_st_adapter_001_error_adapter_0.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_avalon_st_adapter_error_adapter_0.sv \
+  $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0_rsp_mux.sv \
+  $QSYS_SIMDIR/submodules/altera_merlin_arbitrator.sv \
+  $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0_cmd_mux.sv \
+  $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0_cmd_demux.sv \
+  $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0_router_001.sv \
+  $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0_router.sv \
+  $QSYS_SIMDIR/submodules/altera_merlin_master_agent.sv \
+  $QSYS_SIMDIR/submodules/altera_merlin_master_translator.sv \
   $QSYS_SIMDIR/submodules/altera_avalon_mm_slave_bfm.sv \
   $QSYS_SIMDIR/submodules/altera_avalon_interrupt_sink.sv \
   $QSYS_SIMDIR/submodules/altera_avalon_clock_source.sv \
@@ -157,14 +165,16 @@ vcs -lca -timescale=1ps/1ps -sverilog +verilog2001ext+.v -ntb_opts dtm $ELAB_OPT
   $QSYS_SIMDIR/submodules/Computer_System_ARM_A9_HPS_hps_io_border.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_avalon_st_adapter_001.v \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_avalon_st_adapter.v \
+  $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0.v \
   $QSYS_SIMDIR/submodules/altera_merlin_width_adapter.sv \
   $QSYS_SIMDIR/submodules/altera_merlin_address_alignment.sv \
   $QSYS_SIMDIR/submodules/altera_merlin_burst_uncompressor.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_rsp_mux_002.sv \
-  $QSYS_SIMDIR/submodules/altera_merlin_arbitrator.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_rsp_mux.sv \
+  $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_rsp_demux_003.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_rsp_demux_001.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_rsp_demux.sv \
+  $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_cmd_mux_003.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_cmd_mux_001.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_cmd_mux.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_cmd_demux_002.sv \
@@ -181,6 +191,7 @@ vcs -lca -timescale=1ps/1ps -sverilog +verilog2001ext+.v -ntb_opts dtm $ELAB_OPT
   $QSYS_SIMDIR/submodules/altera_merlin_traffic_limiter.sv \
   $QSYS_SIMDIR/submodules/altera_merlin_reorder_memory.sv \
   $QSYS_SIMDIR/submodules/altera_avalon_sc_fifo.v \
+  $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_router_007.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_router_005.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_router_004.sv \
   $QSYS_SIMDIR/submodules/Computer_System_mm_interconnect_0_router_002.sv \

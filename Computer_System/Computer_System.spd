@@ -24,6 +24,42 @@
    type="SYSTEM_VERILOG"
    library="error_adapter_0" />
  <file
+   path="simulation/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0_rsp_mux.sv"
+   type="SYSTEM_VERILOG"
+   library="rsp_mux" />
+ <file
+   path="simulation/submodules/altera_merlin_arbitrator.sv"
+   type="SYSTEM_VERILOG"
+   library="rsp_mux" />
+ <file
+   path="simulation/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0_cmd_mux.sv"
+   type="SYSTEM_VERILOG"
+   library="cmd_mux" />
+ <file
+   path="simulation/submodules/altera_merlin_arbitrator.sv"
+   type="SYSTEM_VERILOG"
+   library="cmd_mux" />
+ <file
+   path="simulation/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0_cmd_demux.sv"
+   type="SYSTEM_VERILOG"
+   library="cmd_demux" />
+ <file
+   path="simulation/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0_router_001.sv"
+   type="SYSTEM_VERILOG"
+   library="router_001" />
+ <file
+   path="simulation/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0_router.sv"
+   type="SYSTEM_VERILOG"
+   library="router" />
+ <file
+   path="simulation/submodules/altera_merlin_master_agent.sv"
+   type="SYSTEM_VERILOG"
+   library="NPU_TOP_0_avs_read_translator_avalon_universal_slave_0_translator_avalon_anti_slave_0_agent" />
+ <file
+   path="simulation/submodules/altera_merlin_master_translator.sv"
+   type="SYSTEM_VERILOG"
+   library="NPU_TOP_0_avs_read_agent_m0_translator" />
+ <file
    path="simulation/submodules/altera_avalon_mm_slave_bfm.sv"
    type="SYSTEM_VERILOG"
    library="border" />
@@ -60,6 +96,10 @@
    type="VERILOG"
    library="avalon_st_adapter" />
  <file
+   path="simulation/submodules/Computer_System_mm_interconnect_0_mm_interconnect_0.v"
+   type="VERILOG"
+   library="mm_interconnect_0" />
+ <file
    path="simulation/submodules/altera_merlin_width_adapter.sv"
    type="SYSTEM_VERILOG"
    library="ARM_A9_HPS_h2f_axi_master_wr_to_NPU_TOP_0_avs_reset_cmd_width_adapter" />
@@ -88,6 +128,10 @@
    type="SYSTEM_VERILOG"
    library="rsp_mux" />
  <file
+   path="simulation/submodules/Computer_System_mm_interconnect_0_rsp_demux_003.sv"
+   type="SYSTEM_VERILOG"
+   library="rsp_demux_003" />
+ <file
    path="simulation/submodules/Computer_System_mm_interconnect_0_rsp_demux_001.sv"
    type="SYSTEM_VERILOG"
    library="rsp_demux_001" />
@@ -95,6 +139,14 @@
    path="simulation/submodules/Computer_System_mm_interconnect_0_rsp_demux.sv"
    type="SYSTEM_VERILOG"
    library="rsp_demux" />
+ <file
+   path="simulation/submodules/Computer_System_mm_interconnect_0_cmd_mux_003.sv"
+   type="SYSTEM_VERILOG"
+   library="cmd_mux_003" />
+ <file
+   path="simulation/submodules/altera_merlin_arbitrator.sv"
+   type="SYSTEM_VERILOG"
+   library="cmd_mux_003" />
  <file
    path="simulation/submodules/Computer_System_mm_interconnect_0_cmd_mux_001.sv"
    type="SYSTEM_VERILOG"
@@ -175,6 +227,10 @@
    path="simulation/submodules/altera_avalon_st_pipeline_base.v"
    type="SYSTEM_VERILOG"
    library="ARM_A9_HPS_h2f_axi_master_wr_limiter" />
+ <file
+   path="simulation/submodules/Computer_System_mm_interconnect_0_router_007.sv"
+   type="SYSTEM_VERILOG"
+   library="router_007" />
  <file
    path="simulation/submodules/Computer_System_mm_interconnect_0_router_005.sv"
    type="SYSTEM_VERILOG"
@@ -360,6 +416,14 @@
    library="NPU_TOP_0" />
  <file
    path="simulation/submodules/custom_ip_mult.qip"
+   type="OTHER"
+   library="NPU_TOP_0" />
+ <file
+   path="simulation/submodules/custom_ip_add.sip"
+   type="OTHER"
+   library="NPU_TOP_0" />
+ <file
+   path="simulation/submodules/custom_ip_mult.sip"
    type="OTHER"
    library="NPU_TOP_0" />
  <file

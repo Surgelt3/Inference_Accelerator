@@ -18,7 +18,7 @@ module CONTROL_UNIT(
 	output reg [255:0] write_data
 );
 	
-	reg [1:0] pe_busy_next;
+	reg [1:0] pe_busy_next, pe_busy_next_tmp;
 	reg [8:0] pe0_address, pe0_address_next, pe1_address, pe1_address_next;
 	reg [8:0] pe0_param_loc, pe0_param_loc_next, pe1_param_loc, pe1_param_loc_next;
 	reg [9:0] pe0_length, pe0_length_next, pe1_length, pe1_length_next;
@@ -41,65 +41,76 @@ module CONTROL_UNIT(
 	
 
 	always @(posedge clk) begin
-		
-		pc_clock <= pc_in;
+		if (instr_valid && opcode == 3'b000)
+			pc_clock <= pc_in;
+			
 		write_data <= load_data;
-		load_signal <= 1'b0;
-		pool_signal <= 1'b0;
-		mac_signal <= mac_signal_next;
 		
-		mem_local_address <= mem_local_address_next;
-		mem_local_param_loc <= mem_local_param_loc_next;
-		read_size <= read_size_next;
-		bias_add <= bias_add_next;
-		pe_fifo_bias_loc <= pe_fifo_bias_loc_next;
-		pe_busy <= pe_busy_next;
-		curr_classifier_bit <= curr_classifier_bit_next;
-		
-		pe1_length <= pe1_length_next;
-		pe1_address <= pe1_address_next;
-		pe1_param_loc <= pe1_param_loc_next;
-		pe0_length <= pe0_length_next;
-		pe0_address <= pe0_address_next;
-		pe0_param_loc <= pe0_param_loc_next;
-
 		if (rst) begin
 			pe_busy <= 2'b00;
 			curr_classifier_bit <= 1'b0;
 			read_size <= 2'b00;
+			pe0_length <= 10'd0;
+			pe1_length <= 10'd0;
+			pe0_address <= 9'd0;
+			pe1_address <= 9'd0;
+			pe0_param_loc <= 9'd0;
+			pe1_param_loc <= 9'd0;
+			mem_local_address <= 9'd0;
+			mem_local_param_loc <= 9'd0;
+			pe_fifo_bias_loc <= 2'b00;
+			bias_add <= 1'b0;
+			mac_signal <= 1'b0;
+			load_signal <= 1'b0;
+			pool_signal <= 1'b0;
+
+
 		end
-		else if (instr_valid) begin
-			if (opcode == 3'b000) begin
-				// MAC Operation
-				mac_signal <= mac_signal_next;
-				mem_local_address <= mem_local_address_next;
-				mem_local_param_loc <= mem_local_param_loc_next;
-				read_size <= read_size_next;
-				bias_add <= bias_add_next;
-				pe_fifo_bias_loc <= pe_fifo_bias_loc_next;
-				pe_busy <= pe_busy_next;
-				curr_classifier_bit <= curr_classifier_bit_next;
-				
-				pe1_length <= pe1_length_next;
-				pe1_address <= pe1_address_next;
-				pe1_param_loc <= pe1_param_loc_next;
-				pe0_length <= pe0_length_next;
-				pe0_address <= pe0_address_next;
-				pe0_param_loc <= pe0_param_loc_next;
-
-
+		else begin
+		
+			mac_signal <= mac_signal_next;
+		
+			mem_local_address <= mem_local_address_next;
+			mem_local_param_loc <= mem_local_param_loc_next;
+			read_size <= read_size_next;
+			bias_add <= bias_add_next;
+			pe_fifo_bias_loc <= pe_fifo_bias_loc_next;
+			pe_busy <= pe_busy_next;
+			curr_classifier_bit <= curr_classifier_bit_next;
+			
+			pe1_length <= pe1_length_next;
+			pe1_address <= pe1_address_next;
+			pe1_param_loc <= pe1_param_loc_next;
+			pe0_length <= pe0_length_next;
+			pe0_address <= pe0_address_next;
+			pe0_param_loc <= pe0_param_loc_next;
+			
+			if (instr_valid) begin
+			
+				if (opcode == 3'b000) begin
+					// MAC Operation
+					load_signal <= 1'b0;
+					pool_signal <= 1'b0;
+					end
+				else if (opcode == 3'b001) begin
+					// LOAD
+					load_signal <= 1'b1;
+					pool_signal <= 1'b0;
 				end
-			else if (opcode == 3'b001) begin
-				// LOAD
-				load_signal <= 1'b1;
+				else if (opcode == 3'b010) begin
+					// RELU Operation
+					//relu_signal <= 1'b1;
+					load_signal <= 1'b0;
+					pool_signal <= 1'b0;
+				end
+				else if (opcode == 3'b011) begin
+					// POOL Operation
+					load_signal <= 1'b0;
+					pool_signal <= 1'b1;
+				end
 			end
-			else if (opcode == 3'b010) begin
-				// RELU Operation
-				//relu_signal <= 1'b1;
-			end
-			else if (opcode == 3'b011) begin
-				// POOL Operation
-				pool_signal <= 1'b1;
+			else begin
+				load_signal <= 1'b0;
 			end
 		end
 
@@ -109,12 +120,33 @@ module CONTROL_UNIT(
 		mac_signal_next = 1'b0;
 		bias_add_next = 1'b0;
 		pe_fifo_bias_loc_next = 2'b00;
-		if (pe_busy[classifier_bit] == 0 && instr_valid && opcode == 3'b000) begin
+		
+		pe_busy_next_tmp = pe_busy;
+		
+		mem_local_address_next = address;
+		mem_local_param_loc_next = param_loc;
+		read_size_next = read_size;
+		pe_fifo_bias_loc_next = pe_fifo_bias_loc;
+		pe_busy_next = pe_busy;
+		curr_classifier_bit_next = curr_classifier_bit;
+		pe1_length_next = pe1_length;
+		pe1_address_next = pe1_address;
+		pe1_param_loc_next = pe1_param_loc;
+		pe0_length_next = pe0_length;
+		pe0_address_next = pe0_address;
+		pe0_param_loc_next = pe0_param_loc;
+		curr_length_next = 10'd0;
+		curr_address_next = 9'd0;
+		curr_param_loc_next = 9'd0;
+		
+		
+		
+		if (pe_busy[classifier_bit] == 1'b0 && instr_valid && opcode == 3'b000) begin
 			curr_length_next = length;
 			curr_address_next = address;
 			curr_param_loc_next = param_loc;
 			curr_classifier_bit_next = classifier_bit;
-			pe_busy_next = pe_busy | (2'b01 << classifier_bit); 
+			pe_busy_next_tmp = pe_busy | (2'b01 << classifier_bit); 
 		end
 		else if (|pe_busy) begin
 			curr_classifier_bit_next = pe_busy[curr_classifier_bit] ? curr_classifier_bit : !curr_classifier_bit;
@@ -129,24 +161,10 @@ module CONTROL_UNIT(
 				curr_address_next = pe0_address;
 				curr_param_loc_next = pe0_param_loc;
 			end
-			pe_busy_next = pe_busy;
-		end
-		else begin
-			mem_local_address_next = address;
-			mem_local_param_loc_next = param_loc;
-			read_size_next = read_size;
-			pe_fifo_bias_loc_next = pe_fifo_bias_loc;
-			pe_busy_next = pe_busy;
-			curr_classifier_bit_next = curr_classifier_bit;
-			pe1_length_next = pe1_length;
-			pe1_address_next = pe1_address;
-			pe1_param_loc_next = pe1_param_loc;
-			pe0_length_next = pe0_length;
-			pe0_address_next = pe0_address;
-			pe0_param_loc_next = pe0_param_loc;
+			pe_busy_next_tmp = pe_busy;
 		end
 		
-		if (pe_busy_next == 2'b00) begin
+		if (pe_busy_next_tmp == 2'b00) begin
 			read_size_next = 2'b00;
 		end
 		else begin
@@ -166,7 +184,8 @@ module CONTROL_UNIT(
 				pe_fifo_bias_loc_next = 3'd4 - ((read_size_next * 4)-curr_length_next);
 				
 				bias_add_next = 1'b1;
-				pe_busy_next[curr_classifier_bit_next] = 1'b0;
+								
+				pe_busy_next_tmp[curr_classifier_bit_next] = 1'b0;
 				if (curr_classifier_bit_next) begin
 					pe1_length_next = curr_length_next;
 					pe1_address_next = curr_address_next;
@@ -208,6 +227,7 @@ module CONTROL_UNIT(
 
 		end
 		
+		pe_busy_next = pe_busy_next_tmp;
 		
 		
 		
