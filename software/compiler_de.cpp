@@ -85,12 +85,33 @@ int unmap_physical(void *virtual_base, unsigned int span)
 #define OUT_ADDRESS 
 static int fd = -1;
 static volatile int writeReady = 1;
+static std::thread resultsThread;
 MemManager::MemManager()
 {
   this->base = (uchar *)NPU_TOP_0_AVS_WRITE_BASE;
   open_physical(fd);
   this->shared_addr = map_physical(fd, NPU_TOP_0_AVS_WRITE_BASE, NPU_TOP_0_AVS_WRITE_SPAN);
   this->outPtr = (uint32_t*) map_physical(fd, NPU_TOP_0_AVS_READ_BASE, NPU_TOP_0_AVS_READ_SPAN);
+  this->resetPtr = (uint32_t *)map_physical(fd, NPU_TOP_0_AVS_RESET_BASE, NPU_TOP_0_AVS_RESET_SPAN);
+  this->instrPtr = (uint32_t *)map_physical(fd, NPU_TOP_0_AVS_WRITE_INSTR_BASE, NPU_TOP_0_AVS_WRITE_INSTR_SPAN);
+  this->results = ch_hashcreate(float);
+  resultsThread=std::thread([this](){
+    uint32_t PC = outPtr[1];
+    uint32_t lastPC=PC;
+    while(1)
+    {
+      PC = outPtr[1];
+      if(PC!=lastPC)
+      {
+        float val=*((float*)outPtr[0]);
+        chprintln("Got value ",val," for PC ",PC);
+        ch_hashinsert(float,results,PC,val);
+        lastPC=PC;
+      }
+    }
+  });
+  resultsThread.detach();
+
   this->PC = 0;
 
   this->instructionsFile.open("instr.txt", std::ifstream::out | std::ifstream::trunc);
@@ -102,6 +123,7 @@ MemManager::MemManager(uchar* virt)
   this->base = NULL;
   this->shared_addr = virt;
   this->PC = 0;
+  this->results = ch_hashcreate(float);
 
   this->instructionsFile.open("instr.txt", std::ifstream::out | std::ifstream::trunc);
   this->instructionsFile.close();
@@ -136,8 +158,16 @@ void MemManager::writeData(float *ptr, size_t size)
 }
 float MemManager::getResult(uint32_t PC)
 {
-  while (outPtr[1] != PC)
-    ;
-  return *((float*)outPtr[0]);
+  chprintln("Requesting value for PC ",PC);
+  float*v=ch_hashgetp(float,results,PC);
+  while(v==NULL)
+  {
+    v = ch_hashgetp(float, results, PC);
+  }
+  ch_hashrem(float,results,PC);
+  chprintln("Request complete");
+  return *v;
+  // while (outPtr[1] != PC)
+  //   ;
+  // return *((float*)outPtr[0]);
 }
-

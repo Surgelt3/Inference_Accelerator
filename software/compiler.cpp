@@ -219,6 +219,7 @@ int main()
         {
           int arrIndex = input->getIndex(0, c, x, y);
           int imIndex = (c * -1 + 2) + 3 * (y * 224 + x);
+          // int imIndex = c + 3 * (y * 224 + x);
           ch_arrget(float, input->data, arrIndex) = (float)image[imIndex] / 255.0;
           // ch_arrget(float, input->data, arrIndex) = 0;
         }
@@ -226,10 +227,10 @@ int main()
     }
 
     Compiler compiler = Compiler();
-    // compiler.writeInstructions(model);
-    // compiler.compileModel(model);
+    compiler.writeInstructions(model);
+    compiler.compileModel(model);
 
-    model.calculate();
+    // model.calculate();
 
     chprintln("calculated");
     int maxIndex = 0;

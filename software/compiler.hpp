@@ -1,6 +1,7 @@
 #pragma once
 
 #include "neural_net.h"
+#include <chevan_utils_array.h>
 #include <chevan_utils_print.hpp>
 #include <thread>
 #include <mutex>
@@ -56,7 +57,10 @@ private:
 public:
   const uchar *base;
   void *shared_addr;
-  uint32_t *outPtr;
+  uint32_t *resetPtr;
+  volatile uint32_t *outPtr;
+  uint32_t *instrPtr;
+  ch_hash results;
   uint PC;
   float *temporaryLoadAddress = (float *)0x40;
   MemManager();
