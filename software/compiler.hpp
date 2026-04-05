@@ -49,7 +49,7 @@ static uint32_t END_Instruction()
   return i;
 }
 
-#define ONDEVICE 0
+#define ONDEVICE 1
 class MemManager
 {
 private:
